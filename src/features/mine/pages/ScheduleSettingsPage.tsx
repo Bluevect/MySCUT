@@ -2,7 +2,7 @@ import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Navbar, NavbarBackLink } from 'konsta/react'
+import { Dialog, DialogButton, Navbar, NavbarBackLink } from 'konsta/react'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import {
   getAutoSimplifyScheduleHintEnabled,
@@ -930,23 +930,29 @@ function ScheduleSettingsPage() {
         </div>
       </Modal>
 
-      <Modal
+      <Dialog
         title='删除课表确认'
-        open={isScheduleDeleteModalOpen}
-        onOk={handleConfirmDeleteSchedule}
-        onCancel={() => setIsScheduleDeleteModalOpen(false)}
-        okText='确认删除'
-        cancelText='取消'
-      >
-        <p className='schedule-switch-empty'>
-          该操作无法撤销。请输入课表名称 <strong>{deleteTargetScheduleName || '-'}</strong> 以确认删除。
-        </p>
-        <Input
-          value={deleteConfirmText}
-          placeholder='输入课表名称进行确认'
-          onChange={(event) => setDeleteConfirmText(event.target.value)}
-        />
-      </Modal>
+        opened={isScheduleDeleteModalOpen}
+        onBackdropClick={() => setIsScheduleDeleteModalOpen(false)}
+        content={
+          <>
+            <p className='schedule-switch-empty'>
+              该操作无法撤销。请输入课表名称 <strong>{deleteTargetScheduleName || '-'}</strong> 以确认删除。
+            </p>
+            <Input
+              value={deleteConfirmText}
+              placeholder='输入课表名称进行确认'
+              onChange={(event) => setDeleteConfirmText(event.target.value)}
+            />
+          </>
+        }
+        buttons={
+          <>
+            <DialogButton onClick={() => setIsScheduleDeleteModalOpen(false)}>取消</DialogButton>
+            <DialogButton strong onClick={handleConfirmDeleteSchedule}>确认删除</DialogButton>
+          </>
+        }
+      />
 
       <Modal
         title='导出课表'

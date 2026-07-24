@@ -1,7 +1,7 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Input, Modal, Select, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Navbar, NavbarBackLink } from 'konsta/react'
+import { Dialog, DialogButton, Navbar, NavbarBackLink } from 'konsta/react'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
@@ -538,23 +538,30 @@ function ScheduleIntersectionPage() {
         </div>
       </Modal>
 
-      <Modal
+      <Dialog
         title='设置课表使用者名称'
-        open={isExternalNameModalOpen}
-        onOk={handleConfirmExternalName}
-        onCancel={() => {
+        opened={isExternalNameModalOpen}
+        onBackdropClick={() => {
           setPendingExternalSchedule(null)
           setIsExternalNameModalOpen(false)
         }}
-        okText='确定'
-        cancelText='取消'
-      >
-        <Input
-          value={pendingExternalName}
-          onChange={(event) => setPendingExternalName(event.target.value)}
-          placeholder={pendingExternalSchedule?.name ?? 'A'}
-        />
-      </Modal>
+        content={
+          <Input
+            value={pendingExternalName}
+            onChange={(event) => setPendingExternalName(event.target.value)}
+            placeholder={pendingExternalSchedule?.name ?? 'A'}
+          />
+        }
+        buttons={
+          <>
+            <DialogButton onClick={() => {
+              setPendingExternalSchedule(null)
+              setIsExternalNameModalOpen(false)
+            }}>取消</DialogButton>
+            <DialogButton strong onClick={handleConfirmExternalName}>确定</DialogButton>
+          </>
+        }
+      />
     </section>
   )
 }
