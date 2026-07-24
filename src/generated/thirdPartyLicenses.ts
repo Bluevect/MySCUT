@@ -15,8 +15,8 @@ export const THIRD_PARTY_LICENSES = [
   { name: 'jeep-sqlite', version: '2.8.0', license: 'MIT' },
   { name: 'konsta', version: '5.2.0', license: 'MIT' },
   { name: 'pdfjs-dist', version: '5.4.624', license: 'Apache-2.0' },
-  { name: 'react', version: '18.3.1', license: 'MIT' },
-  { name: 'react-dom', version: '18.3.1', license: 'MIT' },
+  { name: 'react', version: '19.2.8', license: 'MIT' },
+  { name: 'react-dom', version: '19.2.8', license: 'MIT' },
   { name: 'react-router-dom', version: '7.18.1', license: 'MIT' },
   { name: 'sql.js', version: '1.11.0', license: 'MIT' },
 ] as const
