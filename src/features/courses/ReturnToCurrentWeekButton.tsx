@@ -36,7 +36,7 @@ function clamp(value: number, minimum: number, maximum: number) {
 }
 
 function getAvailableBottom() {
-  const bottomNav = document.querySelector<HTMLElement>('.bottom-nav')
+  const bottomNav = document.querySelector<HTMLElement>('.app-tabbar')
   return bottomNav?.getBoundingClientRect().top ?? window.innerHeight
 }
 

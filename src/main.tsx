@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
+import { App as KonstaApp } from 'konsta/react'
 import 'antd/dist/reset.css'
 import './index.css'
 import App from './App'
@@ -18,7 +19,9 @@ async function renderApplication() {
       <StorageRuntimeProvider initialRuntime={storageRuntime}>
         <GlobalThemeProvider>
           <Router>
-            <App />
+            <KonstaApp theme='ios' dark>
+              <App />
+            </KonstaApp>
           </Router>
         </GlobalThemeProvider>
       </StorageRuntimeProvider>

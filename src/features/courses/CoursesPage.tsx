@@ -81,7 +81,7 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
   }
 
   const getBottomOcclusion = (element: HTMLDivElement) => {
-    const bottomNav = document.querySelector<HTMLElement>('.bottom-nav')
+    const bottomNav = document.querySelector<HTMLElement>('.app-tabbar')
     if (!bottomNav) {
       return 0
     }
@@ -165,7 +165,7 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
       }
     }
 
-    const bottomNav = document.querySelector<HTMLElement>('.bottom-nav')
+    const bottomNav = document.querySelector<HTMLElement>('.app-tabbar')
     const topHeader = document.querySelector<HTMLElement>('.courses-header')
 
     const resizeObserver = new ResizeObserver(() => {
