@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { CloseOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Modal, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { CircleIconButton } from '../../components/buttons/CircleIconButton'
+import { Navbar, NavbarBackLink } from 'konsta/react'
 import { HorizontalSlideSelector } from '../../components/HorizontalSlideSelector'
 import { VerticalSlideSelector } from '../../components/VerticalSlideSelector'
 import { getUseLocalManual, setUseLocalManual } from '../../core/manual/manualSourceStorage'
@@ -192,19 +191,11 @@ function MineDetailPage({ title }: MineDetailPageProps) {
     >
       {contextHolder}
       {modalContextHolder}
-      <header className='schedule-settings-header'>
-        <div>
-          <p className='schedule-settings-title'>{title}</p>
-          <p className='schedule-settings-subtitle'>{subtitle}</p>
-        </div>
-
-        <CircleIconButton
-          ariaLabel='关闭详情页面'
-          icon={<CloseOutlined />}
-          disabled={transitionStage === 'closing'}
-          onClick={handleClose}
-        />
-      </header>
+      <Navbar
+        title={title}
+        subtitle={subtitle}
+        left={<NavbarBackLink onClick={handleClose} />}
+      />
 
       <div className='schedule-settings-content mine-detail-content'>
         {title === '全局设置' ? (

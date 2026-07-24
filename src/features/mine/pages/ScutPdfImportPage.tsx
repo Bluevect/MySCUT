@@ -1,7 +1,6 @@
-import { CloseOutlined } from '@ant-design/icons'
 import { type ChangeEvent, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
+import { Navbar, NavbarBackLink } from 'konsta/react'
 import { extractScutSchedulePdf, type ExtractedSchedulePdf } from '../../../core/schedule/importScutPdf'
 
 function ScutPdfImportPage() {
@@ -76,18 +75,11 @@ function ScutPdfImportPage() {
 
   return (
     <section className='schedule-settings-page'>
-      <header className='schedule-settings-header'>
-        <div>
-          <p className='schedule-settings-title'>从华工教务PDF导入</p>
-          <p className='schedule-settings-subtitle'>SCUT PDF Import</p>
-        </div>
-
-        <CircleIconButton
-          ariaLabel='关闭页面'
-          icon={<CloseOutlined />}
-          onClick={handleClose}
-        />
-      </header>
+      <Navbar
+        title='从华工教务PDF导入'
+        subtitle='SCUT PDF Import'
+        left={<NavbarBackLink onClick={handleClose} />}
+      />
 
       <div className='schedule-settings-content'>
         <input

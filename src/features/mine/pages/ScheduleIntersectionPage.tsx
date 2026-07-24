@@ -1,8 +1,7 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
-import { CloseOutlined } from '@ant-design/icons'
 import { Input, Modal, Select, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
+import { Navbar, NavbarBackLink } from 'konsta/react'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
@@ -344,14 +343,11 @@ function ScheduleIntersectionPage() {
     <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>
       {contextHolder}
 
-      <header className='schedule-settings-header'>
-        <div>
-          <p className='schedule-settings-title'>课表取交集</p>
-          <p className='schedule-settings-subtitle'>Schedule Intersection</p>
-        </div>
-
-        <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={startClosingTransition} />
-      </header>
+      <Navbar
+        title='课表取交集'
+        subtitle='Schedule Intersection'
+        left={<NavbarBackLink onClick={startClosingTransition} />}
+      />
 
       <div className='schedule-settings-content'>
         <div className='mine-button-group'>
