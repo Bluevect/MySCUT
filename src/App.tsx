@@ -1,8 +1,16 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { Tabbar, TabbarLink, ToolbarPane } from 'konsta/react'
+import { BookOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
 import AppRoutes from './app/routes'
 import { useHardwareBackButton } from './platform/capacitor/useHardwareBackButton'
 import { useAndroidViewportInset } from './platform/capacitor/useAndroidViewportInset'
 import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
+
+const TAB_ITEMS = [
+  { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
+  { to: '/manual', label: '手册', icon: <BookOutlined className='app-tabbar-icon' /> },
+  { to: '/mine', label: '我的', icon: <UserOutlined className='app-tabbar-icon' /> },
+]
 
 function App() {
   useHardwareBackButton()
@@ -23,32 +31,26 @@ function App() {
       </main>
 
       {!isMineDetailPage && (
-        <nav className='bottom-nav' aria-label='底部导航'>
-          <NavLink
-            to='/courses'
-            className={({ isActive }) =>
-              `bottom-nav-item ${isActive ? 'is-active' : ''}`
-            }
-          >
-            课程
-          </NavLink>
-          <NavLink
-            to='/manual'
-            className={({ isActive }) =>
-              `bottom-nav-item ${isActive ? 'is-active' : ''}`
-            }
-          >
-            手册
-          </NavLink>
-          <NavLink
-            to='/mine'
-            className={({ isActive }) =>
-              `bottom-nav-item ${isActive ? 'is-active' : ''}`
-            }
-          >
-            我的
-          </NavLink>
-        </nav>
+        <Tabbar
+          component='nav'
+          labels
+          icons
+          className='app-tabbar fixed bottom-0 left-0'
+          aria-label='底部导航'
+        >
+          <ToolbarPane>
+            {TAB_ITEMS.map((tab) => (
+              <TabbarLink
+                key={tab.to}
+                component={Link}
+                linkProps={{ to: tab.to }}
+                active={location.pathname.startsWith(tab.to)}
+                icon={tab.icon}
+                label={tab.label}
+              />
+            ))}
+          </ToolbarPane>
+        </Tabbar>
       )}
     </div>
   )

@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import packageJson from './package.json'
@@ -12,7 +13,7 @@ export default defineConfig(({ mode }) => {
   const outDir = env.VITE_OUT_DIR || 'dist/web'
   const base = targetPlatform === 'ohos' ? './' : '/'
 
-  const plugins = [react()]
+  const plugins = [react(), tailwindcss()]
 
   if (targetPlatform === 'web') {
     plugins.push(

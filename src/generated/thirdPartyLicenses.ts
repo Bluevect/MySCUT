@@ -13,6 +13,7 @@ export const THIRD_PARTY_LICENSES = [
   { name: '@hpcc-js/wasm-zstd', version: '1.12.0', license: 'Apache-2.0' },
   { name: 'antd', version: '5.27.0', license: 'MIT' },
   { name: 'jeep-sqlite', version: '2.8.0', license: 'MIT' },
+  { name: 'konsta', version: '5.2.0', license: 'MIT' },
   { name: 'pdfjs-dist', version: '5.4.624', license: 'Apache-2.0' },
   { name: 'react', version: '18.3.1', license: 'MIT' },
   { name: 'react-dom', version: '18.3.1', license: 'MIT' },
