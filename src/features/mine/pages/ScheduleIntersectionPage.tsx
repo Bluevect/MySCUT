@@ -1,7 +1,7 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Input, Modal, Select, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Dialog, DialogButton, Navbar, NavbarBackLink } from 'konsta/react'
+import { Dialog, DialogButton, Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
@@ -492,23 +492,30 @@ function ScheduleIntersectionPage() {
         />
       </Modal>
 
-      <Modal
-        title='直接输入华工教务HTML'
-        open={isHtmlInputModalOpen}
-        onOk={() => {
-          void handleConfirmHtmlInput()
-        }}
-        onCancel={() => setIsHtmlInputModalOpen(false)}
-        okText='确定'
-        cancelText='取消'
+      <Popup
+        opened={isHtmlInputModalOpen}
+        onBackdropClick={() => setIsHtmlInputModalOpen(false)}
       >
-        <TextArea
-          rows={10}
-          placeholder='请粘贴华工教务系统课表 HTML'
-          value={htmlInputText}
-          onChange={(event) => setHtmlInputText(event.target.value)}
-        />
-      </Modal>
+        <div className='popup-wrapper'>
+          <Navbar
+            title='直接输入华工教务HTML'
+            left={<Link navbar onClick={() => setIsHtmlInputModalOpen(false)}>取消</Link>}
+            right={
+              <Link navbar strong onClick={handleConfirmHtmlInput}>
+                确定
+              </Link>
+            }
+          />
+          <div className='popup-scrollable'>
+            <TextArea
+              rows={10}
+              placeholder='请粘贴华工教务系统课表 HTML'
+              value={htmlInputText}
+              onChange={(event) => setHtmlInputText(event.target.value)}
+            />
+          </div>
+        </div>
+      </Popup>
 
       <Modal
         title='选择本地课表'

@@ -1029,6 +1029,20 @@ body {
   padding: 0 16px calc(24px + var(--safe-bottom-inset));
 }
 
+/* Konsta Popup inner layout — full-height flex with scrollable content area */
+.popup-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.popup-scrollable {
+  overflow: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--safe-bottom-inset));
+}
+
 .schedule-settings-action {
   border: none;
   cursor: pointer;
