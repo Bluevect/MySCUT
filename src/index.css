@@ -11,10 +11,11 @@ body,
 }
 
 :root {
-  --safe-top-inset: env(safe-area-inset-top);
+  /* 状态栏额外预留 4px 呼吸空间 */
+  --safe-top-inset: calc(env(safe-area-inset-top) + 4px);
   --android-system-bottom-inset: 0px;
   --safe-bottom-inset: max(env(safe-area-inset-bottom), var(--android-system-bottom-inset));
-  --bottom-nav-height: calc(80px + var(--safe-bottom-inset));
+  --bottom-nav-height: calc(64px + var(--safe-bottom-inset));
   --detail-header-top-gap: 12px;
   --message-top-offset: calc(var(--safe-top-inset) + var(--detail-header-top-gap));
   --bg-page: #f5f6fa;
@@ -79,7 +80,7 @@ body {
   flex: 1;
   min-height: 0;
   padding: 16px;
-  padding-top: calc(16px + env(safe-area-inset-top));
+  padding-top: calc(16px + var(--safe-top-inset));
   padding-bottom: calc(16px + var(--safe-bottom-inset));
   overflow: auto;
 }
@@ -96,7 +97,7 @@ body {
 }
 
 .page-content--manual {
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-top-inset);
   padding-right: 0;
   padding-bottom: 0;
   padding-left: 0;
@@ -132,7 +133,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: calc(16px + env(safe-area-inset-top)) 16px 0;
+  padding: calc(16px + var(--safe-top-inset)) 16px 0;
   background: var(--overlay-glass);
   border-bottom: 1px solid transparent;
   backdrop-filter: blur(20px) saturate(155%);
@@ -543,10 +544,6 @@ body {
 
 .course-block--yellow {
   background: #fff1bf;
-}
-
-.app-tabbar .app-tabbar-icon {
-  font-size: 26px;
 }
 
 .manual-page {
@@ -1461,7 +1458,7 @@ body {
 
 .storage-status-banner {
   position: fixed;
-  top: max(12px, env(safe-area-inset-top));
+  top: max(12px, var(--safe-top-inset));
   left: 50%;
   z-index: 1200;
   width: min(calc(100vw - 24px), 560px);
