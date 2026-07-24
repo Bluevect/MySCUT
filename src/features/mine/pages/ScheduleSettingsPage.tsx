@@ -2,7 +2,7 @@ import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Dialog, DialogButton, Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
+import { Actions, ActionsButton, ActionsGroup, ActionsLabel, Dialog, DialogButton, Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import {
   getAutoSimplifyScheduleHintEnabled,
@@ -45,8 +45,6 @@ import type { ScheduleData, TimeSlotPresetId } from '../../../core/schedule/type
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 
 const { TextArea } = Input
-
-type HtmlImportMethod = 'file' | 'clipboard' | 'input'
 type ScheduleExportFormat = 'wakeup' | 'qms' | 'qmsCompressedClipboard'
 
 type SavedScheduleItem = ReturnType<typeof listSavedSchedules>[number]
@@ -99,7 +97,6 @@ function ScheduleSettingsPage() {
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isHtmlImportMethodModalOpen, setIsHtmlImportMethodModalOpen] = useState(false)
-  const [htmlImportMethod, setHtmlImportMethod] = useState<HtmlImportMethod>('file')
   const [isHtmlInputModalOpen, setIsHtmlInputModalOpen] = useState(false)
   const [htmlInputText, setHtmlInputText] = useState('')
   const [isScheduleSwitchModalOpen, setIsScheduleSwitchModalOpen] = useState(false)
@@ -237,7 +234,7 @@ function ScheduleSettingsPage() {
 
   const handleImportHtmlEntry = () => {
     setIsImportModalOpen(false)
-    handleOpenHtmlImportMethod()
+    setIsHtmlImportMethodModalOpen(true)
   }
 
   const handleImportPdfEntry = () => {
@@ -278,35 +275,6 @@ function ScheduleSettingsPage() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '压缩QMS导入失败'
       messageApi.error(errorMessage)
-    }
-  }
-
-  const handleOpenHtmlImportMethod = () => {
-    setHtmlImportMethod('file')
-    setIsHtmlImportMethodModalOpen(true)
-  }
-
-  const handleConfirmHtmlImportMethod = async () => {
-    if (htmlImportMethod === 'file') {
-      setIsHtmlImportMethodModalOpen(false)
-      htmlFileInputRef.current?.click()
-      return
-    }
-
-    if (htmlImportMethod === 'input') {
-      setHtmlInputText('')
-      setIsHtmlImportMethodModalOpen(false)
-      setIsHtmlInputModalOpen(true)
-      return
-    }
-
-    setIsHtmlImportMethodModalOpen(false)
-
-    try {
-      const clipboardText = await navigator.clipboard.readText()
-      await handleImportScutHtml(clipboardText)
-    } catch {
-      messageApi.error('无法读取剪贴板，请检查浏览器权限')
     }
   }
 
@@ -828,55 +796,59 @@ function ScheduleSettingsPage() {
         />
       </Modal>
 
-      <Modal
-        title='导入课表'
-        open={isImportModalOpen}
-        onCancel={() => setIsImportModalOpen(false)}
-        footer={null}
+      <Actions
+        opened={isImportModalOpen}
+        onBackdropClick={() => setIsImportModalOpen(false)}
       >
-        <div className='schedule-import-list'>
-          <button type='button' className='schedule-import-item' onClick={handleImportWakeupEntry}>
-            从 WakeUp 导入
-          </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportHtmlEntry}>
-            从华工教务HTML导入
-          </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportPdfEntry}>
-            从华工教务PDF导入
-          </button>
+        <ActionsGroup>
+          <ActionsLabel>选择导入方式</ActionsLabel>
+          <ActionsButton onClick={handleImportWakeupEntry}>从 WakeUp 导入</ActionsButton>
+          <ActionsButton onClick={handleImportHtmlEntry}>从华工教务HTML导入</ActionsButton>
+          <ActionsButton onClick={handleImportPdfEntry}>从华工教务PDF导入</ActionsButton>
           {isAndroidNative && (
-            <button type='button' className='schedule-import-item' onClick={handleImportScutJwEntry}>
-              从华工教务系统导入
-            </button>
+            <ActionsButton onClick={handleImportScutJwEntry}>从华工教务系统导入</ActionsButton>
           )}
-          <button type='button' className='schedule-import-item' onClick={handleImportQmsEntry}>
-            从启梦文件QMS导入
-          </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportCompressedQmsFromClipboardEntry}>
-            从剪贴板压缩QMS导入
-          </button>
-        </div>
-      </Modal>
+          <ActionsButton onClick={handleImportQmsEntry}>从启梦文件QMS导入</ActionsButton>
+          <ActionsButton onClick={handleImportCompressedQmsFromClipboardEntry}>从剪贴板压缩QMS导入</ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton onClick={() => setIsImportModalOpen(false)}>取消</ActionsButton>
+        </ActionsGroup>
+      </Actions>
 
-      <Modal
-        title='从华工教务HTML导入'
-        open={isHtmlImportMethodModalOpen}
-        onOk={handleConfirmHtmlImportMethod}
-        onCancel={() => setIsHtmlImportMethodModalOpen(false)}
-        okText='继续'
-        cancelText='取消'
+      <Actions
+        opened={isHtmlImportMethodModalOpen}
+        onBackdropClick={() => setIsHtmlImportMethodModalOpen(false)}
       >
-        <Select
-          style={{ width: '100%' }}
-          value={htmlImportMethod}
-          onChange={(value) => setHtmlImportMethod(value)}
-          options={[
-            { value: 'file', label: '从文件导入' },
-            { value: 'clipboard', label: '从剪贴板导入' },
-            { value: 'input', label: '直接输入' },
-          ]}
-        />
-      </Modal>
+        <ActionsGroup>
+          <ActionsLabel>选择导入方式</ActionsLabel>
+          <ActionsButton onClick={() => {
+            setIsHtmlImportMethodModalOpen(false)
+            htmlFileInputRef.current?.click()
+          }}>从文件导入</ActionsButton>
+          <ActionsButton onClick={() => {
+            setHtmlInputText('')
+            setIsHtmlImportMethodModalOpen(false)
+            setIsHtmlInputModalOpen(true)
+          }}>直接输入</ActionsButton>
+          <ActionsButton onClick={async () => {
+            setIsHtmlImportMethodModalOpen(false)
+            if (!navigator.clipboard?.readText) {
+              messageApi.error('当前环境不支持读取剪贴板')
+              return
+            }
+            try {
+              const clipboardText = await navigator.clipboard.readText()
+              await handleImportScutHtml(clipboardText)
+            } catch {
+              messageApi.error('无法读取剪贴板，请检查浏览器权限')
+            }
+          }}>从剪贴板导入</ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton onClick={() => setIsHtmlImportMethodModalOpen(false)}>取消</ActionsButton>
+        </ActionsGroup>
+      </Actions>
 
       <Popup
         opened={isHtmlInputModalOpen}

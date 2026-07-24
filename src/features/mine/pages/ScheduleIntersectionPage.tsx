@@ -1,7 +1,7 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Input, Modal, Select, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Dialog, DialogButton, Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
+import { Actions, ActionsButton, ActionsGroup, ActionsLabel, Dialog, DialogButton, Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
@@ -15,7 +15,6 @@ import { getSemesterStartDate } from '../../../core/scheduleSettings'
 
 const { TextArea } = Input
 
-type HtmlImportMethod = 'file' | 'clipboard' | 'input'
 type TransitionStage = 'entering' | 'entered' | 'closing'
 
 type ExternalScheduleItem = {
@@ -49,7 +48,6 @@ function ScheduleIntersectionPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isHtmlImportMethodModalOpen, setIsHtmlImportMethodModalOpen] = useState(false)
   const [isHtmlInputModalOpen, setIsHtmlInputModalOpen] = useState(false)
-  const [htmlImportMethod, setHtmlImportMethod] = useState<HtmlImportMethod>('file')
   const [htmlInputText, setHtmlInputText] = useState('')
   const [isLocalScheduleModalOpen, setIsLocalScheduleModalOpen] = useState(false)
   const [selectedLocalScheduleId, setSelectedLocalScheduleId] = useState(() => loadActiveScheduleEntry()?.id ?? '')
@@ -127,7 +125,6 @@ function ScheduleIntersectionPage() {
 
   const handleImportHtmlEntry = () => {
     setIsImportModalOpen(false)
-    setHtmlImportMethod('file')
     setIsHtmlImportMethodModalOpen(true)
   }
 
@@ -156,33 +153,6 @@ function ScheduleIntersectionPage() {
       openExternalNameModal(parsedQms.scheduleData, 'QMS')
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '压缩QMS导入失败'
-      messageApi.error(errorMessage)
-    }
-  }
-
-  const handleConfirmHtmlImportMethod = async () => {
-    if (htmlImportMethod === 'file') {
-      setIsHtmlImportMethodModalOpen(false)
-      htmlFileInputRef.current?.click()
-      return
-    }
-
-    if (htmlImportMethod === 'input') {
-      setHtmlInputText('')
-      setIsHtmlImportMethodModalOpen(false)
-      setIsHtmlInputModalOpen(true)
-      return
-    }
-
-    setIsHtmlImportMethodModalOpen(false)
-    try {
-      const clipboardText = await navigator.clipboard.readText()
-      const scheduleData = parseScutScheduleHtml(clipboardText, {
-        fallbackSemesterStartDate: getSemesterStartDate(),
-      })
-      openExternalNameModal(scheduleData, '华工教务HTML')
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '导入失败'
       messageApi.error(errorMessage)
     }
   }
@@ -460,37 +430,60 @@ function ScheduleIntersectionPage() {
         onChange={handleImportHtmlFile}
       />
 
-      <Modal title='导入外部课表' open={isImportModalOpen} onCancel={() => setIsImportModalOpen(false)} footer={null}>
-        <div className='schedule-import-list'>
-          <button type='button' className='schedule-import-item' onClick={handleImportWakeupEntry}>从 WakeUp 导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportHtmlEntry}>从华工教务HTML导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportPdfEntry}>从华工教务PDF导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportQmsEntry}>从启梦文件QMS导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportCompressedQmsFromClipboardEntry}>从剪贴板压缩QMS导入</button>
-        </div>
-      </Modal>
-
-      <Modal
-        title='从华工教务HTML导入'
-        open={isHtmlImportMethodModalOpen}
-        onOk={() => {
-          void handleConfirmHtmlImportMethod()
-        }}
-        onCancel={() => setIsHtmlImportMethodModalOpen(false)}
-        okText='继续'
-        cancelText='取消'
+      <Actions
+        opened={isImportModalOpen}
+        onBackdropClick={() => setIsImportModalOpen(false)}
       >
-        <Select
-          style={{ width: '100%' }}
-          value={htmlImportMethod}
-          onChange={(value) => setHtmlImportMethod(value)}
-          options={[
-            { value: 'file', label: '从文件导入' },
-            { value: 'clipboard', label: '从剪贴板导入' },
-            { value: 'input', label: '直接输入' },
-          ]}
-        />
-      </Modal>
+        <ActionsGroup>
+          <ActionsLabel>选择导入方式</ActionsLabel>
+          <ActionsButton onClick={handleImportWakeupEntry}>从 WakeUp 导入</ActionsButton>
+          <ActionsButton onClick={handleImportHtmlEntry}>从华工教务HTML导入</ActionsButton>
+          <ActionsButton onClick={handleImportPdfEntry}>从华工教务PDF导入</ActionsButton>
+          <ActionsButton onClick={handleImportQmsEntry}>从启梦文件QMS导入</ActionsButton>
+          <ActionsButton onClick={handleImportCompressedQmsFromClipboardEntry}>从剪贴板压缩QMS导入</ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton onClick={() => setIsImportModalOpen(false)}>取消</ActionsButton>
+        </ActionsGroup>
+      </Actions>
+
+      <Actions
+        opened={isHtmlImportMethodModalOpen}
+        onBackdropClick={() => setIsHtmlImportMethodModalOpen(false)}
+      >
+        <ActionsGroup>
+          <ActionsLabel>选择导入方式</ActionsLabel>
+          <ActionsButton onClick={() => {
+            setIsHtmlImportMethodModalOpen(false)
+            htmlFileInputRef.current?.click()
+          }}>从文件导入</ActionsButton>
+          <ActionsButton onClick={() => {
+            setHtmlInputText('')
+            setIsHtmlImportMethodModalOpen(false)
+            setIsHtmlInputModalOpen(true)
+          }}>直接输入</ActionsButton>
+          <ActionsButton onClick={async () => {
+            setIsHtmlImportMethodModalOpen(false)
+            if (!navigator.clipboard?.readText) {
+              messageApi.error('当前环境不支持读取剪贴板')
+              return
+            }
+            try {
+              const clipboardText = await navigator.clipboard.readText()
+              const scheduleData = parseScutScheduleHtml(clipboardText, {
+                fallbackSemesterStartDate: getSemesterStartDate(),
+              })
+              openExternalNameModal(scheduleData, '华工教务HTML')
+            } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : '导入失败'
+              messageApi.error(errorMessage)
+            }
+          }}>从剪贴板导入</ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton onClick={() => setIsHtmlImportMethodModalOpen(false)}>取消</ActionsButton>
+        </ActionsGroup>
+      </Actions>
 
       <Popup
         opened={isHtmlInputModalOpen}
