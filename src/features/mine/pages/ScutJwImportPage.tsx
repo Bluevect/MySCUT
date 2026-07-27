@@ -80,7 +80,6 @@ function debugLog(...args: unknown[]) {
 function ScutJwImportPage() {
   const navigate = useNavigate()
   const [messageApi, contextHolder] = message.useMessage()
-  const [modal, modalContextHolder] = Modal.useModal()
   const [lastNavigatedUrl, setLastNavigatedUrl] = useState('')
   const [isImporting, setIsImporting] = useState(false)
   const [isOpeningBrowser, setIsOpeningBrowser] = useState(false)
@@ -102,12 +101,12 @@ function ScutJwImportPage() {
     }
 
     hasShownGuideRef.current = true
-    modal.info({
+    Modal.info({
       title: '导入提示',
       content: '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后再点击“开始导入当前页面”。',
       okText: '知道了',
     })
-  }, [isAndroidNative, modal])
+  }, [isAndroidNative])
 
   useEffect(() => {
     if (!isAndroidNative) {
@@ -325,7 +324,6 @@ function ScutJwImportPage() {
   return (
     <section className='schedule-settings-page'>
       {contextHolder}
-      {modalContextHolder}
 
       <header className='schedule-settings-header'>
         <div>

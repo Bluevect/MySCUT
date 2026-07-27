@@ -69,7 +69,6 @@ const DETAIL_ITEMS_MAP: Record<string, Array<{ title: string; description: strin
 function MineDetailPage({ title }: MineDetailPageProps) {
   const navigate = useNavigate()
   const [messageApi, contextHolder] = message.useMessage()
-  const [modal, modalContextHolder] = Modal.useModal()
   const { themeFamily, mode, resolvedMode, setThemeFamily, setMode } = useGlobalTheme()
   const subtitle = DETAIL_SUBTITLE_MAP[title] ?? 'Details'
   const detailItems = DETAIL_ITEMS_MAP[title] ?? DETAIL_ITEMS_MAP['更多']
@@ -164,7 +163,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
         return
       }
 
-      modal.confirm({
+      Modal.confirm({
         title: `发现新版本 v${result.latestVersion}`,
         content: `当前版本 v${result.localVersion}，检测来源：${result.providerName}`,
         okText: '去更新',
@@ -191,7 +190,6 @@ function MineDetailPage({ title }: MineDetailPageProps) {
       className={`schedule-settings-page mine-detail-page settings-view-transition settings-view-transition--${transitionStage}`}
     >
       {contextHolder}
-      {modalContextHolder}
       <header className='schedule-settings-header'>
         <div>
           <p className='schedule-settings-title'>{title}</p>
