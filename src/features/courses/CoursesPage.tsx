@@ -16,7 +16,6 @@ import {
 } from '@ant-design/icons'
 import { Input, Modal, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Dialog, DialogButton } from 'konsta/react'
 import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
 import { clearIntersectionPreviewPayload, loadIntersectionPreviewPayload } from '../../core/schedule/intersectionPreview'
@@ -1072,43 +1071,34 @@ function CoursesPage() {
         </div>
       </Modal>
 
-      <Dialog
+      <Modal
         title='保存交集课表'
-        opened={isExitConfirmOpen}
-        onBackdropClick={() => {
+        open={isExitConfirmOpen}
+        onOk={handleConfirmSavePreview}
+        onCancel={() => {
           setIsExitConfirmOpen(false)
           finalizePreviewExit()
         }}
-        content={<p>退出临时课表前，是否保存本次取交集结果？</p>}
-        buttons={
-          <>
-            <DialogButton onClick={() => {
-              setIsExitConfirmOpen(false)
-              finalizePreviewExit()
-            }}>不保存</DialogButton>
-            <DialogButton strong onClick={handleConfirmSavePreview}>保存</DialogButton>
-          </>
-        }
-      />
+        okText='保存'
+        cancelText='不保存'
+      >
+        <p className='schedule-switch-empty'>退出临时课表前，是否保存本次取交集结果？</p>
+      </Modal>
 
-      <Dialog
+      <Modal
         title='设置保存名称'
-        opened={isSaveNameModalOpen}
-        onBackdropClick={() => setIsSaveNameModalOpen(false)}
-        content={
-          <Input
-            value={saveNameInput}
-            placeholder={intersectionPreviewPayload?.defaultSaveName ?? 'A/B/Z'}
-            onChange={(event) => setSaveNameInput(event.target.value)}
-          />
-        }
-        buttons={
-          <>
-            <DialogButton onClick={() => setIsSaveNameModalOpen(false)}>取消</DialogButton>
-            <DialogButton strong onClick={handleSubmitSaveName}>确定保存</DialogButton>
-          </>
-        }
-      />
+        open={isSaveNameModalOpen}
+        onOk={handleSubmitSaveName}
+        onCancel={() => setIsSaveNameModalOpen(false)}
+        okText='确定保存'
+        cancelText='取消'
+      >
+        <Input
+          value={saveNameInput}
+          placeholder={intersectionPreviewPayload?.defaultSaveName ?? 'A/B/Z'}
+          onChange={(event) => setSaveNameInput(event.target.value)}
+        />
+      </Modal>
     </div>
   )
 }

@@ -1,9 +1,9 @@
 import { Capacitor, CapacitorCookies, CapacitorHttp } from '@capacitor/core'
 import { DefaultWebViewOptions, InAppBrowser } from '@capacitor/inappbrowser'
 import { useEffect, useRef, useState } from 'react'
-import { Input, message } from 'antd'
+import { Input, Modal, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Dialog, DialogButton, Navbar, NavbarBackLink } from 'konsta/react'
+import { Navbar, NavbarBackLink } from 'konsta/react'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import {
   SCUT_JW_CAMPUS_URL,
@@ -79,7 +79,7 @@ function debugLog(...args: unknown[]) {
 function ScutJwImportPage() {
   const navigate = useNavigate()
   const [messageApi, contextHolder] = message.useMessage()
-  const [isGuideDialogOpen, setIsGuideDialogOpen] = useState(false)
+  const [modal, modalContextHolder] = Modal.useModal()
   const [lastNavigatedUrl, setLastNavigatedUrl] = useState('')
   const [isImporting, setIsImporting] = useState(false)
   const [isOpeningBrowser, setIsOpeningBrowser] = useState(false)
@@ -101,8 +101,12 @@ function ScutJwImportPage() {
     }
 
     hasShownGuideRef.current = true
-    setIsGuideDialogOpen(true)
-  }, [isAndroidNative])
+    modal.info({
+      title: '导入提示',
+      content: '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后再点击“开始导入当前页面”。',
+      okText: '知道了',
+    })
+  }, [isAndroidNative, modal])
 
   useEffect(() => {
     if (!isAndroidNative) {
@@ -320,6 +324,7 @@ function ScutJwImportPage() {
   return (
     <section className='schedule-settings-page'>
       {contextHolder}
+      {modalContextHolder}
 
       <Navbar
         title='从华工教务系统导入'
@@ -418,16 +423,6 @@ function ScutJwImportPage() {
           </>
         )}
       </div>
-
-        <Dialog
-          title='导入提示'
-          opened={isGuideDialogOpen}
-          onBackdropClick={() => setIsGuideDialogOpen(false)}
-          content={'请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后再点击“开始导入当前页面”。'}
-          buttons={
-            <DialogButton strong onClick={() => setIsGuideDialogOpen(false)}>知道了</DialogButton>
-          }
-        />
     </section>
   )
 }
