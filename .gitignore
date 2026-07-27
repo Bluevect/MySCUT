@@ -17,6 +17,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Other package manager lock files (project uses npm only)
+yarn.lock
+pnpm-lock.yaml
+
 # Editor directories and files
 .idea
 .vscode/*
@@ -41,7 +45,6 @@ LLM-Working/test.pdf
 # Local test schedule files (may contain real personal schedule data)
 *.wakeup_schedule
 LLM-Working/test.*
-LLM-Working/*.wakeup_schedule
 
 # Local session logs
 session-ses_*.md
