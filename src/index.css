@@ -859,7 +859,8 @@ body {
 }
 
 .mine-detail-page {
-  /* max-width/padding moved to .schedule-settings-content */
+  max-width: 560px;
+  margin: 0 auto;
 }
 
 .settings-view-transition {
@@ -1018,14 +1019,16 @@ body {
 }
 
 .schedule-settings-page {
+  height: auto;
   min-height: 100vh;
   background: var(--bg-page);
+  padding: 0 16px calc(24px + var(--safe-bottom-inset));
+  max-width: 560px;
+  margin: 0 auto;
 }
 
 .schedule-settings-content {
-  max-width: 560px;
-  margin: 16px auto 0;
-  padding: 0 16px calc(24px + var(--safe-bottom-inset));
+  margin-top: 16px;
 }
 
 .schedule-settings-action {
