@@ -32,8 +32,6 @@ function applyGlobalThemeVariables(themeFamily: GlobalThemeFamily, resolvedMode:
 
   root.dataset.globalTheme = `${themeFamily}-${resolvedMode}`
   root.style.colorScheme = resolvedMode
-  // Konsta UI 的 dark: 变体基于 .dark class（见 konsta/styles/base.css 的 @custom-variant）
-  root.classList.toggle('dark', resolvedMode === 'dark')
 
   for (const [name, value] of Object.entries(preset.cssVariables)) {
     root.style.setProperty(name, value)
