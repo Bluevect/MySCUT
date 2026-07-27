@@ -49,9 +49,8 @@ body,
   --k-color-primary: var(--accent-primary);
 }
 
-/* Konsta UI: safe-area 与项目的自定义 inset 补偿统一 */
+/* Konsta UI: safe-area 底部与项目的 Android 手势条 inset 补偿统一 */
 .safe-areas {
-  --k-safe-area-top: var(--safe-top-inset);
   --k-safe-area-bottom: var(--safe-bottom-inset);
 }
 
