@@ -1,14 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Tabbar, TabbarLink, ToolbarPane } from 'konsta/react'
+import { BookOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
 import AppRoutes from './app/routes'
 import { useHardwareBackButton } from './platform/capacitor/useHardwareBackButton'
 import { useAndroidViewportInset } from './platform/capacitor/useAndroidViewportInset'
 import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
 
 const TAB_ITEMS = [
-  { to: '/courses', label: '课程' },
-  { to: '/manual', label: '手册' },
-  { to: '/mine', label: '我的' },
+  { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
+  { to: '/manual', label: '手册', icon: <BookOutlined className='app-tabbar-icon' /> },
+  { to: '/mine', label: '我的', icon: <UserOutlined className='app-tabbar-icon' /> },
 ]
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Tabbar
           component='nav'
           labels
+          icons
           className='app-tabbar fixed bottom-0 left-0'
           aria-label='底部导航'
         >
@@ -43,6 +45,7 @@ function App() {
                 component={Link}
                 linkProps={{ to: tab.to }}
                 active={location.pathname.startsWith(tab.to)}
+                icon={tab.icon}
                 label={tab.label}
               />
             ))}
