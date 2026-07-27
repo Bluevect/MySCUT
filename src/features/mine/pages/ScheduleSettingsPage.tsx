@@ -2,7 +2,7 @@ import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Dialog, DialogButton, Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
+import { Dialog, DialogButton, Navbar, NavbarBackLink } from 'konsta/react'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import {
   getAutoSimplifyScheduleHintEnabled,
@@ -878,30 +878,21 @@ function ScheduleSettingsPage() {
         />
       </Modal>
 
-      <Popup
-        opened={isHtmlInputModalOpen}
-        onBackdropClick={() => setIsHtmlInputModalOpen(false)}
+      <Modal
+        title='直接输入华工教务HTML'
+        open={isHtmlInputModalOpen}
+        onOk={handleConfirmHtmlInput}
+        onCancel={() => setIsHtmlInputModalOpen(false)}
+        okText='确定'
+        cancelText='取消'
       >
-        <div className='popup-wrapper'>
-          <Navbar
-            title='直接输入华工教务HTML'
-            left={<Link navbar onClick={() => setIsHtmlInputModalOpen(false)}>取消</Link>}
-            right={
-              <Link navbar strong onClick={handleConfirmHtmlInput}>
-                确定
-              </Link>
-            }
-          />
-          <div className='popup-scrollable'>
-            <TextArea
-              rows={10}
-              placeholder='请粘贴华工教务系统课表 HTML'
-              value={htmlInputText}
-              onChange={(event) => setHtmlInputText(event.target.value)}
-            />
-          </div>
-        </div>
-      </Popup>
+        <TextArea
+          rows={10}
+          placeholder='请粘贴华工教务系统课表 HTML'
+          value={htmlInputText}
+          onChange={(event) => setHtmlInputText(event.target.value)}
+        />
+      </Modal>
 
       <Modal
         title='切换课表'

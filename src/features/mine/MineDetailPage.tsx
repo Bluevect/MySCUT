@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Checkbox, Modal, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Navbar, NavbarBackLink, Link, Popup } from 'konsta/react'
+import { Navbar, NavbarBackLink } from 'konsta/react'
 import { HorizontalSlideSelector } from '../../components/HorizontalSlideSelector'
 import { VerticalSlideSelector } from '../../components/VerticalSlideSelector'
 import { getUseLocalManual, setUseLocalManual } from '../../core/manual/manualSourceStorage'
@@ -320,105 +320,87 @@ function MineDetailPage({ title }: MineDetailPageProps) {
               </div>
             ))}
 
-            <Popup
-              opened={isTermsModalOpen}
-              onBackdropClick={() => setIsTermsModalOpen(false)}
+            <Modal
+              title='用户协议与隐私声明'
+              open={isTermsModalOpen}
+              onCancel={() => setIsTermsModalOpen(false)}
+              footer={null}
             >
-              <div className='popup-wrapper'>
-                <Navbar
-                  title='用户协议与隐私声明'
-                  left={<Link navbar onClick={() => setIsTermsModalOpen(false)}>关闭</Link>}
-                />
-                <div className='popup-scrollable'>
-                  <div className='mine-legal-content'>
-                    <p>本应用为信息聚合与工具辅助产品，供校内学习与生活参考使用。</p>
-                    <p>
-                      你在使用过程中应遵守法律法规与平台规则，不得将本应用用于违法违规、侵权或破坏性用途。
-                    </p>
-                    <p>
-                      隐私方面，应用仅在本地存储必要配置（如头像、主题与课表导入结果），不主动上传个人数据。
-                    </p>
-                    <p>
-                      本应用所载信息不构成官方承诺或权威结论，请以学校与相关机构发布的正式信息为准，并自行判断。
-                    </p>
-                  </div>
-                </div>
+              <div className='mine-legal-content'>
+                <p>本应用为信息聚合与工具辅助产品，供校内学习与生活参考使用。</p>
+                <p>
+                  你在使用过程中应遵守法律法规与平台规则，不得将本应用用于违法违规、侵权或破坏性用途。
+                </p>
+                <p>
+                  隐私方面，应用仅在本地存储必要配置（如头像、主题与课表导入结果），不主动上传个人数据。
+                </p>
+                <p>
+                  本应用所载信息不构成官方承诺或权威结论，请以学校与相关机构发布的正式信息为准，并自行判断。
+                </p>
               </div>
-            </Popup>
+            </Modal>
 
-            <Popup
-              opened={isLicenseModalOpen}
-              onBackdropClick={() => setIsLicenseModalOpen(false)}
+            <Modal
+              title='开源许可证'
+              open={isLicenseModalOpen}
+              onCancel={() => setIsLicenseModalOpen(false)}
+              footer={null}
             >
-              <div className='popup-wrapper'>
-                <Navbar
-                  title='开源许可证'
-                  left={<Link navbar onClick={() => setIsLicenseModalOpen(false)}>关闭</Link>}
-                />
-                <div className='popup-scrollable'>
-                  <div className='mine-legal-content'>
-                    <p>本项目及所引用开源项目许可证如下（以官方仓库声明为准）：</p>
-                    <ul className='mine-license-list'>
-                      {THIRD_PARTY_LICENSES.map((item) => (
-                        <li key={`${item.name}@${item.version}`}>
-                          <span>{item.name}@{item.version}</span>
-                          <span>{item.license}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+              <div className='mine-legal-content'>
+                <p>本项目及所引用开源项目许可证如下（以官方仓库声明为准）：</p>
+                <ul className='mine-license-list'>
+                  {THIRD_PARTY_LICENSES.map((item) => (
+                    <li key={`${item.name}@${item.version}`}>
+                      <span>{item.name}@{item.version}</span>
+                      <span>{item.license}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </Popup>
+            </Modal>
 
-            <Popup
-              opened={isTodoModalOpen}
-              onBackdropClick={() => setIsTodoModalOpen(false)}
+            <Modal
+              title='查看TODO，参加贡献！'
+              open={isTodoModalOpen}
+              onCancel={() => setIsTodoModalOpen(false)}
+              footer={null}
             >
-              <div className='popup-wrapper'>
-                <Navbar
-                  title='查看TODO，参加贡献！'
-                  left={<Link navbar onClick={() => setIsTodoModalOpen(false)}>关闭</Link>}
-                />
-                <div className='popup-scrollable'>
-                  <section className='mine-todo-section'>
-                    <p className='mine-todo-section-title'>APP</p>
-                    {APP_TODO_ITEMS.length > 0 ? (
-                      <ul className='mine-todo-list'>
-                        {APP_TODO_ITEMS.map((todo, index) => (
-                          <li key={`app-${index}`}>
-                            <label>
-                              <Checkbox checked={false} disabled />
-                              <span>{todo}</span>
-                            </label>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className='mine-detail-card-description'>暂无 TODO</p>
-                    )}
-                  </section>
+              <section className='mine-todo-section'>
+                <p className='mine-todo-section-title'>APP</p>
+                {APP_TODO_ITEMS.length > 0 ? (
+                  <ul className='mine-todo-list'>
+                    {APP_TODO_ITEMS.map((todo, index) => (
+                      <li key={`app-${index}`}>
+                        <label>
+                          <Checkbox checked={false} disabled />
+                          <span>{todo}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className='mine-detail-card-description'>暂无 TODO</p>
+                )}
+              </section>
 
-                  <section className='mine-todo-section'>
-                    <p className='mine-todo-section-title'>手册</p>
-                    {MANUAL_TODO_ITEMS.length > 0 ? (
-                      <ul className='mine-todo-list'>
-                        {MANUAL_TODO_ITEMS.map((todo, index) => (
-                          <li key={`manual-${index}`}>
-                            <label>
-                              <Checkbox checked={false} disabled />
-                              <span>{todo}</span>
-                            </label>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className='mine-detail-card-description'>暂无 TODO</p>
-                    )}
-                  </section>
-                </div>
-              </div>
-            </Popup>
+              <section className='mine-todo-section'>
+                <p className='mine-todo-section-title'>手册</p>
+                {MANUAL_TODO_ITEMS.length > 0 ? (
+                  <ul className='mine-todo-list'>
+                    {MANUAL_TODO_ITEMS.map((todo, index) => (
+                      <li key={`manual-${index}`}>
+                        <label>
+                          <Checkbox checked={false} disabled />
+                          <span>{todo}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className='mine-detail-card-description'>暂无 TODO</p>
+                )}
+              </section>
+            </Modal>
           </>
         ) : (
           detailItems.map((item) => (
