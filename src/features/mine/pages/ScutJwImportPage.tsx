@@ -1,9 +1,10 @@
+import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor, CapacitorCookies, CapacitorHttp } from '@capacitor/core'
 import { DefaultWebViewOptions, InAppBrowser } from '@capacitor/inappbrowser'
 import { useEffect, useRef, useState } from 'react'
 import { Input, Modal, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Navbar, NavbarBackLink } from 'konsta/react'
+import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import {
   SCUT_JW_CAMPUS_URL,
@@ -326,11 +327,14 @@ function ScutJwImportPage() {
       {contextHolder}
       {modalContextHolder}
 
-      <Navbar
-        title='从华工教务系统导入'
-        subtitle='SCUT In-App Import'
-        left={<NavbarBackLink onClick={handleClose} />}
-      />
+      <header className='schedule-settings-header'>
+        <div>
+          <p className='schedule-settings-title'>从华工教务系统导入</p>
+          <p className='schedule-settings-subtitle'>SCUT In-App Import</p>
+        </div>
+
+        <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={handleClose} />
+      </header>
 
       <div className='schedule-settings-content'>
         {!isAndroidNative ? (

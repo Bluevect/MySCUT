@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { CloseOutlined } from '@ant-design/icons'
 import { Input, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Navbar, NavbarBackLink } from 'konsta/react'
+import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import {
   clearOpenAiCompatibleSettings,
@@ -170,11 +171,19 @@ function AiSettingsPage() {
     <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>
       {contextHolder}
 
-      <Navbar
-        title='AI设置'
-        subtitle='AI Settings'
-        left={<NavbarBackLink onClick={startClosingTransition} />}
-      />
+      <header className='schedule-settings-header'>
+        <div>
+          <p className='schedule-settings-title'>AI设置</p>
+          <p className='schedule-settings-subtitle'>AI Settings</p>
+        </div>
+
+        <CircleIconButton
+          ariaLabel='关闭 AI 设置页面'
+          icon={<CloseOutlined />}
+          disabled={transitionStage === 'closing'}
+          onClick={startClosingTransition}
+        />
+      </header>
 
       <div className='schedule-settings-content'>
         <div className='mine-button-group'>

@@ -1,8 +1,9 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
+import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor } from '@capacitor/core'
 import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { Navbar, NavbarBackLink } from 'konsta/react'
+import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import {
   getAutoSimplifyScheduleHintEnabled,
@@ -684,11 +685,19 @@ function ScheduleSettingsPage() {
     <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>
       {contextHolder}
 
-      <Navbar
-        title='课表设置'
-        subtitle='Class Schedule Settings'
-        left={<NavbarBackLink onClick={handleClose} />}
-      />
+      <header className='schedule-settings-header'>
+        <div>
+          <p className='schedule-settings-title'>课表设置</p>
+          <p className='schedule-settings-subtitle'>Class Schedule Settings</p>
+        </div>
+
+        <CircleIconButton
+          ariaLabel='关闭课表设置'
+          icon={<CloseOutlined />}
+          disabled={transitionStage === 'closing'}
+          onClick={handleClose}
+        />
+      </header>
 
       <div className='schedule-settings-content'>
         <div className='mine-button-group'>
