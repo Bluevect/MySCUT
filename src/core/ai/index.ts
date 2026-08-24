@@ -3,6 +3,7 @@ export {
   getOpenAiCompatibleSettings,
   getPreferredAiProvider,
   getStoredAiProvider,
+  isSupportedAiProvider,
   OPENAI_API_KEY_LOCAL_ONLY_NOTICE,
   setOpenAiCompatibleSettings,
   setStoredAiProvider,

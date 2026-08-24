@@ -3,7 +3,6 @@ import { CloseOutlined } from '@ant-design/icons'
 import { Input, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
-import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import {
   clearOpenAiCompatibleSettings,
   getOpenAiCompatibleSettings,
@@ -20,37 +19,17 @@ type TransitionStage = 'entering' | 'entered' | 'closing'
 const ENTER_ANIMATION_FRAME_MS = 16
 const CLOSE_TRANSITION_MS = 220
 
-const AI_PROVIDER_OPTIONS: Array<{ value: AiProviderId; label: string }> = [
-  { value: 'localModel', label: '本地服务' },
-  { value: 'openaiCompatible', label: 'OpenAI 兼容' },
-]
-
-const AI_PROVIDER_GUIDES: Record<
-  AiProviderId,
-  {
-    title: string
-    overview: string
-    needConfig: boolean
-    steps: string[]
-  }
-> = {
-  localModel: {
-    title: '本地服务说明',
-    overview: '当前版本暂未开放本地模型调用能力，选择该方式时不会发起可用推理请求。',
-    needConfig: false,
-    steps: ['无需额外配置。', '如需立刻使用 AI，请切换到“OpenAI 兼容”并配置自己的服务。'],
-  },
-  openaiCompatible: {
-    title: 'OpenAI 兼容调用说明',
-    overview: '使用兼容 OpenAI Chat Completions 的服务商接口，适合自带 Key 与私有部署场景。',
-    needConfig: true,
-    steps: [
-      '填写 Base URL（示例：https://api.openai.com/v1）。',
-      '填写 API Key（格式通常为 Bearer Token 对应密钥）。',
-      '点击“保存设置”后即可生效。',
-      '若返回 401/403，请确认 Key 权限；若 404，请确认 Base URL 不要拼到 /chat/completions。',
-    ],
-  },
+// localModel 未实现，暂不提供选择；仅保留可用的 OpenAI 兼容直连方式
+const AI_PROVIDER_GUID = {
+  title: 'OpenAI 兼容调用说明',
+  overview: '请求将直接发送到你自己配置的 OpenAI 兼容服务商，适合自带 Key 与私有部署场景。',
+  needConfig: true,
+  steps: [
+    '填写 Base URL（示例：https://api.openai.com/v1）。',
+    '填写 API Key（格式通常为 Bearer Token 对应密钥）。',
+    '点击“保存设置”后即可生效。',
+    '若返回 401/403，请确认 Key 权限；若 404，请确认 Base URL 不要拼到 /chat/completions。',
+  ],
 }
 
 function AiSettingsPage() {
@@ -63,7 +42,7 @@ function AiSettingsPage() {
   const closeTimerRef = useRef<number | null>(null)
   const enterTimerRef = useRef<number | null>(null)
   const isClosingRef = useRef(false)
-  const providerGuide = AI_PROVIDER_GUIDES[providerId]
+  const providerGuide = AI_PROVIDER_GUID
 
   const navigateBack = () => {
     if (window.history.length > 1) {
@@ -153,7 +132,7 @@ function AiSettingsPage() {
   }
 
   const handleResetDefault = () => {
-    const providerSaved = setStoredAiProvider('localModel')
+    const providerSaved = setStoredAiProvider('openaiCompatible')
     const configCleared = clearOpenAiCompatibleSettings()
 
     if (!providerSaved || !configCleared) {
@@ -161,10 +140,10 @@ function AiSettingsPage() {
       return
     }
 
-    setProviderId('localModel')
+    setProviderId('openaiCompatible')
     setBaseUrl('')
     setApiKey('')
-    messageApi.success('已恢复默认（本地服务）')
+    messageApi.success('已恢复默认，请重新填写 OpenAI 兼容配置')
   }
 
   return (
@@ -186,26 +165,6 @@ function AiSettingsPage() {
       </header>
 
       <div className='schedule-settings-content'>
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-theme-family-panel'>
-            <div className='mine-theme-mode-header'>
-              <span>调用方式</span>
-              <span className='mine-theme-toggle-meta'>
-                {AI_PROVIDER_OPTIONS.find((item) => item.value === providerId)?.label ?? '本地服务'}
-              </span>
-            </div>
-
-            <div className='mine-theme-family-list'>
-              <VerticalSlideSelector
-                value={providerId}
-                options={AI_PROVIDER_OPTIONS}
-                onChange={setProviderId}
-                ariaLabel='AI 调用方式切换'
-              />
-            </div>
-          </div>
-        </div>
-
         <div className='mine-button-group'>
           <div className='mine-group-button mine-detail-card-item ai-provider-guide-card'>
             <p className='mine-detail-card-title'>{providerGuide.title}</p>
