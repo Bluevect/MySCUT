@@ -4,10 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
+import { AppBootstrapSkeleton } from '../../components/AppBootstrapSkeleton'
 import {
   bootstrapApplicationStorage,
   type ApplicationStorageRuntime,
@@ -22,13 +24,27 @@ const StorageRuntimeContext = createContext<StorageRuntimeContextValue | null>(n
 
 type StorageRuntimeProviderProps = {
   children: ReactNode
-  initialRuntime: ApplicationStorageRuntime
+  bootstrapRuntime: Promise<ApplicationStorageRuntime>
 }
 
-export function StorageRuntimeProvider({ children, initialRuntime }: StorageRuntimeProviderProps) {
-  const [runtime, setRuntime] = useState(initialRuntime)
+export function StorageRuntimeProvider({ children, bootstrapRuntime }: StorageRuntimeProviderProps) {
+  const [runtime, setRuntime] = useState<ApplicationStorageRuntime | null>(null)
   const [isRetrying, setIsRetrying] = useState(false)
   const [revision, setRevision] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+
+    bootstrapRuntime.then((nextRuntime) => {
+      if (!cancelled) {
+        setRuntime(nextRuntime)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [bootstrapRuntime])
 
   const retry = useCallback(async () => {
     if (isRetrying) {
@@ -47,11 +63,14 @@ export function StorageRuntimeProvider({ children, initialRuntime }: StorageRunt
     }
   }, [isRetrying])
 
-  const contextValue = useMemo<StorageRuntimeContextValue>(() => ({
-    ...runtime,
-    isRetrying,
-    retry,
-  }), [isRetrying, retry, runtime])
+  const contextValue = useMemo<StorageRuntimeContextValue | null>(() => (
+    runtime ? { ...runtime, isRetrying, retry } : null
+  ), [isRetrying, retry, runtime])
+
+  // 存储就绪前先渲染启动骨架，课表等子树依赖已初始化的存储模块状态，不能提前挂载
+  if (!runtime || !contextValue) {
+    return <AppBootstrapSkeleton />
+  }
 
   return (
     <StorageRuntimeContext.Provider value={contextValue}>
