@@ -1413,8 +1413,7 @@ body {
   color: #c43636;
 }
 
-.scut-jw-tip-card,
-.scut-jw-status-card {
+.scut-jw-tip-card {
   border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: var(--bg-surface);
@@ -1426,15 +1425,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.scut-jw-status-card {
-  margin-top: 16px;
-  overflow-wrap: anywhere;
-}
-
-.scut-jw-status-card .schedule-settings-current-date:first-child {
-  margin-top: 0;
 }
 
 .scut-jw-tip-title,
