@@ -54,7 +54,7 @@ function ScutJwWebViewPage() {
               position: 'fixed',
               right: '16px',
               bottom: '24px',
-              zIndex: '2147483647',
+              zIndex: '999',
               padding: '12px 16px',
               border: '0',
               borderRadius: '999px',
