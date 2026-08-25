@@ -737,6 +737,59 @@ body {
   background: var(--bg-soft);
 }
 
+.mine-faq-list {
+  margin-top: 24px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.mine-faq-item {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+.mine-faq-item + .mine-faq-item {
+  border-top: 1px solid var(--border-muted);
+}
+
+.mine-faq-question {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.mine-faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.mine-faq-question::after {
+  content: '+';
+  flex: none;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.mine-faq-item[open] .mine-faq-question::after {
+  content: '−';
+}
+
+.mine-faq-answer {
+  padding-bottom: 14px;
+  line-height: 1.6;
+}
+
 .mine-theme-mode-panel {
   min-height: auto;
   display: block;
