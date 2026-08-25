@@ -11,25 +11,22 @@ import { StorageRuntimeProvider } from './platform/storage/StorageRuntimeProvide
 
 const Router = import.meta.env.VITE_TARGET_PLATFORM === 'ohos' ? HashRouter : BrowserRouter
 
-async function renderApplication() {
-  const storageRuntime = await bootstrapApplicationStorage()
+// 存储初始化与首帧渲染并行，避免入口 await 阻塞渲染造成白屏；就绪前由骨架屏占位
+const storageBootstrap = bootstrapApplicationStorage()
 
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <StorageRuntimeProvider initialRuntime={storageRuntime}>
-        <GlobalThemeProvider>
-          <Router>
-            <KonstaApp theme='ios' dark>
-              <App />
-            </KonstaApp>
-          </Router>
-        </GlobalThemeProvider>
-      </StorageRuntimeProvider>
-    </React.StrictMode>,
-  )
-}
-
-void renderApplication()
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <GlobalThemeProvider>
+      <Router>
+        <KonstaApp theme='ios' dark>
+          <StorageRuntimeProvider bootstrapRuntime={storageBootstrap}>
+            <App />
+          </StorageRuntimeProvider>
+        </KonstaApp>
+      </Router>
+    </GlobalThemeProvider>
+  </React.StrictMode>,
+)
 
 if (__PWA_ENABLED__ && import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {

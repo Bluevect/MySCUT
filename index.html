@@ -10,7 +10,37 @@
     <title>MySCUT</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- 静态启动骨架：在 JS 求值前占位，React 挂载后由 AppBootstrapSkeleton 接管并替换 -->
+      <div class="app-bootstrap-skeleton" aria-hidden="true">
+        <div class="bootstrap-header">
+          <div class="bootstrap-header-text">
+            <div class="bootstrap-bar bootstrap-bar--title"></div>
+            <div class="bootstrap-bar bootstrap-bar--sub"></div>
+          </div>
+          <div class="bootstrap-header-actions">
+            <span class="bootstrap-icon-btn"></span>
+            <span class="bootstrap-icon-btn"></span>
+            <span class="bootstrap-icon-btn"></span>
+          </div>
+        </div>
+        <div class="bootstrap-schedule"></div>
+        <nav class="bootstrap-tabbar">
+          <span class="bootstrap-tab">
+            <span class="bootstrap-tab-icon"></span>
+            <span class="bootstrap-bar bootstrap-bar--tab"></span>
+          </span>
+          <span class="bootstrap-tab">
+            <span class="bootstrap-tab-icon"></span>
+            <span class="bootstrap-bar bootstrap-bar--tab"></span>
+          </span>
+          <span class="bootstrap-tab">
+            <span class="bootstrap-tab-icon"></span>
+            <span class="bootstrap-bar bootstrap-bar--tab"></span>
+          </span>
+        </nav>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

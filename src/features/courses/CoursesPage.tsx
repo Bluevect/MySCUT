@@ -478,10 +478,11 @@ function CoursesPage() {
   const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const [swipeDirection, setSwipeDirection] = useState<'prev' | 'next' | null>(null)
-  const [touchStartX, setTouchStartX] = useState<number | null>(null)
-  const [touchStartY, setTouchStartY] = useState<number | null>(null)
-  const [gestureAxis, setGestureAxis] = useState<'undecided' | 'horizontal' | 'vertical'>('undecided')
-  const [dragOffsetX, setDragOffsetX] = useState(0)
+  const touchStartXRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number | null>(null)
+  const gestureAxisRef = useRef<'undecided' | 'horizontal' | 'vertical'>('undecided')
+  const dragOffsetXRef = useRef(0)
+  const trackRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -668,14 +669,27 @@ function CoursesPage() {
 
     setSwipeDirection(null)
     setIsResetting(false)
-    setDragOffsetX(0)
+    dragOffsetXRef.current = 0
     setIsDragging(false)
-    setGestureAxis('undecided')
-    setTouchStartX(event.touches[0]?.clientX ?? null)
-    setTouchStartY(event.touches[0]?.clientY ?? null)
+    gestureAxisRef.current = 'undecided'
+    touchStartXRef.current = event.touches[0]?.clientX ?? null
+    touchStartYRef.current = event.touches[0]?.clientY ?? null
+  }
+
+  // 跟手位移直接写入 DOM，避免每个 touchmove 触发 setState 与整页 re-render；
+  // trackStyle 仍由 React 托管，保证松手时 inline transform 的移除与释放动画 class 在同一次提交生效。
+  const applyDragOffset = (offsetX: number) => {
+    dragOffsetXRef.current = offsetX
+
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translateX(calc(-33.3333% + ${offsetX}px))`
+    }
   }
 
   const handleTouchMove = (event: TouchEvent<HTMLElement>) => {
+    const touchStartX = touchStartXRef.current
+    const touchStartY = touchStartYRef.current
+
     if (isAnimating || touchStartX === null || touchStartY === null) {
       return
     }
@@ -688,65 +702,69 @@ function CoursesPage() {
     const deltaX = touch.clientX - touchStartX
     const deltaY = touch.clientY - touchStartY
 
-    if (gestureAxis === 'undecided') {
+    if (gestureAxisRef.current === 'undecided') {
       if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) {
         return
       }
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        setGestureAxis('horizontal')
+        gestureAxisRef.current = 'horizontal'
       } else {
-        setGestureAxis('vertical')
+        gestureAxisRef.current = 'vertical'
         return
       }
     }
 
-    if (gestureAxis === 'vertical') {
+    if (gestureAxisRef.current === 'vertical') {
       return
     }
 
-    setIsDragging(true)
+    if (!isDragging) {
+      setIsDragging(true)
+    }
 
     if (deltaX > 0 && currentWeek <= 1) {
-      setDragOffsetX(deltaX * 0.35)
+      applyDragOffset(deltaX * 0.35)
       return
     }
 
-    setDragOffsetX(deltaX)
+    applyDragOffset(deltaX)
   }
 
   const handleTouchEnd = (event: TouchEvent<HTMLElement>) => {
+    const touchStartX = touchStartXRef.current
+
     if (isAnimating || touchStartX === null) {
-      setTouchStartX(null)
-      setTouchStartY(null)
+      touchStartXRef.current = null
+      touchStartYRef.current = null
       return
     }
 
-    if (gestureAxis !== 'horizontal') {
-      setTouchStartX(null)
-      setTouchStartY(null)
-      setGestureAxis('undecided')
-      setDragOffsetX(0)
+    if (gestureAxisRef.current !== 'horizontal') {
+      touchStartXRef.current = null
+      touchStartYRef.current = null
+      gestureAxisRef.current = 'undecided'
+      dragOffsetXRef.current = 0
       setIsDragging(false)
       return
     }
 
     const touchEndX = event.changedTouches[0]?.clientX
     if (typeof touchEndX !== 'number') {
-      setTouchStartX(null)
-      setTouchStartY(null)
-      setGestureAxis('undecided')
-      setDragOffsetX(0)
+      touchStartXRef.current = null
+      touchStartYRef.current = null
+      gestureAxisRef.current = 'undecided'
+      dragOffsetXRef.current = 0
       setIsDragging(false)
       return
     }
 
     const deltaX = touchEndX - touchStartX
-    setTouchStartX(null)
-    setTouchStartY(null)
-    setGestureAxis('undecided')
+    touchStartXRef.current = null
+    touchStartYRef.current = null
+    gestureAxisRef.current = 'undecided'
+    dragOffsetXRef.current = 0
     setIsDragging(false)
-    setDragOffsetX(0)
 
     if (Math.abs(deltaX) < 56) {
       setIsResetting(true)
@@ -805,7 +823,7 @@ function CoursesPage() {
     return 'schedule-swipe-track'
   }, [isDragging, isResetting, swipeDirection])
 
-  const trackStyle = isDragging ? { transform: `translateX(calc(-33.3333% + ${dragOffsetX}px))` } : undefined
+  const trackStyle = isDragging ? { transform: `translateX(calc(-33.3333% + ${dragOffsetXRef.current}px))` } : undefined
 
   const handleGoPrevWeek = () => {
     if (isAnimating || isDragging || currentWeek <= 1) {
@@ -832,7 +850,7 @@ function CoursesPage() {
 
     setSwipeDirection(null)
     setIsResetting(false)
-    setDragOffsetX(0)
+    dragOffsetXRef.current = 0
     applyViewedWeek(inferredCurrentWeek)
   }
 
@@ -984,7 +1002,7 @@ function CoursesPage() {
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        <div className={trackClassName} style={trackStyle} onTransitionEnd={handleSwipeTransitionEnd}>
+        <div ref={trackRef} className={trackClassName} style={trackStyle} onTransitionEnd={handleSwipeTransitionEnd}>
           <div className='schedule-swipe-page'>
             <ScheduleScrollPane>
               {renderScheduleTable(
