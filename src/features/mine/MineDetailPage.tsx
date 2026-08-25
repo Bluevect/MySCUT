@@ -45,33 +45,45 @@ const DETAIL_SUBTITLE_MAP: Record<string, string> = {
   更多: 'More',
 }
 
-const DETAIL_ITEMS_MAP: Record<string, Array<{ title: string; description: string }>> = {
-  '全局设置': [
-    {
-      title: '全局能力正在建设中',
-      description: '后续将在这里统一管理通知、显示偏好与通用行为设置。',
-    },
-  ],
-  '常见问答': [
-    {
-      title: '使用说明持续补充中',
-      description: '后续会在此整理导入、切换课表和常见问题的快速解答。',
-    },
-  ],
-  更多: [
-    {
-      title: '更多功能敬请期待',
-      description: '后续将接入更多工具与入口，保持与课表设置一致的使用体验。',
-    },
-  ],
-}
+// 六条经维护者批准的离线 FAQ；内容需与 PROJECT_BASIS.md、PRIVACY.md 与当前行为保持一致
+const FAQ_ITEMS: Array<{ question: string; answer: string }> = [
+  {
+    question: '如何导入课表？',
+    answer:
+      '进入「课程 → 课表设置 → 导入课表」，可从 WakeUp 文本、华工教务 HTML、华工教务 PDF、启梦 QMS 文件或剪贴板压缩 QMS 导入；Android 端还支持从华工教务系统自动导入。',
+  },
+  {
+    question: '为什么自动导入仅 Android 可用？',
+    answer:
+      '自动导入依赖在设备本地访问教务系统的能力，当前实现基于 Android 平台组件。iOS 与鸿蒙暂不可用，后续是否支持视平台条件而定。',
+  },
+  {
+    question: '我的数据存储在哪里？',
+    answer:
+      '课表与设置默认只保存在当前设备的本地存储中，不上传服务器，也没有云同步。更换设备或清除应用数据前，请先导出课表备份。',
+  },
+  {
+    question: '如何切换或删除课表？',
+    answer:
+      '在「课表设置」的课表库中点击即可切换当前课表；不再需要的课表也在课表库中删除。',
+  },
+  {
+    question: '如何导出课表？',
+    answer:
+      '在「课表设置 → 导出课表」中选择要导出的课表与格式，即可生成导出文件，并可在其他设备上重新导入。',
+  },
+  {
+    question: '检查更新失败怎么办？',
+    answer:
+      '更新信息从 GitHub 获取，失败通常是网络原因。可稍后在「更多 → 检查更新」重试，或到项目仓库的发布页手动查看；更新检查失败不影响课表等本地功能。',
+  },
+]
 
 function MineDetailPage({ title }: MineDetailPageProps) {
   const navigate = useNavigate()
   const [messageApi, contextHolder] = message.useMessage()
   const { themeFamily, mode, resolvedMode, setThemeFamily, setMode } = useGlobalTheme()
   const subtitle = DETAIL_SUBTITLE_MAP[title] ?? 'Details'
-  const detailItems = DETAIL_ITEMS_MAP[title] ?? DETAIL_ITEMS_MAP['更多']
   const [isLocalManualEnabled, setIsLocalManualEnabled] = useState(() => getUseLocalManual())
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
@@ -318,15 +330,6 @@ function MineDetailPage({ title }: MineDetailPageProps) {
               </button>
             </div>
 
-            {detailItems.map((item) => (
-              <div className='mine-button-group' key={item.title}>
-                <div className='mine-group-button mine-detail-card-item'>
-                  <p className='mine-detail-card-title'>{item.title}</p>
-                  <p className='mine-detail-card-description'>{item.description}</p>
-                </div>
-              </div>
-            ))}
-
             <Modal
               title='用户协议与隐私声明'
               open={isTermsModalOpen}
@@ -410,14 +413,14 @@ function MineDetailPage({ title }: MineDetailPageProps) {
             </Modal>
           </>
         ) : (
-          detailItems.map((item) => (
-            <div className='mine-button-group' key={item.title}>
-              <div className='mine-group-button mine-detail-card-item'>
-                <p className='mine-detail-card-title'>{item.title}</p>
-                <p className='mine-detail-card-description'>{item.description}</p>
-              </div>
-            </div>
-          ))
+          <div className='mine-faq-list'>
+            {FAQ_ITEMS.map((item) => (
+              <details className='mine-faq-item' key={item.question}>
+                <summary className='mine-faq-question'>{item.question}</summary>
+                <p className='mine-detail-card-description mine-faq-answer'>{item.answer}</p>
+              </details>
+            ))}
+          </div>
         )}
       </div>
     </section>

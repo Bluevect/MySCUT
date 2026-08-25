@@ -4,7 +4,14 @@ const AI_PROVIDER_STORAGE_KEY = 'aiProvider'
 const OPENAI_COMPATIBLE_SETTINGS_STORAGE_KEY = 'aiOpenAiCompatibleSettings'
 const LEGACY_BUILTIN_GATEWAY_PROVIDER_ID = ['builtin', 'Gateway'].join('')
 
+// 当前实际可用的 provider 仅 OpenAI 兼容；localModel 未实现，不能被选为首选
+const SUPPORTED_AI_PROVIDER_IDS: readonly AiProviderId[] = ['openaiCompatible']
+
 export const OPENAI_API_KEY_LOCAL_ONLY_NOTICE = 'API Key 仅保存在本地，不会上传到应用服务器。'
+
+export function isSupportedAiProvider(value: AiProviderId): boolean {
+  return SUPPORTED_AI_PROVIDER_IDS.includes(value)
+}
 
 function isAiProviderId(value: unknown): value is AiProviderId {
   return value === 'openaiCompatible' || value === 'localModel'
@@ -44,8 +51,8 @@ export function getStoredAiProvider() {
   try {
     const value = localStorage.getItem(AI_PROVIDER_STORAGE_KEY)
     if (value === LEGACY_BUILTIN_GATEWAY_PROVIDER_ID) {
-      localStorage.setItem(AI_PROVIDER_STORAGE_KEY, 'localModel')
-      return 'localModel'
+      localStorage.setItem(AI_PROVIDER_STORAGE_KEY, 'openaiCompatible')
+      return 'openaiCompatible'
     }
 
     return isAiProviderId(value) ? value : null
@@ -55,10 +62,15 @@ export function getStoredAiProvider() {
 }
 
 export function getPreferredAiProvider() {
-  return getStoredAiProvider() ?? 'localModel'
+  const stored = getStoredAiProvider()
+  return stored !== null && isSupportedAiProvider(stored) ? stored : 'openaiCompatible'
 }
 
 export function setStoredAiProvider(providerId: AiProviderId) {
+  if (!isSupportedAiProvider(providerId)) {
+    return false
+  }
+
   try {
     localStorage.setItem(AI_PROVIDER_STORAGE_KEY, providerId)
     return true
