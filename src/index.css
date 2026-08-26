@@ -1137,6 +1137,18 @@ body {
   gap: 12px;
 }
 
+.mine-license-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 8px;
+  text-align: right;
+}
+
+.mine-license-metadata a {
+  color: var(--text-accent);
+}
+
 .mine-todo-section {
   margin-top: 14px;
 }

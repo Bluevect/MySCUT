@@ -529,10 +529,12 @@ function CoursesPage() {
 
   // Handle popup messages from ScutJwWebViewPage
   useEffect(() => {
-    const message = location.state?.message
-    if (!message) return
+    const popupMessage = location.state?.message
+    if (typeof popupMessage !== 'string' || !popupMessage) {
+      return
+    }
 
-    messageApi.success(message)
+    messageApi.success(popupMessage)
     navigate(location.pathname, { replace: true, state: null })
   }, [location, messageApi, navigate])
 

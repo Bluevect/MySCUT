@@ -1,6 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor } from '@capacitor/core'
-import { BackgroundColor, CloseAction, InAppBrowser, ToolBarType } from '@capgo/capacitor-inappbrowser'
 import { useEffect, useRef, useState } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -10,6 +9,10 @@ import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
 import { getScheduleThemeId } from '../../../core/schedule/themeStorage'
 import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import {
+  openScutJwWebView,
+  type ScutJwWebViewSession,
+} from '../../../platform/capacitor/scutJwWebView'
 
 type WebViewLocationState = {
   url?: string
@@ -21,11 +24,9 @@ function ScutJwWebViewPage() {
 
   const [messageApi, contextHolder] = message.useMessage()
   const [isImporting, setIsImporting] = useState(false)
-  const [isBrowserClosed, setIsBrowserClosed] = useState(false)
 
-  const webviewIdRef = useRef<string | null>(null)
+  const webViewSessionRef = useRef<ScutJwWebViewSession | null>(null)
   const isImportingRef = useRef(false)
-  const isUnmountedRef = useRef(false)
 
   const targetUrl = (location.state as WebViewLocationState | null)?.url
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
@@ -39,45 +40,16 @@ function ScutJwWebViewPage() {
       return
     }
 
-    isUnmountedRef.current = false
-
-    const injectImportButton = (id: string) => {
-      InAppBrowser.executeScript({
-        id,
-        code: `
-          (() => {
-            document.getElementById('myscut-import-schedule-button')?.remove();
-            const button = document.createElement('button');
-            button.id = 'myscut-import-schedule-button';
-            button.textContent = '导入当前页面';
-            Object.assign(button.style, {
-              position: 'fixed',
-              right: '16px',
-              bottom: '24px',
-              zIndex: '999',
-              padding: '12px 16px',
-              border: '0',
-              borderRadius: '999px',
-              background: '#1677ff',
-              color: '#fff',
-              fontSize: '14px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
-            });
-            button.addEventListener('click', () => {
-              window.mobileApp.postMessage({
-                detail: {
-                  message: 'captureHTML',
-                  html: document.documentElement.outerHTML,
-                },
-              });
-            });
-            document.documentElement.appendChild(button);
-          })();
-        `,
-      })
-    }
+    let isCancelled = false
 
     const importScheduleFromHtml = async (htmlText: string) => {
+      if (isImportingRef.current) {
+        return
+      }
+
+      isImportingRef.current = true
+      setIsImporting(true)
+
       try {
         const fallbackSemesterStartDate = getSemesterStartDate()
         const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
@@ -97,102 +69,107 @@ function ScutJwWebViewPage() {
 
         saveSemesterStartDate(nextSemesterStartDate)
 
-        InAppBrowser.hide()
+        const activeSession = webViewSessionRef.current
+        webViewSessionRef.current = null
+        if (activeSession) {
+          try {
+            await activeSession.close()
+          } catch (error) {
+            console.error('[ScutJwImport] Failed to close imported schedule session:', error)
+          }
+        }
+
+        if (isCancelled) {
+          return
+        }
+
         navigate('/courses', {
           replace: true,
           state: {
             message: `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
-          }
+          },
         })
       } catch (error) {
-        messageApi.error(error instanceof Error ? error.message : '华工教务课表导入失败')
+        if (!isCancelled) {
+          messageApi.error(error instanceof Error ? error.message : '华工教务课表导入失败')
+        }
       } finally {
         isImportingRef.current = false
-        setIsImporting(false)
+        if (!isCancelled) {
+          setIsImporting(false)
+        }
       }
     }
 
-    const openBrowser = async () => {
-      InAppBrowser.clearAllCookies()
-      InAppBrowser.clearCache()
-
-      const handleClose = await InAppBrowser.addListener('closeEvent', () => {
-        if (isUnmountedRef.current) {
+    void openScutJwWebView({
+      url: targetUrl,
+      onClose: () => {
+        if (isCancelled) {
           return
         }
 
-        webviewIdRef.current = null
-        setIsBrowserClosed(true)
-
-        navigate('/mine/import-scut-jw')
-      })
-
-      const handlePageLoaded = await InAppBrowser.addListener('browserPageLoaded', (event) => {
-        if (isUnmountedRef.current) {
-          return
-        }
-
-        const id = event.id || webviewIdRef.current
-        if (id) injectImportButton(id)
-      })
-
-      const handleMessage = await InAppBrowser.addListener('messageFromWebview', async (event) => {
-        const detail = event.detail
-        if (isUnmountedRef.current || detail?.message !== 'captureHTML' || typeof detail.html !== 'string' || isImportingRef.current) {
-          return
-        }
-
-        isImportingRef.current = true
-        setIsImporting(true)
-        importScheduleFromHtml(detail.html)
-      })
-
-      try {
-        const { id } = await InAppBrowser.openWebView({
-          url: targetUrl,
-          openBlankTargetInWebView: true,
-          toolbarType: ToolBarType.NAVIGATION,
-          closeAction: CloseAction.CLOSE,
-          title: '从教务导入课表',
-          handleDownloads: true,
-          backgroundColor: BackgroundColor.WHITE
-        })
-
-        webviewIdRef.current = id
-      } catch (error) {
-        messageApi.error(error instanceof Error ? error.message : '无法打开教务系统页面')
+        webViewSessionRef.current = null
         navigate('/mine/import-scut-jw', { replace: true })
+      },
+      onError: (error) => {
+        if (isCancelled) {
+          return
+        }
+
+        messageApi.error(error.message)
+      },
+      onHtmlCaptured: importScheduleFromHtml,
+    }).then((session) => {
+      if (isCancelled) {
+        void session.close().catch((error: unknown) => {
+          console.error('[ScutJwImport] Failed to close cancelled session:', error)
+        })
+        return
       }
 
-      return () => {
-        void Promise.all([handleClose, handlePageLoaded, handleMessage].map((handle) => handle.remove().catch(() => undefined)))
+      webViewSessionRef.current = session
+    }).catch((error: unknown) => {
+      if (isCancelled) {
+        return
       }
-    }
 
-    let removeListeners: (() => void) | undefined
-
-    void openBrowser().then((cleanup) => {
-      removeListeners = cleanup
+      messageApi.error(error instanceof Error ? error.message : '无法打开教务系统页面')
+      navigate('/mine/import-scut-jw', { replace: true })
     })
 
     return () => {
-      isUnmountedRef.current = true
-      removeListeners?.()
-
-      if (webviewIdRef.current) {
-        void InAppBrowser.close({ id: webviewIdRef.current })
+      isCancelled = true
+      isImportingRef.current = false
+      const activeSession = webViewSessionRef.current
+      webViewSessionRef.current = null
+      if (activeSession) {
+        void activeSession.close().catch((error: unknown) => {
+          console.error('[ScutJwImport] Failed to close unmounted session:', error)
+        })
       }
-
-      webviewIdRef.current = null
     }
   }, [isAndroidNative, messageApi, navigate, targetUrl])
 
   const handleClose = () => {
-    if (webviewIdRef.current) {
-      void InAppBrowser.close({ id: webviewIdRef.current })
+    const activeSession = webViewSessionRef.current
+    webViewSessionRef.current = null
+    if (!activeSession) {
+      navigate('/mine/import-scut-jw', { replace: true })
+      return
     }
-    navigate('/mine/import-scut-jw', { replace: true })
+
+    void activeSession.close()
+      .catch((error: unknown) => {
+        messageApi.error(error instanceof Error ? error.message : '教务系统页面关闭失败')
+      })
+      .finally(() => navigate('/mine/import-scut-jw', { replace: true }))
   }
+
+  const unavailableMessage = !isAndroidNative
+    ? '当前环境不支持该功能，请在安卓原生应用中使用。'
+    : !targetUrl
+      ? '导入会话已失效，请返回后重新选择教务系统入口。'
+      : ''
 
   return (
     <section className='schedule-settings-page scut-jw-webview-page'>
@@ -208,9 +185,13 @@ function ScutJwWebViewPage() {
       </header>
       
       <div className='schedule-settings-content'>
-        <p className='schedule-settings-current-date'>
-          {isBrowserClosed ? '浏览器已关闭，可返回上一页。' : isImporting ? '正在导入当前页面...' : '请在网页右下角点击“导入当前页面”。'}
-        </p>
+        {unavailableMessage ? (
+          <p className='schedule-pdf-error'>{unavailableMessage}</p>
+        ) : (
+          <p className='schedule-settings-current-date'>
+            {isImporting ? '正在导入当前页面...' : '请在网页右下角点击“导入当前页面”。'}
+          </p>
+        )}
       </div>
     </section>
   )

@@ -359,7 +359,7 @@ function ScheduleSettingsPage() {
     messageApi.success('提示信息精简设置已更新')
   }
 
-  const handleSelectTheme = (themeId: ScheduleThemeId) => {
+  const handleSelectTheme = async (themeId: ScheduleThemeId) => {
     if (themeId === scheduleThemeId) {
       return
     }
@@ -370,10 +370,15 @@ function ScheduleSettingsPage() {
       return
     }
 
-    setActiveScheduleThemeId(themeId)
-    
-    setScheduleThemeIdState(themeId)
-    messageApi.success('课表配色已更新')
+    try {
+      await setActiveScheduleThemeId(themeId)
+      setScheduleThemeIdState(themeId)
+      messageApi.success('课表配色已更新')
+    } catch (error) {
+      const isRolledBack = setScheduleThemeId(scheduleThemeId)
+      const errorMessage = error instanceof Error ? error.message : '课表配色保存失败'
+      messageApi.error(isRolledBack ? errorMessage : `${errorMessage}，且默认配色回滚失败`)
+    }
   }
 
   const handleSelectTimeSlotPreset = async (presetId: TimeSlotPresetId) => {

@@ -36,12 +36,14 @@ const SCUT_JW_ACCESS_OPTIONS: Array<{
 // Override via localStorage for testing against mock server:
 //   localStorage.setItem('scutJwMockUrl', 'http://10.0.2.2:8080/')
 function getScutJwTargetUrl(targetUrl: string): string {
+  if (!import.meta.env.DEV) {
+    return targetUrl
+  }
+
   try {
     const override = localStorage.getItem('scutJwMockUrl')
     if (override) {
-      if (import.meta.env.DEV) {
-        debugLog('[ScutJwImport] Using mock URL:', override)
-      }
+      debugLog('[ScutJwImport] Using mock URL:', override)
       return override
     }
   } catch {
@@ -78,7 +80,7 @@ function ScutJwImportPage() {
     hasShownGuideRef.current = true
     Modal.info({
       title: '导入提示',
-      content: '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后再点击“开始导入当前页面”。',
+      content: '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后点击网页右下角的“导入当前页面”。',
       okText: '知道了',
     })
   }, [isAndroidNative])
