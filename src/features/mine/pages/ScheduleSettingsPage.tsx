@@ -18,6 +18,7 @@ import {
   loadActiveScheduleEntry,
   loadSavedScheduleById,
   saveScheduleDataWithOptions,
+  setActiveScheduleThemeId,
   setActiveScheduleTimeSlotPreset,
   switchActiveSchedule,
 } from '../../../core/schedule/storage'
@@ -369,6 +370,8 @@ function ScheduleSettingsPage() {
       return
     }
 
+    setActiveScheduleThemeId(themeId)
+    
     setScheduleThemeIdState(themeId)
     messageApi.success('课表配色已更新')
   }
