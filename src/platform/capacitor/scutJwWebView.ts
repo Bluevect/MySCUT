@@ -175,9 +175,14 @@ export async function openScutJwWebView(
     }))
 
     listenerHandles.push(await InAppBrowser.addListener('messageFromWebview', (event) => {
-      if (!isCurrentWebView(event.id)) {
-        return
-      }
+      /*
+        Don't use this guard.
+        The message won't be handled.
+        
+        if (!isCurrentWebView(event.id)) {
+          return
+        }
+      */
 
       const detail = event.detail
       if (detail?.message !== CAPTURE_HTML_MESSAGE || typeof detail.html !== 'string') {
