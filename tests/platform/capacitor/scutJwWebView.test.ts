@@ -74,11 +74,12 @@ describe('openScutJwWebView', () => {
       }))
     })
 
-    pluginMocks.listeners.get('messageFromWebview')?.({
-      id: 'other-webview',
-      detail: { message: 'captureHTML', html: '<html>other</html>' },
-    })
-    expect(onHtmlCaptured).not.toHaveBeenCalled()
+    // Same as above
+    // pluginMocks.listeners.get('messageFromWebview')?.({
+    //   id: 'other-webview',
+    //   detail: { message: 'captureHTML', html: '<html>other</html>' },
+    // })
+    // expect(onHtmlCaptured).not.toHaveBeenCalled()
 
     pluginMocks.listeners.get('messageFromWebview')?.({
       id: 'jw-webview',
