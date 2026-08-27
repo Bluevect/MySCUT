@@ -13,6 +13,7 @@ import {
   openScutJwWebView,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
+import { InAppBrowser } from '@capgo/capacitor-inappbrowser'
 
 type WebViewLocationState = {
   url?: string
@@ -67,6 +68,9 @@ function ScutJwWebViewPage() {
           console.error('[ScutJwImport] Failed to close imported schedule session:', error)
         }
       }
+
+      // Necessary to hide WebView, or navigation won't work!
+      InAppBrowser.hide()
 
       navigate('/courses', {
         replace: true,
