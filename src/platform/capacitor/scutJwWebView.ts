@@ -158,9 +158,14 @@ export async function openScutJwWebView(
     }))
 
     listenerHandles.push(await InAppBrowser.addListener('browserPageLoaded', (event) => {
-      if (!isCurrentWebView(event.id)) {
-        return
-      }
+      /*
+        Don't use this guard.
+        Button won't be injected in personal schedule page for some unknown reasons
+        
+        if (!isCurrentWebView(event.id)) {
+          return
+        }
+      */
 
       const eventWebViewId = event.id || webViewId
       if (eventWebViewId) {
