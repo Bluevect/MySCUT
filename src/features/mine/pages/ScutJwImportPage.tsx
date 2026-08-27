@@ -108,7 +108,10 @@ function ScutJwImportPage() {
       return
     }
 
-    navigate('/mine/import-scut-jw-webview', { state: { url: getScutJwTargetUrl(entryUrlResult.url) } })
+    navigate('/mine/import-scut-jw-webview', {
+      replace: true,
+      state: { url: getScutJwTargetUrl(entryUrlResult.url) },
+    })
   }
 
   return (
