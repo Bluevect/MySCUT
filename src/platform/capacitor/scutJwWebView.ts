@@ -106,13 +106,9 @@ export async function openScutJwWebView(
   }
 
   const clearSessionCookies = async () => {
-    const results = await Promise.allSettled(
-      [...visitedUrls].map((url) => InAppBrowser.clearCookies({ url })),
-    )
-    const failedResult = results.find((result) => result.status === 'rejected')
-    if (failedResult?.status === 'rejected') {
-      throw toError(failedResult.reason, '教务系统 Cookie 清理失败')
-    }
+    // clearCookies rejects with `WebView is not initialized` error if called before any WebView existed
+    // Use clearAllCookies instead
+    await InAppBrowser.clearAllCookies()
   }
 
   const closeSession = async () => {
