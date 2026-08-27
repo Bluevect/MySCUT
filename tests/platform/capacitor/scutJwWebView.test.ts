@@ -63,7 +63,7 @@ describe('openScutJwWebView', () => {
       preventDeeplink: true,
     }))
 
-    // Temporarily approach, may need a better solution
+    // Temporary approach, may need a better solution
     // pluginMocks.listeners.get('browserPageLoaded')?.({ id: 'other-webview' })
     // expect(pluginMocks.executeScript).not.toHaveBeenCalled()
 
