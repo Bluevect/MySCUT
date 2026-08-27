@@ -31,6 +31,56 @@ function ScutJwWebViewPage() {
   const targetUrl = (location.state as WebViewLocationState | null)?.url
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
 
+  const importScheduleFromHtml = async (htmlText: string) => {
+    if (isImportingRef.current) {
+      return
+    }
+
+    isImportingRef.current = true
+    setIsImporting(true)
+
+    try {
+      const fallbackSemesterStartDate = getSemesterStartDate()
+      const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
+      const themePreset = resolveScheduleImportThemePreset(getScheduleThemeId())
+      const nextSemesterStartDate = scheduleData.table.startDate || fallbackSemesterStartDate
+      const result = await saveScheduleDataWithOptions(scheduleData, {
+        themeId: themePreset.id,
+        timeSlotPresetId: 'builtIn',
+        semesterStartDate: nextSemesterStartDate,
+        preferredName: scheduleData.table.name,
+        setActive: true,
+      })
+
+      if (!result.ok) {
+        throw new Error('课表保存失败，请稍后重试')
+      }
+
+      saveSemesterStartDate(nextSemesterStartDate)
+
+      const activeSession = webViewSessionRef.current
+      webViewSessionRef.current = null
+      if (activeSession) {
+        try {
+          await activeSession.close()
+        } catch (error) {
+          console.error('[ScutJwImport] Failed to close imported schedule session:', error)
+        }
+      }
+
+      navigate('/courses', {
+        replace: true,
+        state: {
+          message: `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
+        },
+      })
+    } catch (error) {
+      return
+    } finally {
+      isImportingRef.current = false
+    }
+  }
+
   useEffect(() => {
     isImportingRef.current = isImporting
   }, [isImporting])
@@ -41,65 +91,6 @@ function ScutJwWebViewPage() {
     }
 
     let isCancelled = false
-
-    const importScheduleFromHtml = async (htmlText: string) => {
-      if (isImportingRef.current) {
-        return
-      }
-
-      isImportingRef.current = true
-      setIsImporting(true)
-
-      try {
-        const fallbackSemesterStartDate = getSemesterStartDate()
-        const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
-        const themePreset = resolveScheduleImportThemePreset(getScheduleThemeId())
-        const nextSemesterStartDate = scheduleData.table.startDate || fallbackSemesterStartDate
-        const result = await saveScheduleDataWithOptions(scheduleData, {
-          themeId: themePreset.id,
-          timeSlotPresetId: 'builtIn',
-          semesterStartDate: nextSemesterStartDate,
-          preferredName: scheduleData.table.name,
-          setActive: true,
-        })
-
-        if (!result.ok) {
-          throw new Error('课表保存失败，请稍后重试')
-        }
-
-        saveSemesterStartDate(nextSemesterStartDate)
-
-        const activeSession = webViewSessionRef.current
-        webViewSessionRef.current = null
-        if (activeSession) {
-          try {
-            await activeSession.close()
-          } catch (error) {
-            console.error('[ScutJwImport] Failed to close imported schedule session:', error)
-          }
-        }
-
-        if (isCancelled) {
-          return
-        }
-
-        navigate('/courses', {
-          replace: true,
-          state: {
-            message: `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
-          },
-        })
-      } catch (error) {
-        if (!isCancelled) {
-          messageApi.error(error instanceof Error ? error.message : '华工教务课表导入失败')
-        }
-      } finally {
-        isImportingRef.current = false
-        if (!isCancelled) {
-          setIsImporting(false)
-        }
-      }
-    }
 
     void openScutJwWebView({
       url: targetUrl,
@@ -122,7 +113,7 @@ function ScutJwWebViewPage() {
     }).then((session) => {
       if (isCancelled) {
         void session.close().catch((error: unknown) => {
-          console.error('[ScutJwImport] Failed to close cancelled session:', error)
+          console.error('[ScutJwImport] Failed to close cancelled session: ', error)
         })
         return
       }
@@ -144,7 +135,7 @@ function ScutJwWebViewPage() {
       webViewSessionRef.current = null
       if (activeSession) {
         void activeSession.close().catch((error: unknown) => {
-          console.error('[ScutJwImport] Failed to close unmounted session:', error)
+          console.error('[ScutJwImport] Failed to close unmounted session: ', error)
         })
       }
     }
@@ -183,7 +174,7 @@ function ScutJwWebViewPage() {
 
         <CircleIconButton ariaLabel='关闭教务系统' icon={<CloseOutlined />} onClick={handleClose} />
       </header>
-      
+
       <div className='schedule-settings-content'>
         {unavailableMessage ? (
           <p className='schedule-pdf-error'>{unavailableMessage}</p>
