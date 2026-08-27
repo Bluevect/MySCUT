@@ -81,6 +81,10 @@ async function removeListenerHandles(handles: PluginListenerHandle[]) {
   await Promise.allSettled(activeHandles.map((handle) => handle.remove()))
 }
 
+export function hideActiveWebView() {
+  void InAppBrowser.hide()
+}
+
 export async function openScutJwWebView(
   options: OpenScutJwWebViewOptions,
 ): Promise<ScutJwWebViewSession> {
