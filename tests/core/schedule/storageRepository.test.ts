@@ -182,6 +182,56 @@ describe('ScheduleRepository migration', () => {
 })
 
 describe('ScheduleRepository durable snapshots', () => {
+  it('updates only the active schedule theme after the durable write succeeds', async () => {
+    const persistentStore = new InMemoryPersistentStore()
+    const repository = new ScheduleRepository()
+    await repository.initialize({
+      store: persistentStore,
+      migrationJournal: new InMemoryMigrationJournal(),
+    }, new MemoryStorage())
+
+    await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+      setActive: true,
+    })
+    await repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
+      themeId: 'bambooGrove',
+      semesterStartDate: '2026-02-23',
+      setActive: true,
+    })
+
+    await expect(repository.setActiveScheduleThemeId('autumnOsmanthus')).resolves.toBe(true)
+
+    expect(repository.listSavedSchedules().map(({ name, themeId }) => ({ name, themeId }))).toEqual([
+      { name: '第一份', themeId: 'skyBlue' },
+      { name: '第二份', themeId: 'autumnOsmanthus' },
+    ])
+    expect((await persistentStore.get(SCHEDULE_LIBRARY_KEY))?.schedules[1]?.themeId).toBe('autumnOsmanthus')
+  })
+
+  it('keeps the active schedule theme unchanged when the durable write fails', async () => {
+    const targetStore = new InMemoryPersistentStore()
+    const store = new FailingPersistentStore(targetStore)
+    const repository = new ScheduleRepository()
+    await repository.initialize({
+      store,
+      migrationJournal: new InMemoryMigrationJournal(),
+    }, new MemoryStorage())
+
+    await repository.saveScheduleDataWithOptions(createScheduleData(), {
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+    })
+    store.failWrites = true
+
+    await expect(repository.setActiveScheduleThemeId('palacePlum')).rejects.toMatchObject({
+      code: 'unavailable',
+    })
+    expect(repository.loadActiveScheduleEntry()?.themeId).toBe('skyBlue')
+    expect((await targetStore.get(SCHEDULE_LIBRARY_KEY))?.schedules[0]?.themeId).toBe('skyBlue')
+  })
+
   it('does not change its snapshot when a durable write fails', async () => {
     const targetStore = new InMemoryPersistentStore()
     const store = new FailingPersistentStore(targetStore)

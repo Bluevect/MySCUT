@@ -5,7 +5,10 @@ import {
   type PersistentStorageRuntime,
   type StorageLike,
 } from '../storage'
-import { resolveScheduleImportThemePreset } from './themePresets'
+import {
+  resolveScheduleImportThemePreset,
+  type ScheduleThemeId,
+} from './themePresets'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from './types'
 
 const LEGACY_SCHEDULE_STORAGE_KEY = 'scheduleData'
@@ -378,6 +381,35 @@ export class ScheduleRepository {
     })
   }
 
+  async setActiveScheduleThemeId(themeId: ScheduleThemeId) {
+    return this.enqueueMutation(async () => {
+      const store = this.requireWritableStore()
+      if (this.snapshot === null) {
+        return false
+      }
+
+      const activeSchedule = this.snapshot.schedules.find(
+        (schedule) => schedule.id === this.snapshot?.activeScheduleId,
+      )
+      if (!activeSchedule) {
+        return false
+      }
+
+      const nextLibrary: ScheduleLibrary = {
+        ...this.snapshot,
+        schedules: this.snapshot.schedules.map((schedule) =>
+          schedule.id === activeSchedule.id
+            ? { ...schedule, themeId }
+            : schedule,
+        ),
+      }
+
+      await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
+      this.snapshot = nextLibrary
+      return true
+    })
+  }
+
   async switchActiveSchedule(scheduleId: string) {
     return this.enqueueMutation(async () => {
       const store = this.requireWritableStore()
@@ -517,6 +549,10 @@ export async function saveScheduleData(scheduleData: ScheduleData) {
 
 export function setActiveScheduleTimeSlotPreset(timeSlotPresetId: TimeSlotPresetId) {
   return scheduleRepository.setActiveScheduleTimeSlotPreset(timeSlotPresetId)
+}
+
+export function setActiveScheduleThemeId(themeId: ScheduleThemeId) {
+  return scheduleRepository.setActiveScheduleThemeId(themeId)
 }
 
 export function saveScheduleDataWithOptions(scheduleData: ScheduleData, options: SaveScheduleOptions) {

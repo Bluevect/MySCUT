@@ -362,7 +362,15 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                   {THIRD_PARTY_LICENSES.map((item) => (
                     <li key={`${item.name}@${item.version}`}>
                       <span>{item.name}@{item.version}</span>
-                      <span>{item.license}</span>
+                      <span className='mine-license-metadata'>
+                        <span>{item.license}</span>
+                        {item.sourceUrl ? (
+                          <a href={item.sourceUrl} target='_blank' rel='noreferrer'>源码</a>
+                        ) : null}
+                        {item.licenseUrl ? (
+                          <a href={item.licenseUrl} target='_blank' rel='noreferrer'>许可证全文</a>
+                        ) : null}
+                      </span>
                     </li>
                   ))}
                 </ul>

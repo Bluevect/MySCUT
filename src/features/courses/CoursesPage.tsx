@@ -527,6 +527,17 @@ function CoursesPage() {
 
   const swipeState = useMemo(() => createSwipeState(currentWeek, swipeDirection), [currentWeek, swipeDirection])
 
+  // Handle popup messages from ScutJwWebViewPage
+  useEffect(() => {
+    const popupMessage = location.state?.message
+    if (typeof popupMessage !== 'string' || !popupMessage) {
+      return
+    }
+
+    messageApi.success(popupMessage)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location, messageApi, navigate])
+
   useEffect(() => {
     const nextWeekViewContext = `${scheduleWeekViewId}:${semesterStartDate}`
     if (weekViewContextRef.current !== nextWeekViewContext) {

@@ -45,6 +45,13 @@ const ScutJwImportPage = isWebPlatform
     return { default: module.default }
   })
 
+const ScutJwWebViewPage = isWebPlatform
+  ? null
+  : lazy(async () => {
+    const module = await import('../features/mine/pages/ScutJwWebViewPage')
+    return { default: module.default }
+  })
+
 const MineDetailPage = lazy(async () => {
   const module = await import('../features/mine/MineDetailPage')
   return { default: module.default }
@@ -66,6 +73,10 @@ function AppRoutes() {
         <Route
           path='/mine/import-scut-jw'
           element={isWebPlatform || ScutJwImportPage === null ? <Navigate to='/mine/schedule-settings' replace /> : <ScutJwImportPage />}
+        />
+        <Route
+          path='/mine/import-scut-jw-webview'
+          element={isWebPlatform || ScutJwWebViewPage === null ? <Navigate to='/mine/schedule-settings' replace /> : <ScutJwWebViewPage />}
         />
         <Route path='/mine/global-settings' element={<MineDetailPage title='全局设置' />} />
         <Route path='/mine/faq' element={<MineDetailPage title='常见问答' />} />
