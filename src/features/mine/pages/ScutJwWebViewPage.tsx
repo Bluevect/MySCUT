@@ -79,7 +79,9 @@ function ScutJwWebViewPage() {
         },
       })
     } catch (error) {
-      return
+      const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
+      console.error('[ScutJwImport] Failed to import captured schedule:', error)
+      messageApi.error(errorMessage)
     } finally {
       isImportingRef.current = false
     }
