@@ -28,7 +28,9 @@
 
 ### PDF
 
-`importScutPdf.ts` 负责 PDF 文本提取和课表推断。PDF.js CMap 可按构建环境选择本地或远程资源。解析失败必须提示具体阶段，不把不完整结果自动保存。
+`importScutPdf.ts` 使用 PDF.js 提取文本，并校验首个固定布局合约 `scut-student-timetable-v1`。当前只支持单页、横向 A4、带可选择文本层的华工学生个人课表；详细坐标、字段、周次语法和拒绝边界见 [SCUT_PDF_LAYOUT.md](SCUT_PDF_LAYOUT.md)。格式校验失败必须提示具体阶段，不把不完整结果自动保存。
+
+公开 PDF fixture 由 `npm run build:scut-pdf-fixtures` 使用 Node 内置能力生成，只包含 `TEST-*` 数据。不得提交真实学生 PDF、视觉遮盖后的 PDF 或其提取 JSON。
 
 ### QMS
 

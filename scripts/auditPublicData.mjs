@@ -73,6 +73,29 @@ function readLiteralPatterns() {
     .filter((line) => line && !line.startsWith('#'))
 }
 
+function extractPdfAuditText(buffer) {
+  const rawPdf = buffer.toString('latin1')
+  const literalStrings = Array.from(rawPdf.matchAll(/\((?:\\.|[^\\()])*\)/g), (match) => (
+    match[0]
+      .slice(1, -1)
+      .replace(/\\([\\()])/g, '$1')
+  ))
+  const unicodeHexStrings = Array.from(rawPdf.matchAll(/<([0-9a-f\s]{4,})>/gi), (match) => {
+    const hex = match[1].replace(/\s+/g, '')
+    if (hex.length % 4 !== 0) {
+      return ''
+    }
+
+    let decoded = ''
+    for (let index = 0; index < hex.length; index += 4) {
+      decoded += String.fromCharCode(Number.parseInt(hex.slice(index, index + 4), 16))
+    }
+    return decoded
+  })
+
+  return [...literalStrings, ...unicodeHexStrings].join('\n')
+}
+
 function auditSyntheticFixtures(failures) {
   const fixtureFiles = listTrackedFiles().filter((filePath) => filePath.startsWith('tests/fixtures/public/'))
   if (fixtureFiles.length === 0) {
@@ -81,7 +104,10 @@ function auditSyntheticFixtures(failures) {
   }
 
   for (const filePath of fixtureFiles) {
-    const content = readFileSync(resolve(rootDir, filePath), 'utf8')
+    const fixtureBuffer = readFileSync(resolve(rootDir, filePath))
+    const content = filePath.endsWith('.pdf')
+      ? extractPdfAuditText(fixtureBuffer)
+      : fixtureBuffer.toString('utf8')
     if (/\d{9,}/.test(content)) {
       failures.push(`${filePath}: contains an abnormally long numeric identifier`)
     }
