@@ -10,6 +10,7 @@ import {
   getAutoSimplifyScheduleHintEnabled,
   setAutoSimplifyScheduleHintEnabled,
 } from '../../../core/schedule/displaySettings'
+import { assertScheduleTextFileSize } from '../../../core/schedule/importLimits'
 import { parseQmsScheduleText } from '../../../core/schedule/importQms'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
@@ -444,6 +445,7 @@ function ScheduleSettingsPage() {
     try {
       await runImportOperation(async () => {
         try {
+          assertScheduleTextFileSize(file, 'WakeUp')
           const content = await file.text()
           const scheduleData = parseWakeupScheduleText(content)
           const selectedThemePreset = resolveScheduleImportThemePreset(scheduleThemeId)
@@ -513,11 +515,13 @@ function ScheduleSettingsPage() {
 
     try {
       await runImportOperation(async () => {
+        assertScheduleTextFileSize(file, 'QMS')
         const content = await file.text()
         await handleImportQmsText(content)
       })
-    } catch {
-      messageApi.error('QMS 文件读取失败，请重新选择文件后重试')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'QMS 文件读取失败，请重新选择文件后重试'
+      messageApi.error(errorMessage)
     } finally {
       event.target.value = ''
     }
@@ -531,11 +535,13 @@ function ScheduleSettingsPage() {
 
     try {
       await runImportOperation(async () => {
+        assertScheduleTextFileSize(file, '华工教务 HTML')
         const html = await file.text()
         await handleImportScutHtml(html)
       })
-    } catch {
-      messageApi.error('HTML 文件读取失败，请重新选择文件后重试')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'HTML 文件读取失败，请重新选择文件后重试'
+      messageApi.error(errorMessage)
     } finally {
       event.target.value = ''
     }

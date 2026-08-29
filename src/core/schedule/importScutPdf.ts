@@ -1,3 +1,8 @@
+import {
+  assertScutPdfFileSize,
+  assertScutPdfPageCount,
+} from './importLimits'
+
 type PdfjsRuntime = {
   getDocument: (typeof import('pdfjs-dist'))['getDocument']
   version: string
@@ -91,6 +96,7 @@ function isPdfJsTextItem(item: unknown): item is PdfJsTextItem {
 }
 
 export async function extractScutSchedulePdf(file: File): Promise<ExtractedSchedulePdf> {
+  assertScutPdfFileSize(file)
   const pdfjsRuntime = await getPdfjsRuntime()
   const pdfAssetBaseUrl = resolvePdfAssetBaseUrl(pdfjsRuntime.version)
   const buffer = await file.arrayBuffer()
@@ -105,6 +111,7 @@ export async function extractScutSchedulePdf(file: File): Promise<ExtractedSched
 
   try {
     const document = await loadingTask.promise
+    assertScutPdfPageCount(document.numPages)
     const pages: ExtractedPdfPage[] = []
 
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {

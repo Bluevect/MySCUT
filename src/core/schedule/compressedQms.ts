@@ -1,3 +1,8 @@
+import {
+  assertCompressedQmsDecodedSize,
+  assertCompressedQmsInputLength,
+} from './importLimits'
+
 type ZstdModule = typeof import('@hpcc-js/wasm-zstd')
 type ZstdInstance = Awaited<ReturnType<ZstdModule['Zstd']['load']>>
 
@@ -49,7 +54,9 @@ export async function encodeCompressedQmsText(qmsText: string) {
 }
 
 export async function decodeCompressedQmsText(compressedQmsBase64: string) {
+  assertCompressedQmsInputLength(compressedQmsBase64)
   let compressedBytes: Uint8Array
+  let rawBytes: Uint8Array
 
   try {
     compressedBytes = base64ToBytes(compressedQmsBase64)
@@ -59,9 +66,11 @@ export async function decodeCompressedQmsText(compressedQmsBase64: string) {
 
   try {
     const zstd = await getZstdInstance()
-    const rawBytes = zstd.decompress(compressedBytes)
-    return textDecoder.decode(rawBytes)
+    rawBytes = zstd.decompress(compressedBytes)
   } catch {
     throw new Error('压缩QMS解析失败：Zstd 解压失败')
   }
+
+  assertCompressedQmsDecodedSize(rawBytes.byteLength)
+  return textDecoder.decode(rawBytes)
 }

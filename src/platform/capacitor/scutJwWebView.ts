@@ -6,12 +6,15 @@ import {
   ToolBarType,
 } from '@capgo/capacitor-inappbrowser'
 import {
+  assertScheduleByteLength,
+  getUtf8ByteLength,
+} from '../../core/schedule/importLimits'
+import {
   logScutJwImportDiagnostic,
   type ScutJwImportDiagnosticStage,
 } from './scutJwImportDiagnostics'
 
 const CAPTURE_HTML_MESSAGE = 'captureHTML'
-const MAX_CAPTURED_HTML_LENGTH = 5 * 1024 * 1024
 const IMPORT_BUTTON_SCRIPT = `
   (() => {
     document.getElementById('myscut-import-schedule-button')?.remove();
@@ -239,8 +242,14 @@ export async function openScutJwWebView(
         return
       }
 
-      if (detail.html.length > MAX_CAPTURED_HTML_LENGTH) {
-        reportError('capture-rejected', '当前页面内容过大，无法安全导入')
+      const responseLength = getUtf8ByteLength(detail.html)
+      try {
+        assertScheduleByteLength(responseLength, '华工教务页面')
+      } catch (error) {
+        reportError(
+          'capture-rejected',
+          error instanceof Error ? error.message : '当前页面内容过大，无法安全导入',
+        )
         return
       }
 
@@ -258,7 +267,7 @@ export async function openScutJwWebView(
       logScutJwImportDiagnostic({
         stage: 'page-captured',
         targetUrl,
-        responseLength: detail.html.length,
+        responseLength,
       })
       void Promise.resolve(options.onHtmlCaptured(detail.html))
         .catch(() => reportError('capture-processing-failed', '课表页面处理失败，请确认已打开个人课表查询页面'))
