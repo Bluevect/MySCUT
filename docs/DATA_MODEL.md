@@ -9,13 +9,13 @@
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `version` | `1` | 数据结构版本 |
-| `source` | `wakeup \| scutHtml \| intersection` | 数据来源 |
+| `source` | `wakeup \| scutHtml \| scutPdf \| intersection` | 数据来源 |
 | `importedAt` | `number` | 导入时间戳，单位为毫秒 |
 | `table` | object | 学期、校区、周数、节数和显示配置 |
 | `timeSlots` | `WakeupTimeSlot[]` | 节次与起止时间映射 |
 | `courses` | `ScheduleCourse[]` | 去重后的课程定义 |
 | `lessons` | `ScheduleLesson[]` | 具体上课实例 |
-| `raw` | union | 导入源的兼容信息；QMS v2 不依赖它恢复业务字段 |
+| `raw` | union | 导入源的兼容或诊断信息；QMS v2 不依赖它恢复业务字段 |
 
 `table` 包含 `id`、`name`、`campus`、`school`、`maxWeek`、`nodes`、`startDate`、`showSat`、`showSun` 和 `timeTable`。
 
@@ -34,6 +34,8 @@
 - 兼容字段 `type`、`level`。
 
 同一课程可以有多个 Lesson；多周段会拆成多个 Lesson，多教师文本保留为导入源提供的合并字符串。
+
+`scutPdf` 的 `raw` 只保存文件名、字节数、页数、PDF.js 版本、提取时间和布局/解析器版本。原始 PDF 字节和完整提取文本不得进入 `ScheduleData` 或课表库。
 
 ## SavedSchedule 与 ScheduleLibrary
 

@@ -70,6 +70,19 @@ const TIME_SLOT_PRESET_SELECTOR_OPTIONS = TIME_SLOT_PRESET_OPTIONS.map((preset) 
   label: preset.name,
 }))
 
+function getScheduleSourceLabel(source: ScheduleData['source']) {
+  switch (source) {
+    case 'wakeup':
+      return 'WakeUp'
+    case 'scutHtml':
+      return '华工教务 HTML'
+    case 'scutPdf':
+      return '华工教务 PDF'
+    case 'intersection':
+      return '课表交集'
+  }
+}
+
 function formatExportTimestamp(date: Date) {
   const pad = (value: number) => value.toString().padStart(2, '0')
 
@@ -971,7 +984,7 @@ function ScheduleSettingsPage() {
                 >
                   <span>{schedule.name}</span>
                   <span className='schedule-switch-meta'>
-                    来源：{schedule.source === 'wakeup' ? 'WakeUp' : '华工教务HTML'}
+                    来源：{getScheduleSourceLabel(schedule.source)}
                   </span>
                 </button>
                 <button
@@ -1027,7 +1040,7 @@ function ScheduleSettingsPage() {
               >
                 <span>{schedule.name}</span>
                 <span className='schedule-switch-meta'>
-                  来源：{schedule.source === 'wakeup' ? 'WakeUp' : '华工教务HTML'}
+                  来源：{getScheduleSourceLabel(schedule.source)}
                 </span>
               </button>
             ))
