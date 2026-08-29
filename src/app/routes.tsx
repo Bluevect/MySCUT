@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { NotFoundPage, RouteLoadingView } from '../components/AppRouteStates'
 
 const isWebPlatform = import.meta.env.VITE_TARGET_PLATFORM === 'web'
 
@@ -59,7 +60,7 @@ const MineDetailPage = lazy(async () => {
 
 function AppRoutes() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingView />}>
       <Routes>
         <Route path='/' element={<Navigate to='/courses' replace />} />
         <Route path='/courses' element={<CoursesPage />} />
@@ -81,6 +82,7 @@ function AppRoutes() {
         <Route path='/mine/global-settings' element={<MineDetailPage title='全局设置' />} />
         <Route path='/mine/faq' element={<MineDetailPage title='常见问答' />} />
         <Route path='/mine/more' element={<MineDetailPage title='更多' />} />
+        <Route path='*' element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   )

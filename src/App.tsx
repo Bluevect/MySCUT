@@ -1,10 +1,11 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Tabbar, TabbarLink, ToolbarPane } from 'konsta/react'
 import { BookOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
 import AppRoutes from './app/routes'
 import { useHardwareBackButton } from './platform/capacitor/useHardwareBackButton'
 import { useAndroidViewportInset } from './platform/capacitor/useAndroidViewportInset'
 import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
+import { RouteContentErrorBoundary } from './components/AppRouteStates'
 
 const TAB_ITEMS = [
   { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
@@ -17,9 +18,11 @@ function App() {
   useAndroidViewportInset()
 
   const location = useLocation()
+  const navigate = useNavigate()
   const isMineDetailPage = location.pathname.startsWith('/mine/')
   const isCoursesPage = location.pathname === '/courses'
   const isManualPage = location.pathname === '/manual'
+  const routeBoundaryKey = `${location.key}:${location.pathname}`
 
   return (
     <div className='app-shell'>
@@ -27,7 +30,13 @@ function App() {
       <main
         className={`page-content ${isMineDetailPage ? 'page-content--fullscreen' : ''} ${isCoursesPage ? 'page-content--courses' : ''} ${isManualPage ? 'page-content--manual' : ''}`}
       >
-        <AppRoutes />
+        <RouteContentErrorBoundary
+          key={routeBoundaryKey}
+          onRetry={() => window.location.reload()}
+          onReturnToCourses={() => navigate('/courses')}
+        >
+          <AppRoutes />
+        </RouteContentErrorBoundary>
       </main>
 
       {!isMineDetailPage && (
