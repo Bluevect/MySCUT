@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
+import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
@@ -14,6 +15,7 @@ import {
   openScutJwWebView,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
+import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
 
 type WebViewLocationState = {
   url?: string
@@ -27,69 +29,97 @@ function ScutJwWebViewPage() {
   const [isImporting, setIsImporting] = useState(false)
 
   const webViewSessionRef = useRef<ScutJwWebViewSession | null>(null)
-  const isImportingRef = useRef(false)
+  const importOperationRef = useRef(new SinglePendingOperation())
 
   const targetUrl = (location.state as WebViewLocationState | null)?.url
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
 
   const importScheduleFromHtml = async (htmlText: string) => {
-    if (isImportingRef.current) {
-      return
-    }
+    const result = await importOperationRef.current.run(async () => {
+      try {
+        logScutJwImportDiagnostic({
+          stage: 'parse-started',
+          targetUrl,
+          responseLength: htmlText.length,
+        })
+        const fallbackSemesterStartDate = getSemesterStartDate()
+        const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
+        const courseCount = scheduleData.courses.length
+        const lessonCount = scheduleData.lessons.length
+        logScutJwImportDiagnostic({
+          stage: 'parse-completed',
+          targetUrl,
+          responseLength: htmlText.length,
+          courseCount,
+          lessonCount,
+        })
+        const themePreset = resolveScheduleImportThemePreset(getScheduleThemeId())
+        const nextSemesterStartDate = scheduleData.table.startDate || fallbackSemesterStartDate
+        logScutJwImportDiagnostic({
+          stage: 'save-started',
+          targetUrl,
+          courseCount,
+          lessonCount,
+        })
+        const saveResult = await saveScheduleDataWithOptions(scheduleData, {
+          themeId: themePreset.id,
+          timeSlotPresetId: 'builtIn',
+          semesterStartDate: nextSemesterStartDate,
+          preferredName: scheduleData.table.name,
+          setActive: true,
+        })
 
-    isImportingRef.current = true
-    setIsImporting(true)
-
-    try {
-      const fallbackSemesterStartDate = getSemesterStartDate()
-      const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
-      const themePreset = resolveScheduleImportThemePreset(getScheduleThemeId())
-      const nextSemesterStartDate = scheduleData.table.startDate || fallbackSemesterStartDate
-      const result = await saveScheduleDataWithOptions(scheduleData, {
-        themeId: themePreset.id,
-        timeSlotPresetId: 'builtIn',
-        semesterStartDate: nextSemesterStartDate,
-        preferredName: scheduleData.table.name,
-        setActive: true,
-      })
-
-      if (!result.ok) {
-        throw new Error('课表保存失败，请稍后重试')
-      }
-
-      saveSemesterStartDate(nextSemesterStartDate)
-
-      const activeSession = webViewSessionRef.current
-      webViewSessionRef.current = null
-      if (activeSession) {
-        try {
-          await activeSession.close()
-        } catch (error) {
-          console.error('[ScutJwImport] Failed to close imported schedule session:', error)
+        if (!saveResult.ok) {
+          throw new Error('课表保存失败，请稍后重试')
         }
+
+        logScutJwImportDiagnostic({
+          stage: 'save-completed',
+          targetUrl,
+          courseCount,
+          lessonCount,
+        })
+        saveSemesterStartDate(nextSemesterStartDate)
+
+        const activeSession = webViewSessionRef.current
+        webViewSessionRef.current = null
+        if (activeSession) {
+          try {
+            await activeSession.close()
+          } catch {
+            logScutJwImportDiagnostic({
+              stage: 'session-close-failed',
+              targetUrl,
+            })
+          }
+        }
+
+        // Necessary to hide WebView, or navigation won't work!
+        hideActiveWebView()
+
+        navigate('/courses', {
+          replace: true,
+          state: {
+            message: `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
+          },
+        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
+        logScutJwImportDiagnostic({
+          stage: 'import-failed',
+          targetUrl,
+        })
+        messageApi.error(errorMessage)
       }
+    }, setIsImporting)
 
-      // Necessary to hide WebView, or navigation won't work!
-      hideActiveWebView()
-
-      navigate('/courses', {
-        replace: true,
-        state: {
-          message: `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
-        },
+    if (!result.started) {
+      logScutJwImportDiagnostic({
+        stage: 'duplicate-import-ignored',
+        targetUrl,
       })
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
-      console.error('[ScutJwImport] Failed to import captured schedule:', error)
-      messageApi.error(errorMessage)
-    } finally {
-      isImportingRef.current = false
     }
   }
-
-  useEffect(() => {
-    isImportingRef.current = isImporting
-  }, [isImporting])
 
   useEffect(() => {
     if (!isAndroidNative || !targetUrl) {
@@ -118,30 +148,35 @@ function ScutJwWebViewPage() {
       onHtmlCaptured: importScheduleFromHtml,
     }).then((session) => {
       if (isCancelled) {
-        void session.close().catch((error: unknown) => {
-          console.error('[ScutJwImport] Failed to close cancelled session: ', error)
+        void session.close().catch(() => {
+          logScutJwImportDiagnostic({
+            stage: 'cancelled-session-close-failed',
+            targetUrl,
+          })
         })
         return
       }
 
       webViewSessionRef.current = session
-    }).catch((error: unknown) => {
+    }).catch(() => {
       if (isCancelled) {
         return
       }
 
-      messageApi.error(error instanceof Error ? error.message : '无法打开教务系统页面')
+      messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
       navigate('/mine/import-scut-jw', { replace: true })
     })
 
     return () => {
       isCancelled = true
-      isImportingRef.current = false
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
       if (activeSession) {
-        void activeSession.close().catch((error: unknown) => {
-          console.error('[ScutJwImport] Failed to close unmounted session: ', error)
+        void activeSession.close().catch(() => {
+          logScutJwImportDiagnostic({
+            stage: 'unmounted-session-close-failed',
+            targetUrl,
+          })
         })
       }
     }
@@ -156,8 +191,12 @@ function ScutJwWebViewPage() {
     }
 
     void activeSession.close()
-      .catch((error: unknown) => {
-        messageApi.error(error instanceof Error ? error.message : '教务系统页面关闭失败')
+      .catch(() => {
+        logScutJwImportDiagnostic({
+          stage: 'manual-session-close-failed',
+          targetUrl,
+        })
+        messageApi.error('教务系统页面关闭失败，请稍后重试')
       })
       .finally(() => navigate('/mine/import-scut-jw', { replace: true }))
   }
@@ -178,7 +217,12 @@ function ScutJwWebViewPage() {
           <p className='schedule-settings-subtitle'>SCUT WebView</p>
         </div>
 
-        <CircleIconButton ariaLabel='关闭教务系统' icon={<CloseOutlined />} onClick={handleClose} />
+        <CircleIconButton
+          ariaLabel='关闭教务系统'
+          icon={<CloseOutlined />}
+          disabled={isImporting}
+          onClick={handleClose}
+        />
       </header>
 
       <div className='schedule-settings-content'>
