@@ -17,6 +17,7 @@ import {
 import { Input, Modal, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
+import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
 import { clearIntersectionPreviewPayload, loadIntersectionPreviewPayload } from '../../core/schedule/intersectionPreview'
 import {
@@ -885,6 +886,8 @@ function CoursesPage() {
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false)
   const [isSaveNameModalOpen, setIsSaveNameModalOpen] = useState(false)
   const [saveNameInput, setSaveNameInput] = useState('')
+  const [isSavingIntersection, setIsSavingIntersection] = useState(false)
+  const saveIntersectionOperationRef = useRef(new SinglePendingOperation())
 
   const finalizePreviewExit = () => {
     clearIntersectionPreviewPayload()
@@ -945,27 +948,29 @@ function CoursesPage() {
       return
     }
 
-    const preferredName = saveNameInput.trim() || intersectionPreviewPayload.defaultSaveName || '课表取交集'
-    try {
-      const saveResult = await saveScheduleDataWithOptions(intersectionPreviewPayload.scheduleData, {
-        themeId: activeScheduleEntry?.themeId ?? 'skyBlue',
-        semesterStartDate: getSemesterStartDate(),
-        timeSlotPresetId: 'union',
-        preferredName,
-        setActive: true,
-      })
+    await saveIntersectionOperationRef.current.run(async () => {
+      const preferredName = saveNameInput.trim() || intersectionPreviewPayload.defaultSaveName || '课表取交集'
+      try {
+        const saveResult = await saveScheduleDataWithOptions(intersectionPreviewPayload.scheduleData, {
+          themeId: activeScheduleEntry?.themeId ?? 'skyBlue',
+          semesterStartDate: getSemesterStartDate(),
+          timeSlotPresetId: 'union',
+          preferredName,
+          setActive: true,
+        })
 
-      if (!saveResult.ok) {
-        messageApi.error('课表保存失败，请稍后重试')
-        return
+        if (!saveResult.ok) {
+          messageApi.error('课表保存失败，请稍后重试')
+          return
+        }
+
+        setIsSaveNameModalOpen(false)
+        finalizePreviewExit()
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '课表保存失败'
+        messageApi.error(errorMessage)
       }
-
-      setIsSaveNameModalOpen(false)
-      finalizePreviewExit()
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '课表保存失败'
-      messageApi.error(errorMessage)
-    }
+    }, setIsSavingIntersection)
   }
 
   return (
@@ -1119,6 +1124,9 @@ function CoursesPage() {
         open={isSaveNameModalOpen}
         onOk={handleSubmitSaveName}
         onCancel={() => setIsSaveNameModalOpen(false)}
+        confirmLoading={isSavingIntersection}
+        okButtonProps={{ disabled: isSavingIntersection }}
+        cancelButtonProps={{ disabled: isSavingIntersection }}
         okText='确定保存'
         cancelText='取消'
       >

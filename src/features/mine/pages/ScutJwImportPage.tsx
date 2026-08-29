@@ -10,6 +10,7 @@ import {
   resolveScutJwEntryUrl,
   type ScutJwAccessMode,
 } from '../../../core/schedule/scutJwAccess'
+import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
 
 const SCUT_JW_ACCESS_OPTIONS: Array<{
   value: ScutJwAccessMode
@@ -43,20 +44,16 @@ function getScutJwTargetUrl(targetUrl: string): string {
   try {
     const override = localStorage.getItem('scutJwMockUrl')
     if (override) {
-      debugLog('[ScutJwImport] Using mock URL:', override)
+      logScutJwImportDiagnostic({
+        stage: 'mock-target-selected',
+        targetUrl: override,
+      })
       return override
     }
   } catch {
     // localStorage may not be available
   }
   return targetUrl
-}
-
-/** Debug logger — stripped from production bundles via import.meta.env.DEV */
-function debugLog(...args: unknown[]) {
-  if (import.meta.env.DEV) {
-    console.log('[ScutJwImport]', ...args)
-  }
 }
 
 function ScutJwImportPage() {

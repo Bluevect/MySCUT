@@ -5,6 +5,10 @@ import {
   InAppBrowser,
   ToolBarType,
 } from '@capgo/capacitor-inappbrowser'
+import {
+  logScutJwImportDiagnostic,
+  type ScutJwImportDiagnosticStage,
+} from './scutJwImportDiagnostics'
 
 const CAPTURE_HTML_MESSAGE = 'captureHTML'
 const MAX_CAPTURED_HTML_LENGTH = 5 * 1024 * 1024
@@ -39,6 +43,21 @@ const IMPORT_BUTTON_SCRIPT = `
   })();
 `
 
+function buildImportButtonPendingScript(isPending: boolean) {
+  const buttonText = isPending ? '正在导入…' : '导入当前页面'
+
+  return `
+    (() => {
+      const button = document.getElementById('myscut-import-schedule-button');
+      if (!(button instanceof HTMLButtonElement)) return;
+      button.disabled = ${isPending};
+      button.textContent = '${buttonText}';
+      button.style.opacity = '${isPending ? '0.72' : '1'}';
+      button.style.cursor = '${isPending ? 'wait' : 'pointer'}';
+    })();
+  `
+}
+
 export type ScutJwWebViewSession = {
   close: () => Promise<void>
 }
@@ -48,10 +67,6 @@ type OpenScutJwWebViewOptions = {
   onClose: () => void
   onError: (error: Error) => void
   onHtmlCaptured: (html: string) => void | Promise<void>
-}
-
-function toError(error: unknown, fallbackMessage: string) {
-  return error instanceof Error ? error : new Error(fallbackMessage)
 }
 
 function normalizeHttpUrl(rawUrl: string) {
@@ -90,22 +105,30 @@ export async function openScutJwWebView(
 ): Promise<ScutJwWebViewSession> {
   const targetUrl = validateTargetUrl(options.url)
   const listenerHandles: PluginListenerHandle[] = []
-  const visitedUrls = new Set([targetUrl])
   let webViewId: string | null = null
   let isClosed = false
+  let isCapturePending = false
 
   const isCurrentWebView = (eventId?: string) => (
     !isClosed && webViewId !== null && (!eventId || eventId === webViewId)
   )
 
-  const reportError = (error: unknown, fallbackMessage: string) => {
-    options.onError(toError(error, fallbackMessage))
+  const reportError = (stage: ScutJwImportDiagnosticStage, fallbackMessage: string) => {
+    logScutJwImportDiagnostic({ stage, targetUrl })
+    options.onError(new Error(fallbackMessage))
   }
 
   const injectImportButton = async (id: string) => {
     await InAppBrowser.executeScript({
       id,
       code: IMPORT_BUTTON_SCRIPT,
+    })
+  }
+
+  const setImportButtonPending = async (id: string, isPending: boolean) => {
+    await InAppBrowser.executeScript({
+      id,
+      code: buildImportButtonPendingScript(isPending),
     })
   }
 
@@ -131,10 +154,18 @@ export async function openScutJwWebView(
       }
     } finally {
       await clearSessionCookies()
+      logScutJwImportDiagnostic({
+        stage: 'session-closed',
+        targetUrl,
+      })
     }
   }
 
   try {
+    logScutJwImportDiagnostic({
+      stage: 'session-opening',
+      targetUrl,
+    })
     await clearSessionCookies()
 
     listenerHandles.push(await InAppBrowser.addListener('closeEvent', (event) => {
@@ -146,7 +177,7 @@ export async function openScutJwWebView(
       webViewId = null
       void removeListenerHandles(listenerHandles)
         .then(clearSessionCookies)
-        .catch((error: unknown) => reportError(error, '教务系统会话清理失败'))
+        .catch(() => reportError('session-cleanup-failed', '教务系统会话清理失败，请重新打开导入页面'))
         .finally(options.onClose)
     }))
 
@@ -157,7 +188,10 @@ export async function openScutJwWebView(
 
       const visitedUrl = normalizeHttpUrl(event.url)
       if (visitedUrl) {
-        visitedUrls.add(visitedUrl)
+        logScutJwImportDiagnostic({
+          stage: 'page-origin-changed',
+          targetUrl: visitedUrl,
+        })
       }
     }))
 
@@ -173,8 +207,12 @@ export async function openScutJwWebView(
 
       const eventWebViewId = event.id || webViewId
       if (eventWebViewId) {
+        logScutJwImportDiagnostic({
+          stage: 'page-loaded',
+          targetUrl,
+        })
         void injectImportButton(eventWebViewId)
-          .catch((error: unknown) => reportError(error, '无法添加课表导入按钮'))
+          .catch(() => reportError('button-injection-failed', '无法添加课表导入按钮，请刷新页面后重试'))
       }
     }))
 
@@ -193,13 +231,48 @@ export async function openScutJwWebView(
         return
       }
 
-      if (detail.html.length > MAX_CAPTURED_HTML_LENGTH) {
-        reportError(new Error('当前页面内容过大，无法安全导入'), '课表页面内容过大')
+      if (isCapturePending) {
+        logScutJwImportDiagnostic({
+          stage: 'duplicate-capture-ignored',
+          targetUrl,
+        })
         return
       }
 
+      if (detail.html.length > MAX_CAPTURED_HTML_LENGTH) {
+        reportError('capture-rejected', '当前页面内容过大，无法安全导入')
+        return
+      }
+
+      isCapturePending = true
+      const eventWebViewId = event.id || webViewId
+      if (eventWebViewId) {
+        void setImportButtonPending(eventWebViewId, true).catch(() => {
+          logScutJwImportDiagnostic({
+            stage: 'button-state-update-failed',
+            targetUrl,
+          })
+        })
+      }
+
+      logScutJwImportDiagnostic({
+        stage: 'page-captured',
+        targetUrl,
+        responseLength: detail.html.length,
+      })
       void Promise.resolve(options.onHtmlCaptured(detail.html))
-        .catch((error: unknown) => reportError(error, '课表页面处理失败'))
+        .catch(() => reportError('capture-processing-failed', '课表页面处理失败，请确认已打开个人课表查询页面'))
+        .finally(() => {
+          isCapturePending = false
+          if (!isClosed && eventWebViewId) {
+            void setImportButtonPending(eventWebViewId, false).catch(() => {
+              logScutJwImportDiagnostic({
+                stage: 'button-state-update-failed',
+                targetUrl,
+              })
+            })
+          }
+        })
     }))
 
     const openedWebView = await InAppBrowser.openWebView({
@@ -216,14 +289,22 @@ export async function openScutJwWebView(
 
     webViewId = openedWebView.id
     await injectImportButton(openedWebView.id)
-  } catch (error) {
+    logScutJwImportDiagnostic({
+      stage: 'session-opened',
+      targetUrl,
+    })
+  } catch {
     try {
       await closeSession()
-    } catch (cleanupError) {
-      reportError(cleanupError, '教务系统会话清理失败')
+    } catch {
+      reportError('session-cleanup-failed', '教务系统会话清理失败，请重新打开导入页面')
     }
 
-    throw toError(error, '无法打开教务系统页面')
+    logScutJwImportDiagnostic({
+      stage: 'session-open-failed',
+      targetUrl,
+    })
+    throw new Error('无法打开教务系统页面，请检查网络和访问地址后重试')
   }
 
   return {
