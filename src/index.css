@@ -225,6 +225,178 @@ body {
   overflow-x: hidden;
 }
 
+.courses-page--first-use {
+  background:
+    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 34%),
+    var(--bg-page);
+}
+
+.courses-first-use-guide {
+  width: min(100%, 520px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: calc(28px + env(safe-area-inset-top)) 24px calc(var(--bottom-nav-height) + 28px);
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  gap: 28px;
+  overflow-y: auto;
+}
+
+.courses-first-use-hero {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+
+.courses-first-use-app-icon {
+  width: 76px;
+  height: 76px;
+  display: block;
+  border-radius: 18px;
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--text-strong) 18%, transparent);
+}
+
+.courses-first-use-eyebrow,
+.courses-first-use-title,
+.courses-first-use-description,
+.courses-first-use-capability h2,
+.courses-first-use-capability p {
+  margin: 0;
+}
+
+.courses-first-use-eyebrow {
+  margin-bottom: 6px;
+  color: var(--accent-primary);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.courses-first-use-title {
+  color: var(--text-strong);
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+}
+
+.courses-first-use-description {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.courses-first-use-capabilities {
+  margin: 0;
+  padding: 6px 0;
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--text-strong) 7%, transparent);
+}
+
+.courses-first-use-capability {
+  min-width: 0;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.courses-first-use-capability-icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: var(--button-soft-bg);
+  color: var(--button-soft-text);
+  font-size: 20px;
+}
+
+.courses-first-use-capability h2 {
+  color: var(--text-strong);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.courses-first-use-capability p {
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.courses-first-use-import-button {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  border-radius: 16px;
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.courses-first-use-import-button:active {
+  transform: scale(0.985);
+}
+
+.courses-first-use-import-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-primary) 34%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 360px) {
+  .courses-first-use-guide {
+    padding-right: 18px;
+    padding-left: 18px;
+    gap: 22px;
+  }
+
+  .courses-first-use-hero {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .courses-first-use-app-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 15px;
+  }
+
+  .courses-first-use-capability {
+    padding: 12px 14px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .courses-first-use-capability-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    font-size: 18px;
+  }
+}
+
 .courses-header {
   position: sticky;
   top: 0;
@@ -965,6 +1137,12 @@ body {
 
 .theme-transitioning body,
 .theme-transitioning .courses-header,
+.theme-transitioning .courses-first-use-guide,
+.theme-transitioning .courses-first-use-capabilities,
+.theme-transitioning .courses-first-use-capability-icon,
+.theme-transitioning .courses-first-use-title,
+.theme-transitioning .courses-first-use-description,
+.theme-transitioning .courses-first-use-import-button,
 .theme-transitioning .schedule-scroll-area,
 .theme-transitioning .schedule-scroll-hint,
 .theme-transitioning .app-tabbar,
@@ -1005,6 +1183,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .return-current-week-fab,
+  .courses-first-use-import-button,
   .scut-jw-access-option,
   .scut-jw-access-radio,
   .scut-jw-access-radio::after,
