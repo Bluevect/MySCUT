@@ -116,104 +116,218 @@ body {
   letter-spacing: 2px;
 }
 
-/* 启动骨架：结构与课表页头部的日期面板 + 课表主体 + 底部导航对齐，减少存储就绪后的布局跳动 */
-.app-bootstrap-skeleton {
+/* 品牌启动壳：与存储初始化并行出现，不承载存储失败或重试逻辑 */
+.app-bootstrap-shell {
   height: 100%;
+  min-height: 100%;
+  padding: calc(32px + env(safe-area-inset-top)) 24px calc(32px + var(--safe-bottom-inset));
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--accent-primary) 14%, transparent), transparent 34%),
+    var(--bg-page);
+}
+
+.app-bootstrap-brand {
+  width: min(100%, 320px);
   display: flex;
   flex-direction: column;
-  background: var(--bg-page);
+  align-items: center;
+  text-align: center;
 }
 
-.bootstrap-header {
+.app-bootstrap-icon {
+  width: 88px;
+  height: 88px;
+  display: block;
+  border-radius: 21px;
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--text-strong) 20%, transparent);
+}
+
+.app-bootstrap-brand h1,
+.app-bootstrap-brand p {
+  margin: 0;
+}
+
+.app-bootstrap-brand h1 {
+  margin-top: 22px;
+  color: var(--text-strong);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.app-bootstrap-brand p {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.app-bootstrap-progress,
+.app-route-loading-indicator {
+  width: 20px;
+  height: 20px;
+  display: block;
+  border: 2px solid color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: app-progress-spin 760ms linear infinite;
+}
+
+.app-bootstrap-progress {
+  margin-top: 28px;
+}
+
+.app-bootstrap-status-text {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@keyframes app-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-route-state {
+  width: 100%;
+  min-height: 100%;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(var(--bottom-nav-height) + 24px);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: calc(16px + env(safe-area-inset-top)) 16px 12px;
+  align-items: center;
+  justify-content: center;
 }
 
-.bootstrap-header-text {
+.page-content--fullscreen .app-route-state {
+  padding-bottom: calc(24px + var(--safe-bottom-inset));
+}
+
+.app-route-state-content {
+  width: min(100%, 420px);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 4px;
+  align-items: center;
+  text-align: center;
 }
 
-.bootstrap-header-actions {
-  display: flex;
+.app-route-state-card {
+  padding: 30px 24px;
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--text-strong) 8%, transparent);
+}
+
+.app-route-state-app-icon {
+  width: 58px;
+  height: 58px;
+  display: block;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--text-strong) 16%, transparent);
+}
+
+.app-route-state h1,
+.app-route-state p {
+  margin: 0;
+}
+
+.app-route-state h1 {
+  margin-top: 18px;
+  color: var(--text-strong);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.app-route-state p {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.app-route-loading-indicator {
+  margin-top: 22px;
+}
+
+.app-route-state-symbol {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: var(--button-soft-bg);
+  color: var(--button-soft-text);
+  font-size: 26px;
+}
+
+.app-route-state-symbol--warning {
+  background: color-mix(in srgb, #faad14 16%, var(--bg-surface));
+  color: #d48806;
+}
+
+.app-route-state-code {
+  margin-top: 16px !important;
+  color: var(--accent-primary) !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.app-route-state-code + h1 {
+  margin-top: 6px;
+}
+
+.app-route-state-actions {
+  width: 100%;
+  margin-top: 24px;
+  display: grid;
   gap: 10px;
 }
 
-.bootstrap-bar {
-  border-radius: 6px;
-  background: var(--border-strong);
-  animation: bootstrap-skeleton-pulse 1.4s ease-in-out infinite;
+.app-route-state-card > .app-state-primary-button {
+  width: 100%;
+  margin-top: 24px;
 }
 
-.bootstrap-bar--title {
-  width: 96px;
-  height: 18px;
-}
-
-.bootstrap-bar--sub {
-  width: 64px;
-  height: 14px;
-}
-
-.bootstrap-bar--tab {
-  width: 32px;
-  height: 10px;
-}
-
-.bootstrap-icon-btn {
-  width: 40px;
-  height: 40px;
+.app-state-primary-button,
+.app-state-secondary-button {
+  min-height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   border-radius: 14px;
-  background: var(--border-strong);
-  animation: bootstrap-skeleton-pulse 1.4s ease-in-out infinite;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.bootstrap-schedule {
-  flex: 1;
-  min-height: 0;
-  margin-top: 12px;
-  border-radius: 16px 16px 0 0;
-  background: var(--bg-surface);
-  animation: bootstrap-skeleton-pulse 1.4s ease-in-out infinite;
+.app-state-primary-button {
+  border: none;
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-primary) 26%, transparent);
 }
 
-.bootstrap-tabbar {
-  height: var(--bottom-nav-height);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: var(--overlay-panel);
-  border-top: 1px solid var(--border-soft);
+.app-state-secondary-button {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-surface-alt);
+  color: var(--text-strong);
 }
 
-.bootstrap-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.bootstrap-tab-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: var(--border-strong);
-  animation: bootstrap-skeleton-pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes bootstrap-skeleton-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.45;
-  }
+.app-state-primary-button:focus-visible,
+.app-state-secondary-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  outline-offset: 3px;
 }
 
 .courses-page {
@@ -1143,6 +1257,13 @@ body {
 .theme-transitioning .courses-first-use-title,
 .theme-transitioning .courses-first-use-description,
 .theme-transitioning .courses-first-use-import-button,
+.theme-transitioning .app-bootstrap-shell,
+.theme-transitioning .app-bootstrap-brand,
+.theme-transitioning .app-route-state,
+.theme-transitioning .app-route-state-card,
+.theme-transitioning .app-route-state-symbol,
+.theme-transitioning .app-state-primary-button,
+.theme-transitioning .app-state-secondary-button,
 .theme-transitioning .schedule-scroll-area,
 .theme-transitioning .schedule-scroll-hint,
 .theme-transitioning .app-tabbar,
@@ -1187,8 +1308,10 @@ body {
   .scut-jw-access-option,
   .scut-jw-access-radio,
   .scut-jw-access-radio::after,
-  .app-bootstrap-skeleton,
-  .app-bootstrap-skeleton * {
+  .app-bootstrap-shell,
+  .app-bootstrap-shell *,
+  .app-route-state,
+  .app-route-state * {
     animation: none;
     transition: none;
   }
