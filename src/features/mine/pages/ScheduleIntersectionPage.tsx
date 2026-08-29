@@ -6,6 +6,7 @@ import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
+import { assertScheduleTextFileSize } from '../../../core/schedule/importLimits'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
 import { saveIntersectionPreviewPayload } from '../../../core/schedule/intersectionPreview'
 import { parseQmsScheduleText } from '../../../core/schedule/importQms'
@@ -233,6 +234,7 @@ function ScheduleIntersectionPage() {
     }
 
     try {
+      assertScheduleTextFileSize(file, 'WakeUp')
       const content = await file.text()
       const scheduleData = parseWakeupScheduleText(content)
       openExternalNameModal(scheduleData, 'WakeUp')
@@ -251,6 +253,7 @@ function ScheduleIntersectionPage() {
     }
 
     try {
+      assertScheduleTextFileSize(file, 'QMS')
       const content = await file.text()
       const parsedQms = parseQmsScheduleText(content)
       openExternalNameModal(parsedQms.scheduleData, 'QMS')
@@ -269,6 +272,7 @@ function ScheduleIntersectionPage() {
     }
 
     try {
+      assertScheduleTextFileSize(file, '华工教务 HTML')
       const html = await file.text()
       const scheduleData = parseScutScheduleHtml(html, {
         fallbackSemesterStartDate: getSemesterStartDate(),

@@ -1,4 +1,5 @@
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId, WakeupTimeSlot } from './types'
+import { assertScheduleTextByteLength } from './importLimits'
 import { trimRedundantTimeSlots } from './timeSlotTrim'
 
 type QmsPayloadV1 = {
@@ -212,6 +213,7 @@ function parseFromV2(payload: QmsPayloadV2): ParsedQmsResult {
 }
 
 export function parseQmsScheduleText(text: string): ParsedQmsResult {
+  assertScheduleTextByteLength(text, 'QMS')
   let parsed: unknown
 
   try {

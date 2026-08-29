@@ -149,7 +149,7 @@ describe('openScutJwWebView', () => {
 
     expect(onHtmlCaptured).not.toHaveBeenCalled()
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-      message: '当前页面内容过大，无法安全导入',
+      message: '华工教务页面：内容大小超过 512 KiB 限制，请确认内容来自受支持的课表导出',
     }))
     await session.close()
   })

@@ -8,6 +8,7 @@ import type {
   WakeupTableConfig,
   WakeupTimeSlot,
 } from './types'
+import { assertScheduleTextByteLength } from './importLimits'
 import { trimRedundantTimeSlots } from './timeSlotTrim'
 
 function parseJsonLine<T>(line: string, index: number) {
@@ -183,6 +184,7 @@ export function normalizeWakeupStartDate(startDate: string) {
 }
 
 export function parseWakeupScheduleText(text: string): ScheduleData {
+  assertScheduleTextByteLength(text, 'WakeUp')
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
