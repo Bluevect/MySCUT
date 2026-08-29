@@ -30,7 +30,7 @@ import {
 } from '../../core/schedule/selectors'
 import { getAutoSimplifyScheduleHintEnabled } from '../../core/schedule/displaySettings'
 import { simplifyCourseName, simplifyRoomText, simplifyTeacherText } from '../../core/schedule/displayTextSimplifier'
-import { loadActiveScheduleEntry, saveScheduleDataWithOptions } from '../../core/schedule/storage'
+import { listSavedSchedules, loadActiveScheduleEntry, saveScheduleDataWithOptions } from '../../core/schedule/storage'
 import { resolveScheduleTimeSlotsByPreset } from '../../core/schedule/timeSlotPresets'
 import { getScheduleThemePreset } from '../../core/schedule/themeStorage'
 import type { ScheduleThemePreset } from '../../core/schedule/themePresets'
@@ -43,6 +43,7 @@ import {
 } from '../../core/schedule/weekNavigation'
 import { getSemesterStartDate } from '../../core/scheduleSettings'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
+import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
 
 const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
 const MAX_LESSON_COUNT = 12
@@ -493,6 +494,7 @@ function CoursesPage() {
   const [selectedNode, setSelectedNode] = useState(1)
   const [expandedCourseDetailMap, setExpandedCourseDetailMap] = useState<Record<string, boolean>>({})
   const persistedActiveScheduleEntry = useMemo(() => loadActiveScheduleEntry(), [])
+  const savedScheduleCount = useMemo(() => listSavedSchedules().length, [])
   const isIntersectionPreviewMode = location.pathname === INTERSECTION_PREVIEW_PATH
   const intersectionPreviewPayload = isIntersectionPreviewMode ? loadIntersectionPreviewPayload() : null
   const activeScheduleEntry = isIntersectionPreviewMode
@@ -971,6 +973,15 @@ function CoursesPage() {
         messageApi.error(errorMessage)
       }
     }, setIsSavingIntersection)
+  }
+
+  if (shouldShowCoursesFirstUseGuide(savedScheduleCount, isIntersectionPreviewMode)) {
+    return (
+      <div className='courses-page courses-page--first-use'>
+        {contextHolder}
+        <CoursesFirstUseGuide onImport={() => navigate('/mine/schedule-settings')} />
+      </div>
+    )
   }
 
   return (
