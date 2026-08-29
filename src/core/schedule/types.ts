@@ -102,7 +102,7 @@ export type ScheduleLesson = {
 
 export type ScheduleData = {
   version: 1
-  source: 'wakeup' | 'scutHtml' | 'intersection'
+  source: 'wakeup' | 'scutHtml' | 'scutPdf' | 'intersection'
   importedAt: number
   table: {
     id: number
@@ -131,6 +131,16 @@ export type ScheduleData = {
     | {
         kind: 'scutHtml'
         html: string
+      }
+    | {
+        kind: 'scutPdf'
+        sourceFileName: string | null
+        byteLength: number | null
+        pageCount: number | null
+        pdfjsVersion: string | null
+        extractedAt: string | null
+        layout: 'scut-student-timetable-v1'
+        parserVersion: 1
       }
 }
 

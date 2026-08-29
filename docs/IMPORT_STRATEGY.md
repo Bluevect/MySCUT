@@ -28,9 +28,11 @@
 
 ### PDF
 
-`importScutPdf.ts` 使用 PDF.js 提取文本，并校验首个固定布局合约 `scut-student-timetable-v1`。当前只支持单页、横向 A4、带可选择文本层的华工学生个人课表；详细坐标、字段、周次语法和拒绝边界见 [SCUT_PDF_LAYOUT.md](SCUT_PDF_LAYOUT.md)。格式校验失败必须提示具体阶段，不把不完整结果自动保存。
+`importScutPdf.ts` 使用 PDF.js 提取文本，并校验首个固定布局合约 `scut-student-timetable-v1`。`mapScutSchedulePdf.ts` 再把完整合约纯映射为来源为 `scutPdf` 的 `ScheduleData`；课程字段缺失、周次/节次无效或同名课程学分冲突时整体拒绝，不生成部分课表。当前只支持单页、横向 A4、带可选择文本层的华工学生个人课表；详细坐标、字段、周次语法和拒绝边界见 [SCUT_PDF_LAYOUT.md](SCUT_PDF_LAYOUT.md)。
 
 公开 PDF fixture 由 `npm run build:scut-pdf-fixtures` 使用 Node 内置能力生成，只包含 `TEST-*` 数据。不得提交真实学生 PDF、视觉遮盖后的 PDF 或其提取 JSON。
+
+PDF 映射结果的 raw 数据只保留文件名、大小、页数和提取/解析版本等诊断元数据，不保存原始 PDF 或完整页面文本。非 WakeUp 来源继续通过统一模型生成 WakeUp 兼容导出。
 
 ### QMS
 

@@ -29,13 +29,14 @@ QMS 是 MySCUT 的 JSON 课表交换格式。当前写出版本为 v2，导入�
 }
 ```
 
-所有时间戳均为 Unix 毫秒。`table`、`courses` 和 `lessons` 字段见 [DATA_MODEL.md](DATA_MODEL.md)。
+所有时间戳均为 Unix 毫秒。`source` 支持 `wakeup`、`scutHtml`、`scutPdf` 和 `intersection`；外层与 `scheduleData.source` 必须一致。`table`、`courses` 和 `lessons` 字段见 [DATA_MODEL.md](DATA_MODEL.md)。
 
 ## 时间表规则
 
 - `timeSlotPresetId = builtIn` 时，v2 可写入 `scheduleData.timeSlots`。
 - 选择校区预设或并集预设时，导出不重复写入可由预设恢复的 `timeSlots`。
 - 导入会裁剪多余节次，并将未知预设降级为 `builtIn`。
+- v2 不写入来源 raw 数据；重新导入 `scutPdf` 时会保留来源语义，并把不可从 QMS 恢复的 PDF 诊断字段设为 `null`。
 
 ## v1 兼容
 
