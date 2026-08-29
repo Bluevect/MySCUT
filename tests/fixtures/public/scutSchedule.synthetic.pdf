@@ -1,0 +1,188 @@
+%PDF-1.4
+%TEST-SYNTHETIC-SCUT-PDF
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UCS2-H /DescendantFonts [7 0 R] /ToUnicode 8 0 R >>
+endobj
+6 0 obj
+<< /Length 3360 >>
+stream
+q
+0 G
+0.65 w
+BT /F2 17 Tf 305 554 Td <534E535774065DE559275B665B66751F4E2A4EBA8BFE8868> Tj ET
+BT /F1 7 Tf 356 541 Td (SCUT STUDENT TIMETABLE V1) Tj ET
+BT /F1 8 Tf 32 527 Td (ACADEMIC-YEAR:2026-2027) Tj ET
+BT /F1 8 Tf 190 527 Td (SEMESTER:1) Tj ET
+BT /F1 8 Tf 285 527 Td (STUDENT-ID:TEST-STUDENT-001) Tj ET
+BT /F1 8 Tf 505 527 Td (CAMPUS:TEST-CAMPUS) Tj ET
+BT /F1 8 Tf 650 527 Td (SCHEDULE-ID:TEST-SCHEDULE-001) Tj ET
+28 30 786 433 re S
+28 438 m 814 438 l S
+BT /F2 8 Tf 45 447 Td <82826B21> Tj ET
+BT /F1 5 Tf 48 441 Td (NODE) Tj ET
+86 463 m 86 30 l S
+190 463 m 190 30 l S
+294 463 m 294 30 l S
+398 463 m 398 30 l S
+502 463 m 502 30 l S
+606 463 m 606 30 l S
+710 463 m 710 30 l S
+814 463 m 814 30 l S
+BT /F2 8 Tf 123 447 Td <661F671F4E00> Tj ET
+BT /F1 5 Tf 130 441 Td (MON) Tj ET
+BT /F2 8 Tf 227 447 Td <661F671F4E8C> Tj ET
+BT /F1 5 Tf 234 441 Td (TUE) Tj ET
+BT /F2 8 Tf 331 447 Td <661F671F4E09> Tj ET
+BT /F1 5 Tf 338 441 Td (WED) Tj ET
+BT /F2 8 Tf 435 447 Td <661F671F56DB> Tj ET
+BT /F1 5 Tf 442 441 Td (THU) Tj ET
+BT /F2 8 Tf 539 447 Td <661F671F4E94> Tj ET
+BT /F1 5 Tf 546 441 Td (FRI) Tj ET
+BT /F2 8 Tf 643 447 Td <661F671F516D> Tj ET
+BT /F1 5 Tf 650 441 Td (SAT) Tj ET
+BT /F2 8 Tf 747 447 Td <661F671F65E5> Tj ET
+BT /F1 5 Tf 754 441 Td (SUN) Tj ET
+28 404 m 814 404 l S
+BT /F1 7 Tf 52 420 Td (1) Tj ET
+28 370 m 814 370 l S
+BT /F1 7 Tf 52 386 Td (2) Tj ET
+28 336 m 814 336 l S
+BT /F1 7 Tf 52 352 Td (3) Tj ET
+28 302 m 814 302 l S
+BT /F1 7 Tf 52 318 Td (4) Tj ET
+28 268 m 814 268 l S
+BT /F1 7 Tf 52 284 Td (5) Tj ET
+28 234 m 814 234 l S
+BT /F1 7 Tf 52 250 Td (6) Tj ET
+28 200 m 814 200 l S
+BT /F1 7 Tf 52 216 Td (7) Tj ET
+28 166 m 814 166 l S
+BT /F1 7 Tf 52 182 Td (8) Tj ET
+28 132 m 814 132 l S
+BT /F1 7 Tf 52 148 Td (9) Tj ET
+28 98 m 814 98 l S
+BT /F1 7 Tf 52 114 Td (10) Tj ET
+28 64 m 814 64 l S
+BT /F1 7 Tf 52 80 Td (11) Tj ET
+28 30 m 814 30 l S
+BT /F1 7 Tf 52 46 Td (12) Tj ET
+q 1 g 86.5 370.5 103 67 re f 0 G 86 370 104 68 re S Q
+BT /F1 5.5 Tf 89 428.5 Td (COURSE:TEST-COURSE-ALPHA) Tj ET
+BT /F1 5.5 Tf 89 420.5 Td (WEEKS:1-15\(ODD\)) Tj ET
+BT /F1 5.5 Tf 89 412.5 Td (NODES:1-2) Tj ET
+BT /F1 5.5 Tf 89 404.5 Td (TEACHER:TEST-TEACHER-A,B) Tj ET
+BT /F1 5.5 Tf 89 396.5 Td (ROOM:TEST-ROOM-A101) Tj ET
+BT /F1 5.5 Tf 89 388.5 Td (CREDIT:3.5) Tj ET
+q 1 g 190.5 268.5 103 101 re f 0 G 190 268 104 102 re S Q
+BT /F1 5.5 Tf 193 360.5 Td (COURSE:TEST-COURSE-BETA) Tj ET
+BT /F1 5.5 Tf 193 352.5 Td (WEEKS:2-16\(EVEN\)) Tj ET
+BT /F1 5.5 Tf 193 344.5 Td (NODES:3-5) Tj ET
+BT /F1 5.5 Tf 193 336.5 Td (TEACHER:TEST-TEACHER-C) Tj ET
+BT /F1 5.5 Tf 193 328.5 Td (ROOM:TEST-ROOM-B202) Tj ET
+BT /F1 5.5 Tf 193 320.5 Td (CREDIT:2) Tj ET
+q 1 g 294.5 200.5 103 67 re f 0 G 294 200 104 68 re S Q
+BT /F1 5.5 Tf 297 258.5 Td (COURSE:TEST-COURSE-GAMMA) Tj ET
+BT /F1 5.5 Tf 297 250.5 Td (WEEKS:1-4,9-12) Tj ET
+BT /F1 5.5 Tf 297 242.5 Td (NODES:6-7) Tj ET
+BT /F1 5.5 Tf 297 234.5 Td (TEACHER:TEST-TEACHER-D) Tj ET
+BT /F1 5.5 Tf 297 226.5 Td (ROOM:TEST-ROOM-C303) Tj ET
+BT /F1 5.5 Tf 297 218.5 Td (CREDIT:1.5) Tj ET
+q 1 g 502.5 98.5 103 67 re f 0 G 502 98 104 68 re S Q
+BT /F1 5.5 Tf 505 156.5 Td (COURSE:TEST-COURSE-ALPHA) Tj ET
+BT /F1 5.5 Tf 505 148.5 Td (WEEKS:2-14/2) Tj ET
+BT /F1 5.5 Tf 505 140.5 Td (NODES:9-10) Tj ET
+BT /F1 5.5 Tf 505 132.5 Td (TEACHER:TEST-TEACHER-A) Tj ET
+BT /F1 5.5 Tf 505 124.5 Td (ROOM:TEST-ROOM-D404) Tj ET
+BT /F1 5.5 Tf 505 116.5 Td (CREDIT:3.5) Tj ET
+Q
+endstream
+endobj
+7 0 obj
+<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> /DW 1000 >>
+endobj
+8 0 obj
+<< /Length 799 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def
+/CMapName /TEST-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+34 beginbfchar
+<534E> <534E>
+<5357> <5357>
+<7406> <7406>
+<5DE5> <5DE5>
+<5927> <5927>
+<5B66> <5B66>
+<751F> <751F>
+<4E2A> <4E2A>
+<4EBA> <4EBA>
+<8BFE> <8BFE>
+<8868> <8868>
+<5E74> <5E74>
+<671F> <671F>
+<53F7> <53F7>
+<6821> <6821>
+<533A> <533A>
+<7F16> <7F16>
+<8282> <8282>
+<6B21> <6B21>
+<661F> <661F>
+<4E00> <4E00>
+<4E8C> <4E8C>
+<4E09> <4E09>
+<56DB> <56DB>
+<4E94> <4E94>
+<516D> <516D>
+<65E5> <65E5>
+<7A0B> <7A0B>
+<5468> <5468>
+<6559> <6559>
+<5E08> <5E08>
+<5730> <5730>
+<70B9> <70B9>
+<5206> <5206>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+endstream
+endobj
+9 0 obj
+<< /Title (TEST-SCUT-FIXED-LAYOUT-SUPPORTED) /Author (TEST-FIXTURE-GENERATOR) /Creator (scripts/generateScutPdfFixtures.mjs) >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000034 00000 n 
+0000000083 00000 n 
+0000000140 00000 n 
+0000000276 00000 n 
+0000000373 00000 n 
+0000000512 00000 n 
+0000003923 00000 n 
+0000004081 00000 n 
+0000004931 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R /Info 9 0 R >>
+startxref
+5074
+%%EOF

@@ -22,6 +22,7 @@
     "dev": "vite",
     "build:todo-snapshot": "node scripts/generateTodoSnapshot.mjs",
     "build:licenses": "node scripts/generateThirdPartyLicenses.mjs",
+    "build:scut-pdf-fixtures": "node scripts/generateScutPdfFixtures.mjs",
     "typecheck": "tsc -b",
     "build:app": "node scripts/buildAppOnly.mjs",
     "release:prepare-manual": "node scripts/prepareReleaseManualSubmodule.mjs",
