@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -26,7 +26,6 @@ function ScutJwWebViewPage() {
   const location = useLocation()
 
   const [messageApi, contextHolder] = message.useMessage()
-  const [isImporting, setIsImporting] = useState(false)
 
   const webViewSessionRef = useRef<ScutJwWebViewSession | null>(null)
   const isImportingRef = useRef(false)
@@ -40,7 +39,6 @@ function ScutJwWebViewPage() {
     }
 
     isImportingRef.current = true
-    setIsImporting(true)
 
     try {
       const fallbackSemesterStartDate = getSemesterStartDate()
@@ -86,7 +84,6 @@ function ScutJwWebViewPage() {
       messageApi.error(errorMessage)
     } finally {
       isImportingRef.current = false
-      setIsImporting(false)
     }
   }
 
@@ -108,10 +105,6 @@ function ScutJwWebViewPage() {
       console.error('[ScutJwImport] Failed to dispatch touch event:', error)
     })
   }
-
-  useEffect(() => {
-    isImportingRef.current = isImporting
-  }, [isImporting])
 
   useEffect(() => {
     if (!isAndroidNative || !targetUrl) {
