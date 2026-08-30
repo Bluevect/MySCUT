@@ -86,6 +86,7 @@ function ScutJwWebViewPage() {
       messageApi.error(errorMessage)
     } finally {
       isImportingRef.current = false
+      setIsImporting(false)
     }
   }
 
