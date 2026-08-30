@@ -15,6 +15,7 @@ import {
   openScutJwWebView,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
+import { restoreWebViewStatusBar, setWebViewStatusBar } from '../../../platform/capacitor/statusBarWebView'
 
 type WebViewLocationState = {
   url?: string
@@ -116,7 +117,11 @@ function ScutJwWebViewPage() {
       return
     }
 
+    // Set body transparent
     document.body.style.background = 'transparent'
+
+    // Prevent messageApi blinking under android status bar
+    void setWebViewStatusBar()
 
     let isCancelled = false
 
@@ -159,7 +164,13 @@ function ScutJwWebViewPage() {
     return () => {
       isCancelled = true
       isImportingRef.current = false
+
+      // Restore background
       document.body.style.background = ''
+
+      // Restore status bar
+      void restoreWebViewStatusBar()
+
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
       if (activeSession) {
