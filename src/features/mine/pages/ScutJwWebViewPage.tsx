@@ -1,15 +1,16 @@
-import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useRef, useState } from 'react'
+import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
 import { getScheduleThemeId } from '../../../core/schedule/themeStorage'
 import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import {
+  closeActiveWebView,
+  dispatchTouchEvent,
   hideActiveWebView,
   openScutJwWebView,
   type ScutJwWebViewSession,
@@ -87,6 +88,25 @@ function ScutJwWebViewPage() {
     }
   }
 
+  const handleTouch = async (event: TouchEvent<HTMLElement>) => {
+    const touch = event.type === 'touchend' || event.type === 'touchcancel'
+      ? event.changedTouches[0]
+      : event.touches[0]
+
+    if (!touch) {
+      return
+    }
+    
+    event.preventDefault()
+    void dispatchTouchEvent({
+      type: event.type as 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
+      x: touch.clientX,
+      y: touch.clientY,
+    }).catch((error: unknown) => {
+      console.error('[ScutJwImport] Failed to dispatch touch event:', error)
+    })
+  }
+
   useEffect(() => {
     isImportingRef.current = isImporting
   }, [isImporting])
@@ -95,6 +115,8 @@ function ScutJwWebViewPage() {
     if (!isAndroidNative || !targetUrl) {
       return
     }
+
+    document.body.style.background = 'transparent'
 
     let isCancelled = false
 
@@ -137,6 +159,7 @@ function ScutJwWebViewPage() {
     return () => {
       isCancelled = true
       isImportingRef.current = false
+      document.body.style.background = ''
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
       if (activeSession) {
@@ -144,52 +167,20 @@ function ScutJwWebViewPage() {
           console.error('[ScutJwImport] Failed to close unmounted session: ', error)
         })
       }
+
+      closeActiveWebView()
     }
   }, [isAndroidNative, messageApi, navigate, targetUrl])
 
-  const handleClose = () => {
-    const activeSession = webViewSessionRef.current
-    webViewSessionRef.current = null
-    if (!activeSession) {
-      navigate('/mine/import-scut-jw', { replace: true })
-      return
-    }
-
-    void activeSession.close()
-      .catch((error: unknown) => {
-        messageApi.error(error instanceof Error ? error.message : '教务系统页面关闭失败')
-      })
-      .finally(() => navigate('/mine/import-scut-jw', { replace: true }))
-  }
-
-  const unavailableMessage = !isAndroidNative
-    ? '当前环境不支持该功能，请在安卓原生应用中使用。'
-    : !targetUrl
-      ? '导入会话已失效，请返回后重新选择教务系统入口。'
-      : ''
-
   return (
-    <section className='schedule-settings-page scut-jw-webview-page'>
+    <section
+      className='scut-jw-webview-page'
+      onTouchCancel={handleTouch}
+      onTouchEnd={handleTouch}
+      onTouchMove={handleTouch}
+      onTouchStart={handleTouch}
+    >
       {contextHolder}
-
-      <header className='schedule-settings-header'>
-        <div>
-          <p className='schedule-settings-title'>教务系统</p>
-          <p className='schedule-settings-subtitle'>SCUT WebView</p>
-        </div>
-
-        <CircleIconButton ariaLabel='关闭教务系统' icon={<CloseOutlined />} onClick={handleClose} />
-      </header>
-
-      <div className='schedule-settings-content'>
-        {unavailableMessage ? (
-          <p className='schedule-pdf-error'>{unavailableMessage}</p>
-        ) : (
-          <p className='schedule-settings-current-date'>
-            {isImporting ? '正在导入当前页面...' : '请在网页右下角点击“导入当前页面”。'}
-          </p>
-        )}
-      </div>
     </section>
   )
 }

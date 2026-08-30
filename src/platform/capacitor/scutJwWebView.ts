@@ -43,6 +43,13 @@ export type ScutJwWebViewSession = {
   close: () => Promise<void>
 }
 
+type DispatchTouchEventOptions = {
+  id?: string
+  type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel'
+  x: number
+  y: number
+}
+
 type OpenScutJwWebViewOptions = {
   url: string
   onClose: () => void
@@ -83,6 +90,14 @@ async function removeListenerHandles(handles: PluginListenerHandle[]) {
 
 export function hideActiveWebView() {
   void InAppBrowser.hide()
+}
+
+export function closeActiveWebView() {
+  void InAppBrowser.close()
+}
+
+export async function dispatchTouchEvent(options: DispatchTouchEventOptions) {
+  await InAppBrowser.dispatchInputEvent(options)
 }
 
 export async function openScutJwWebView(
@@ -205,16 +220,18 @@ export async function openScutJwWebView(
     const openedWebView = await InAppBrowser.openWebView({
       url: targetUrl,
       openBlankTargetInWebView: true,
-      toolbarType: ToolBarType.NAVIGATION,
+      toolbarType: ToolBarType.BLANK,
       closeAction: CloseAction.CLOSE,
       title: '从教务导入课表',
       backgroundColor: BackgroundColor.WHITE,
       handleDownloads: false,
       persistWebViewData: false,
       preventDeeplink: true,
+      toBack: true,
     })
 
     webViewId = openedWebView.id
+
     await injectImportButton(openedWebView.id)
   } catch (error) {
     try {
