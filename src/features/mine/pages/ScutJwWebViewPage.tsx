@@ -147,6 +147,14 @@ function ScutJwWebViewPage() {
     }
 
     // Set body transparent
+    const previousColorScheme = document.documentElement.style.colorScheme
+    const isDarkMode = document.documentElement.classList.contains('dark')
+
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark')
+    }
+    
+    document.documentElement.style.colorScheme = ''
     document.body.style.background = 'transparent'
 
     // Prevent messageApi blinking under android status bar
@@ -197,7 +205,11 @@ function ScutJwWebViewPage() {
       isCancelled = true
 
       // Restore background
-      document.body.style.background = ''
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark')
+      }
+      document.documentElement.style.colorScheme = previousColorScheme
+      document.body.style.backgroundColor = ''
 
       // Restore status bar
       void restoreWebViewStatusBar()
