@@ -1,44 +1,126 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1677ff" />
     <link rel="icon" href="/icons/icon-192.png" type="image/png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="preload" href="/icons/icon-192.png" as="image" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>MySCUT</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        min-height: 100%;
+        height: 100%;
+      }
+
+      body {
+        font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      }
+
+      .app-bootstrap-shell {
+        box-sizing: border-box;
+        height: 100%;
+        padding: calc(32px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));
+        display: grid;
+        place-items: center;
+        color: #182338;
+        background: radial-gradient(circle at 50% 32%, rgba(22, 119, 255, 0.14), transparent 34%), #f5f6fa;
+      }
+
+      .app-bootstrap-brand {
+        width: min(100%, 320px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .app-bootstrap-icon {
+        width: 88px;
+        height: 88px;
+        display: block;
+        border-radius: 21px;
+        box-shadow: 0 18px 40px rgba(24, 35, 56, 0.2);
+      }
+
+      .app-bootstrap-brand h1,
+      .app-bootstrap-brand p {
+        margin: 0;
+      }
+
+      .app-bootstrap-brand h1 {
+        margin-top: 22px;
+        font-size: 34px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      .app-bootstrap-brand p {
+        margin-top: 8px;
+        color: #72809a;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .app-bootstrap-progress {
+        width: 20px;
+        height: 20px;
+        margin-top: 28px;
+        display: block;
+        border: 2px solid rgba(22, 119, 255, 0.22);
+        border-top-color: #1677ff;
+        border-radius: 50%;
+        animation: app-bootstrap-spin 760ms linear infinite;
+      }
+
+      .app-bootstrap-status-text {
+        margin-top: 10px;
+        color: #72809a;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      @keyframes app-bootstrap-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .app-bootstrap-shell {
+          color: #f5f7fb;
+          background: radial-gradient(circle at 50% 32%, rgba(86, 156, 255, 0.16), transparent 34%), #111722;
+        }
+
+        .app-bootstrap-brand p,
+        .app-bootstrap-status-text {
+          color: #aeb9cc;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .app-bootstrap-progress {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root">
-      <!-- 静态启动骨架：在 JS 求值前占位，React 挂载后由 AppBootstrapSkeleton 接管并替换 -->
-      <div class="app-bootstrap-skeleton" aria-hidden="true">
-        <div class="bootstrap-header">
-          <div class="bootstrap-header-text">
-            <div class="bootstrap-bar bootstrap-bar--title"></div>
-            <div class="bootstrap-bar bootstrap-bar--sub"></div>
-          </div>
-          <div class="bootstrap-header-actions">
-            <span class="bootstrap-icon-btn"></span>
-            <span class="bootstrap-icon-btn"></span>
-            <span class="bootstrap-icon-btn"></span>
-          </div>
+      <!-- 静态品牌启动壳：在 JS 求值前占位，React 挂载后继续展示同一状态直到本地存储就绪 -->
+      <div class="app-bootstrap-shell" role="status" aria-live="polite" aria-busy="true">
+        <div class="app-bootstrap-brand">
+          <img class="app-bootstrap-icon" src="/icons/icon-192.png" alt="" aria-hidden="true" />
+          <h1>MySCUT</h1>
+          <p>正在准备你的校园工具</p>
+          <span class="app-bootstrap-progress" aria-hidden="true"></span>
+          <span class="app-bootstrap-status-text">正在初始化本地数据…</span>
         </div>
-        <div class="bootstrap-schedule"></div>
-        <nav class="bootstrap-tabbar">
-          <span class="bootstrap-tab">
-            <span class="bootstrap-tab-icon"></span>
-            <span class="bootstrap-bar bootstrap-bar--tab"></span>
-          </span>
-          <span class="bootstrap-tab">
-            <span class="bootstrap-tab-icon"></span>
-            <span class="bootstrap-bar bootstrap-bar--tab"></span>
-          </span>
-          <span class="bootstrap-tab">
-            <span class="bootstrap-tab-icon"></span>
-            <span class="bootstrap-bar bootstrap-bar--tab"></span>
-          </span>
-        </nav>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

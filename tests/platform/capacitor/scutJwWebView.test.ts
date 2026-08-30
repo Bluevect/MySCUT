@@ -149,8 +149,46 @@ describe('openScutJwWebView', () => {
 
     expect(onHtmlCaptured).not.toHaveBeenCalled()
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-      message: '当前页面内容过大，无法安全导入',
+      message: '华工教务页面：内容大小超过 512 KiB 限制，请确认内容来自受支持的课表导出',
     }))
+    await session.close()
+  })
+
+  it('disables the injected import button and ignores duplicate captures while importing', async () => {
+    let finishImport = () => undefined
+    const pendingImport = new Promise<void>((resolve) => {
+      finishImport = resolve
+    })
+    const onHtmlCaptured = vi.fn(() => pendingImport)
+    const session = await openScutJwWebView({
+      url: 'https://jw.example.edu.cn/',
+      onClose: vi.fn(),
+      onError: vi.fn(),
+      onHtmlCaptured,
+    })
+    const captureEvent = {
+      id: 'jw-webview',
+      detail: { message: 'captureHTML', html: '<html>schedule</html>' },
+    }
+
+    pluginMocks.listeners.get('messageFromWebview')?.(captureEvent)
+    pluginMocks.listeners.get('messageFromWebview')?.(captureEvent)
+
+    await vi.waitFor(() => {
+      expect(onHtmlCaptured).toHaveBeenCalledOnce()
+      expect(pluginMocks.executeScript).toHaveBeenCalledWith(expect.objectContaining({
+        id: 'jw-webview',
+        code: expect.stringContaining('button.disabled = true'),
+      }))
+    })
+
+    finishImport()
+    await vi.waitFor(() => {
+      expect(pluginMocks.executeScript).toHaveBeenCalledWith(expect.objectContaining({
+        id: 'jw-webview',
+        code: expect.stringContaining('button.disabled = false'),
+      }))
+    })
     await session.close()
   })
 
@@ -163,5 +201,24 @@ describe('openScutJwWebView', () => {
     })).rejects.toThrow('仅支持 HTTP 或 HTTPS')
 
     expect(pluginMocks.openWebView).not.toHaveBeenCalled()
+  })
+
+  it('does not expose native failure details to the caller', async () => {
+    pluginMocks.openWebView.mockRejectedValueOnce(new Error(
+      'Cookie: TEST-SECRET; response=<html>private schedule</html>',
+    ))
+
+    const error = await openScutJwWebView({
+      url: 'https://jw.example.edu.cn/private?token=TEST-TOKEN',
+      onClose: vi.fn(),
+      onError: vi.fn(),
+      onHtmlCaptured: vi.fn(),
+    }).catch((caughtError: unknown) => caughtError)
+
+    expect(error).toBeInstanceOf(Error)
+    expect((error as Error).message).toBe('无法打开教务系统页面，请检查网络和访问地址后重试')
+    expect((error as Error).message).not.toContain('TEST-SECRET')
+    expect((error as Error).message).not.toContain('TEST-TOKEN')
+    expect((error as Error).message).not.toContain('private schedule')
   })
 })

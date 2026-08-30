@@ -17,6 +17,7 @@ import {
 import { Input, Modal, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
+import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
 import { clearIntersectionPreviewPayload, loadIntersectionPreviewPayload } from '../../core/schedule/intersectionPreview'
 import {
@@ -29,7 +30,7 @@ import {
 } from '../../core/schedule/selectors'
 import { getAutoSimplifyScheduleHintEnabled } from '../../core/schedule/displaySettings'
 import { simplifyCourseName, simplifyRoomText, simplifyTeacherText } from '../../core/schedule/displayTextSimplifier'
-import { loadActiveScheduleEntry, saveScheduleDataWithOptions } from '../../core/schedule/storage'
+import { listSavedSchedules, loadActiveScheduleEntry, saveScheduleDataWithOptions } from '../../core/schedule/storage'
 import { resolveScheduleTimeSlotsByPreset } from '../../core/schedule/timeSlotPresets'
 import { getScheduleThemePreset } from '../../core/schedule/themeStorage'
 import type { ScheduleThemePreset } from '../../core/schedule/themePresets'
@@ -42,6 +43,7 @@ import {
 } from '../../core/schedule/weekNavigation'
 import { getSemesterStartDate } from '../../core/scheduleSettings'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
+import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
 
 const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
 const MAX_LESSON_COUNT = 12
@@ -492,6 +494,7 @@ function CoursesPage() {
   const [selectedNode, setSelectedNode] = useState(1)
   const [expandedCourseDetailMap, setExpandedCourseDetailMap] = useState<Record<string, boolean>>({})
   const persistedActiveScheduleEntry = useMemo(() => loadActiveScheduleEntry(), [])
+  const savedScheduleCount = useMemo(() => listSavedSchedules().length, [])
   const isIntersectionPreviewMode = location.pathname === INTERSECTION_PREVIEW_PATH
   const intersectionPreviewPayload = isIntersectionPreviewMode ? loadIntersectionPreviewPayload() : null
   const activeScheduleEntry = isIntersectionPreviewMode
@@ -885,6 +888,8 @@ function CoursesPage() {
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false)
   const [isSaveNameModalOpen, setIsSaveNameModalOpen] = useState(false)
   const [saveNameInput, setSaveNameInput] = useState('')
+  const [isSavingIntersection, setIsSavingIntersection] = useState(false)
+  const saveIntersectionOperationRef = useRef(new SinglePendingOperation())
 
   const finalizePreviewExit = () => {
     clearIntersectionPreviewPayload()
@@ -945,27 +950,38 @@ function CoursesPage() {
       return
     }
 
-    const preferredName = saveNameInput.trim() || intersectionPreviewPayload.defaultSaveName || '课表取交集'
-    try {
-      const saveResult = await saveScheduleDataWithOptions(intersectionPreviewPayload.scheduleData, {
-        themeId: activeScheduleEntry?.themeId ?? 'skyBlue',
-        semesterStartDate: getSemesterStartDate(),
-        timeSlotPresetId: 'union',
-        preferredName,
-        setActive: true,
-      })
+    await saveIntersectionOperationRef.current.run(async () => {
+      const preferredName = saveNameInput.trim() || intersectionPreviewPayload.defaultSaveName || '课表取交集'
+      try {
+        const saveResult = await saveScheduleDataWithOptions(intersectionPreviewPayload.scheduleData, {
+          themeId: activeScheduleEntry?.themeId ?? 'skyBlue',
+          semesterStartDate: getSemesterStartDate(),
+          timeSlotPresetId: 'union',
+          preferredName,
+          setActive: true,
+        })
 
-      if (!saveResult.ok) {
-        messageApi.error('课表保存失败，请稍后重试')
-        return
+        if (!saveResult.ok) {
+          messageApi.error('课表保存失败，请稍后重试')
+          return
+        }
+
+        setIsSaveNameModalOpen(false)
+        finalizePreviewExit()
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '课表保存失败'
+        messageApi.error(errorMessage)
       }
+    }, setIsSavingIntersection)
+  }
 
-      setIsSaveNameModalOpen(false)
-      finalizePreviewExit()
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '课表保存失败'
-      messageApi.error(errorMessage)
-    }
+  if (shouldShowCoursesFirstUseGuide(savedScheduleCount, isIntersectionPreviewMode)) {
+    return (
+      <div className='courses-page courses-page--first-use'>
+        {contextHolder}
+        <CoursesFirstUseGuide onImport={() => navigate('/mine/schedule-settings')} />
+      </div>
+    )
   }
 
   return (
@@ -1119,6 +1135,9 @@ function CoursesPage() {
         open={isSaveNameModalOpen}
         onOk={handleSubmitSaveName}
         onCancel={() => setIsSaveNameModalOpen(false)}
+        confirmLoading={isSavingIntersection}
+        okButtonProps={{ disabled: isSavingIntersection }}
+        cancelButtonProps={{ disabled: isSavingIntersection }}
         okText='确定保存'
         cancelText='取消'
       >

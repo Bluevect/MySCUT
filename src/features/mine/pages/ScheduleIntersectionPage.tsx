@@ -3,8 +3,10 @@ import { CloseOutlined } from '@ant-design/icons'
 import { Input, Modal, Select, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
+import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
+import { assertScheduleTextFileSize } from '../../../core/schedule/importLimits'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
 import { saveIntersectionPreviewPayload } from '../../../core/schedule/intersectionPreview'
 import { parseQmsScheduleText } from '../../../core/schedule/importQms'
@@ -61,10 +63,12 @@ function ScheduleIntersectionPage() {
   const [isExternalNameModalOpen, setIsExternalNameModalOpen] = useState(false)
   const [localUserName, setLocalUserName] = useState('')
   const [displayMode, setDisplayMode] = useState<IntersectionDisplayMode>('default')
+  const [isCalculating, setIsCalculating] = useState(false)
 
   const closeTimerRef = useRef<number | null>(null)
   const enterTimerRef = useRef<number | null>(null)
   const isClosingRef = useRef(false)
+  const calculateOperationRef = useRef(new SinglePendingOperation())
 
   const navigateBack = () => {
     if (window.history.length > 1) {
@@ -230,6 +234,7 @@ function ScheduleIntersectionPage() {
     }
 
     try {
+      assertScheduleTextFileSize(file, 'WakeUp')
       const content = await file.text()
       const scheduleData = parseWakeupScheduleText(content)
       openExternalNameModal(scheduleData, 'WakeUp')
@@ -248,6 +253,7 @@ function ScheduleIntersectionPage() {
     }
 
     try {
+      assertScheduleTextFileSize(file, 'QMS')
       const content = await file.text()
       const parsedQms = parseQmsScheduleText(content)
       openExternalNameModal(parsedQms.scheduleData, 'QMS')
@@ -266,6 +272,7 @@ function ScheduleIntersectionPage() {
     }
 
     try {
+      assertScheduleTextFileSize(file, '华工教务 HTML')
       const html = await file.text()
       const scheduleData = parseScutScheduleHtml(html, {
         fallbackSemesterStartDate: getSemesterStartDate(),
@@ -300,7 +307,7 @@ function ScheduleIntersectionPage() {
 
   const selectedLocalSchedule = loadSavedScheduleById(selectedLocalScheduleId)
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!selectedLocalSchedule) {
       messageApi.error('请先选择本地课表')
       return
@@ -311,33 +318,40 @@ function ScheduleIntersectionPage() {
       return
     }
 
-    const normalizedLocalUserName = localUserName.trim() || 'Kozumi'
-    const participants = [
-      {
-        name: normalizedLocalUserName,
-        scheduleData: selectedLocalSchedule.scheduleData,
-        timeSlotPresetId: selectedLocalSchedule.timeSlotPresetId,
-      },
-      ...externalSchedules.map((item) => ({
-        name: item.name,
-        scheduleData: item.scheduleData,
-        timeSlotPresetId: 'builtIn' as const,
-      })),
-    ]
+    await calculateOperationRef.current.run(async () => {
+      try {
+        const normalizedLocalUserName = localUserName.trim() || 'Kozumi'
+        const participants = [
+          {
+            name: normalizedLocalUserName,
+            scheduleData: selectedLocalSchedule.scheduleData,
+            timeSlotPresetId: selectedLocalSchedule.timeSlotPresetId,
+          },
+          ...externalSchedules.map((item) => ({
+            name: item.name,
+            scheduleData: item.scheduleData,
+            timeSlotPresetId: 'builtIn' as const,
+          })),
+        ]
 
-    const intersectionScheduleData = buildIntersectionSchedule(participants, displayMode, '课表取交集')
-    const defaultSaveName = [...externalSchedules.map((item) => item.name), normalizedLocalUserName].join('/')
-    const saved = saveIntersectionPreviewPayload({
-      scheduleData: intersectionScheduleData,
-      defaultSaveName,
-    })
+        const intersectionScheduleData = buildIntersectionSchedule(participants, displayMode, '课表取交集')
+        const defaultSaveName = [...externalSchedules.map((item) => item.name), normalizedLocalUserName].join('/')
+        const saved = saveIntersectionPreviewPayload({
+          scheduleData: intersectionScheduleData,
+          defaultSaveName,
+        })
 
-    if (!saved) {
-      messageApi.error('临时课表生成失败，请检查浏览器存储空间')
-      return
-    }
+        if (!saved) {
+          messageApi.error('临时课表生成失败，请检查浏览器存储空间')
+          return
+        }
 
-    navigate('/courses/intersection-preview')
+        navigate('/courses/intersection-preview')
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '临时课表生成失败'
+        messageApi.error(errorMessage)
+      }
+    }, setIsCalculating)
   }
 
   return (
@@ -436,8 +450,16 @@ function ScheduleIntersectionPage() {
         </div>
 
         <div className='mine-button-group'>
-          <button type='button' className='mine-group-button schedule-settings-action' onClick={handleCalculate}>
-            计算并查看临时课表
+          <button
+            type='button'
+            className='mine-group-button schedule-settings-action'
+            onClick={() => {
+              void handleCalculate()
+            }}
+            disabled={isCalculating}
+            aria-busy={isCalculating}
+          >
+            {isCalculating ? '正在计算临时课表...' : '计算并查看临时课表'}
           </button>
         </div>
       </div>

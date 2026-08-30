@@ -1,0 +1,108 @@
+%PDF-1.4
+%TEST-SYNTHETIC-SCUT-PDF
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UCS2-H /DescendantFonts [7 0 R] /ToUnicode 8 0 R >>
+endobj
+6 0 obj
+<< /Length 267 >>
+stream
+q
+0 G
+0.65 w
+BT /F1 18 Tf 255 532 Td (UNSUPPORTED GENERIC TABLE EXPORT) Tj ET
+90 215 660 260 re S
+BT /F1 12 Tf 125 418 Td (TEST-COURSE-UNSUPPORTED) Tj ET
+BT /F1 12 Tf 125 378 Td (TEST-TEACHER-UNSUPPORTED) Tj ET
+BT /F1 12 Tf 125 338 Td (TEST-ROOM-UNSUPPORTED) Tj ET
+Q
+endstream
+endobj
+7 0 obj
+<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> /DW 1000 >>
+endobj
+8 0 obj
+<< /Length 799 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def
+/CMapName /TEST-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+34 beginbfchar
+<534E> <534E>
+<5357> <5357>
+<7406> <7406>
+<5DE5> <5DE5>
+<5927> <5927>
+<5B66> <5B66>
+<751F> <751F>
+<4E2A> <4E2A>
+<4EBA> <4EBA>
+<8BFE> <8BFE>
+<8868> <8868>
+<5E74> <5E74>
+<671F> <671F>
+<53F7> <53F7>
+<6821> <6821>
+<533A> <533A>
+<7F16> <7F16>
+<8282> <8282>
+<6B21> <6B21>
+<661F> <661F>
+<4E00> <4E00>
+<4E8C> <4E8C>
+<4E09> <4E09>
+<56DB> <56DB>
+<4E94> <4E94>
+<516D> <516D>
+<65E5> <65E5>
+<7A0B> <7A0B>
+<5468> <5468>
+<6559> <6559>
+<5E08> <5E08>
+<5730> <5730>
+<70B9> <70B9>
+<5206> <5206>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+endstream
+endobj
+9 0 obj
+<< /Title (TEST-SCUT-FIXED-LAYOUT-UNSUPPORTED) /Author (TEST-FIXTURE-GENERATOR) /Creator (scripts/generateScutPdfFixtures.mjs) >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000034 00000 n 
+0000000083 00000 n 
+0000000140 00000 n 
+0000000276 00000 n 
+0000000373 00000 n 
+0000000512 00000 n 
+0000000829 00000 n 
+0000000987 00000 n 
+0000001837 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R /Info 9 0 R >>
+startxref
+1982
+%%EOF

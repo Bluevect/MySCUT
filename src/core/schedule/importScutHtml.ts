@@ -1,4 +1,5 @@
 import { DEFAULT_SCUT_TIME_SLOTS } from './defaultTimeSlots'
+import { assertScheduleTextByteLength } from './importLimits'
 import { normalizeWakeupStartDate } from './importWakeup'
 import type { ScheduleCourse, ScheduleData, ScheduleLesson } from './types'
 
@@ -233,6 +234,7 @@ function parseScutHtmlDetailEntries(document: Document) {
 }
 
 export function parseScutScheduleHtml(html: string, options: ParseScutHtmlOptions): ScheduleData {
+  assertScheduleTextByteLength(html, '华工教务 HTML')
   const parser = new DOMParser()
   const document = parser.parseFromString(html, 'text/html')
 

@@ -50,16 +50,40 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+function isScheduleSource(value: unknown): value is ScheduleData['source'] {
+  return value === 'wakeup' || value === 'scutHtml' || value === 'scutPdf' || value === 'intersection'
+}
+
+function isScutPdfRaw(value: unknown) {
+  if (!isObject(value) || value.kind !== 'scutPdf') {
+    return false
+  }
+
+  return (
+    (typeof value.sourceFileName === 'string' || value.sourceFileName === null) &&
+    (typeof value.byteLength === 'number' || value.byteLength === null) &&
+    (typeof value.pageCount === 'number' || value.pageCount === null) &&
+    (typeof value.pdfjsVersion === 'string' || value.pdfjsVersion === null) &&
+    (typeof value.extractedAt === 'string' || value.extractedAt === null) &&
+    value.layout === 'scut-student-timetable-v1' &&
+    value.parserVersion === 1
+  )
+}
+
 function isScheduleData(value: unknown): value is ScheduleData {
   if (!isObject(value) || value.version !== 1) {
     return false
   }
 
-  if (value.source !== 'wakeup' && value.source !== 'scutHtml' && value.source !== 'intersection') {
+  if (!isScheduleSource(value.source)) {
     return false
   }
 
-  return isObject(value.table) && Array.isArray(value.courses) && Array.isArray(value.lessons)
+  if (!isObject(value.table) || !Array.isArray(value.courses) || !Array.isArray(value.lessons)) {
+    return false
+  }
+
+  return value.source !== 'scutPdf' || isScutPdfRaw(value.raw)
 }
 
 function isSavedSchedule(value: unknown): value is SavedSchedule {
@@ -70,6 +94,7 @@ function isSavedSchedule(value: unknown): value is SavedSchedule {
   if (
     typeof value.id !== 'string' ||
     typeof value.name !== 'string' ||
+    !isScheduleSource(value.source) ||
     typeof value.themeId !== 'string' ||
     typeof value.semesterStartDate !== 'string' ||
     typeof value.createdAt !== 'number'
@@ -88,7 +113,7 @@ function isSavedSchedule(value: unknown): value is SavedSchedule {
     return false
   }
 
-  return isScheduleData(value.scheduleData)
+  return isScheduleData(value.scheduleData) && value.source === value.scheduleData.source
 }
 
 function isScheduleLibrary(value: unknown): value is ScheduleLibrary {

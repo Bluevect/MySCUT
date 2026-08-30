@@ -5,10 +5,12 @@ import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
+import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
 import {
   getAutoSimplifyScheduleHintEnabled,
   setAutoSimplifyScheduleHintEnabled,
 } from '../../../core/schedule/displaySettings'
+import { assertScheduleTextFileSize } from '../../../core/schedule/importLimits'
 import { parseQmsScheduleText } from '../../../core/schedule/importQms'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
@@ -68,6 +70,19 @@ const TIME_SLOT_PRESET_SELECTOR_OPTIONS = TIME_SLOT_PRESET_OPTIONS.map((preset) 
   label: preset.name,
 }))
 
+function getScheduleSourceLabel(source: ScheduleData['source']) {
+  switch (source) {
+    case 'wakeup':
+      return 'WakeUp'
+    case 'scutHtml':
+      return '华工教务 HTML'
+    case 'scutPdf':
+      return '华工教务 PDF'
+    case 'intersection':
+      return '课表交集'
+  }
+}
+
 function formatExportTimestamp(date: Date) {
   const pad = (value: number) => value.toString().padStart(2, '0')
 
@@ -104,6 +119,7 @@ function ScheduleSettingsPage() {
   const [htmlImportMethod, setHtmlImportMethod] = useState<HtmlImportMethod>('file')
   const [isHtmlInputModalOpen, setIsHtmlInputModalOpen] = useState(false)
   const [htmlInputText, setHtmlInputText] = useState('')
+  const [isImportPending, setIsImportPending] = useState(false)
   const [isScheduleSwitchModalOpen, setIsScheduleSwitchModalOpen] = useState(false)
   const [isScheduleDeleteModalOpen, setIsScheduleDeleteModalOpen] = useState(false)
   const [deleteTargetScheduleId, setDeleteTargetScheduleId] = useState('')
@@ -134,6 +150,7 @@ function ScheduleSettingsPage() {
   const closeTimerRef = useRef<number | null>(null)
   const enterTimerRef = useRef<number | null>(null)
   const isClosingRef = useRef(false)
+  const importOperationRef = useRef(new SinglePendingOperation())
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
 
   const navigateBack = () => {
@@ -197,6 +214,10 @@ function ScheduleSettingsPage() {
     setTimeSlotPresetId(activeSchedule?.timeSlotPresetId ?? 'builtIn')
     setSavedSchedules(listSavedSchedules())
   }
+
+  const runImportOperation = (operation: () => Promise<void>) => (
+    importOperationRef.current.run(operation, setIsImportPending)
+  )
 
   const handleClose = () => {
     startClosingTransition()
@@ -271,16 +292,18 @@ function ScheduleSettingsPage() {
       return
     }
 
-    try {
-      const compressedQmsText = await navigator.clipboard.readText()
-      const compressedQmsModule = await import('../../../core/schedule/compressedQms')
-      const decodeCompressedQmsText = compressedQmsModule.decodeCompressedQmsText
-      const qmsText = await decodeCompressedQmsText(compressedQmsText)
-      await handleImportQmsText(qmsText)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '压缩QMS导入失败'
-      messageApi.error(errorMessage)
-    }
+    await runImportOperation(async () => {
+      try {
+        const compressedQmsText = await navigator.clipboard.readText()
+        const compressedQmsModule = await import('../../../core/schedule/compressedQms')
+        const decodeCompressedQmsText = compressedQmsModule.decodeCompressedQmsText
+        const qmsText = await decodeCompressedQmsText(compressedQmsText)
+        await handleImportQmsText(qmsText)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '压缩QMS导入失败'
+        messageApi.error(errorMessage)
+      }
+    })
   }
 
   const handleOpenHtmlImportMethod = () => {
@@ -304,12 +327,14 @@ function ScheduleSettingsPage() {
 
     setIsHtmlImportMethodModalOpen(false)
 
-    try {
-      const clipboardText = await navigator.clipboard.readText()
-      await handleImportScutHtml(clipboardText)
-    } catch {
-      messageApi.error('无法读取剪贴板，请检查浏览器权限')
-    }
+    await runImportOperation(async () => {
+      try {
+        const clipboardText = await navigator.clipboard.readText()
+        await handleImportScutHtml(clipboardText)
+      } catch {
+        messageApi.error('无法读取剪贴板，请检查浏览器权限')
+      }
+    })
   }
 
   const handleOpenScheduleSwitch = () => {
@@ -431,32 +456,36 @@ function ScheduleSettingsPage() {
     }
 
     try {
-      const content = await file.text()
-      const scheduleData = parseWakeupScheduleText(content)
-      const selectedThemePreset = resolveScheduleImportThemePreset(scheduleThemeId)
-      const nextThemeId = selectedThemePreset.id
-      const nextTimeSlotPresetId = resolveNearestCampusTimeSlotPresetId(scheduleData.timeSlots)
-      const nextSemesterStartDate = scheduleData.table.startDate || semesterStartDate
-      const isSaved = await persistImportedSchedule(scheduleData, nextSemesterStartDate, nextThemeId, nextTimeSlotPresetId)
-      if (!isSaved) {
-        event.target.value = ''
-        return
-      }
+      await runImportOperation(async () => {
+        try {
+          assertScheduleTextFileSize(file, 'WakeUp')
+          const content = await file.text()
+          const scheduleData = parseWakeupScheduleText(content)
+          const selectedThemePreset = resolveScheduleImportThemePreset(scheduleThemeId)
+          const nextThemeId = selectedThemePreset.id
+          const nextTimeSlotPresetId = resolveNearestCampusTimeSlotPresetId(scheduleData.timeSlots)
+          const nextSemesterStartDate = scheduleData.table.startDate || semesterStartDate
+          const isSaved = await persistImportedSchedule(scheduleData, nextSemesterStartDate, nextThemeId, nextTimeSlotPresetId)
+          if (!isSaved) {
+            return
+          }
 
-      setScheduleThemeId(nextThemeId)
-      setScheduleThemeIdState(nextThemeId)
-      setTimeSlotPresetId(nextTimeSlotPresetId)
+          setScheduleThemeId(nextThemeId)
+          setScheduleThemeIdState(nextThemeId)
+          setTimeSlotPresetId(nextTimeSlotPresetId)
 
-      saveSemesterStartDate(nextSemesterStartDate)
-      setSemesterStartDate(nextSemesterStartDate)
-      const matchedTimeSlotName = getTimeSlotPresetName(nextTimeSlotPresetId)
-      messageApi.success(`课表导入成功，已应用配色：${selectedThemePreset.name}，自动匹配时间表：${matchedTimeSlotName}`)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '课表导入失败'
-      messageApi.error(errorMessage)
+          saveSemesterStartDate(nextSemesterStartDate)
+          setSemesterStartDate(nextSemesterStartDate)
+          const matchedTimeSlotName = getTimeSlotPresetName(nextTimeSlotPresetId)
+          messageApi.success(`课表导入成功，已应用配色：${selectedThemePreset.name}，自动匹配时间表：${matchedTimeSlotName}`)
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : '课表导入失败'
+          messageApi.error(errorMessage)
+        }
+      })
+    } finally {
+      event.target.value = ''
     }
-
-    event.target.value = ''
   }
 
   const handleImportQmsText = async (content: string) => {
@@ -498,8 +527,14 @@ function ScheduleSettingsPage() {
     }
 
     try {
-      const content = await file.text()
-      await handleImportQmsText(content)
+      await runImportOperation(async () => {
+        assertScheduleTextFileSize(file, 'QMS')
+        const content = await file.text()
+        await handleImportQmsText(content)
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'QMS 文件读取失败，请重新选择文件后重试'
+      messageApi.error(errorMessage)
     } finally {
       event.target.value = ''
     }
@@ -512,8 +547,14 @@ function ScheduleSettingsPage() {
     }
 
     try {
-      const html = await file.text()
-      await handleImportScutHtml(html)
+      await runImportOperation(async () => {
+        assertScheduleTextFileSize(file, '华工教务 HTML')
+        const html = await file.text()
+        await handleImportScutHtml(html)
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'HTML 文件读取失败，请重新选择文件后重试'
+      messageApi.error(errorMessage)
     } finally {
       event.target.value = ''
     }
@@ -547,9 +588,11 @@ function ScheduleSettingsPage() {
       return
     }
 
-    await handleImportScutHtml(htmlInputText)
-    setIsHtmlInputModalOpen(false)
-    setHtmlInputText('')
+    const result = await runImportOperation(() => handleImportScutHtml(htmlInputText))
+    if (result.started) {
+      setIsHtmlInputModalOpen(false)
+      setHtmlInputText('')
+    }
   }
 
   const handleSwitchSchedule = async (scheduleId: string) => {
@@ -724,8 +767,10 @@ function ScheduleSettingsPage() {
             type='button'
             className='mine-group-button schedule-settings-action'
             onClick={handleOpenImport}
+            disabled={isImportPending}
+            aria-busy={isImportPending}
           >
-            导入课表
+            {isImportPending ? '正在导入课表...' : '导入课表'}
           </button>
           <button
             type='button'
@@ -802,6 +847,7 @@ function ScheduleSettingsPage() {
         type='file'
         accept='.wakeup_schedule,.json,.txt,.bin'
         className='schedule-settings-file-input'
+        disabled={isImportPending}
         onChange={handleImportSchedule}
       />
 
@@ -810,6 +856,7 @@ function ScheduleSettingsPage() {
         type='file'
         accept='.qms,.json,.txt'
         className='schedule-settings-file-input'
+        disabled={isImportPending}
         onChange={handleImportQms}
       />
 
@@ -818,6 +865,7 @@ function ScheduleSettingsPage() {
         type='file'
         accept='.html,.htm,.mht,.mhtml,.txt'
         className='schedule-settings-file-input'
+        disabled={isImportPending}
         onChange={handleImportHtmlFile}
       />
 
@@ -852,24 +900,24 @@ function ScheduleSettingsPage() {
         footer={null}
       >
         <div className='schedule-import-list'>
-          <button type='button' className='schedule-import-item' onClick={handleImportWakeupEntry}>
+          <button type='button' className='schedule-import-item' onClick={handleImportWakeupEntry} disabled={isImportPending}>
             从 WakeUp 导入
           </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportHtmlEntry}>
+          <button type='button' className='schedule-import-item' onClick={handleImportHtmlEntry} disabled={isImportPending}>
             从华工教务HTML导入
           </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportPdfEntry}>
+          <button type='button' className='schedule-import-item' onClick={handleImportPdfEntry} disabled={isImportPending}>
             从华工教务PDF导入
           </button>
           {isAndroidNative && (
-            <button type='button' className='schedule-import-item' onClick={handleImportScutJwEntry}>
+            <button type='button' className='schedule-import-item' onClick={handleImportScutJwEntry} disabled={isImportPending}>
               从华工教务系统导入
             </button>
           )}
-          <button type='button' className='schedule-import-item' onClick={handleImportQmsEntry}>
+          <button type='button' className='schedule-import-item' onClick={handleImportQmsEntry} disabled={isImportPending}>
             从启梦文件QMS导入
           </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportCompressedQmsFromClipboardEntry}>
+          <button type='button' className='schedule-import-item' onClick={handleImportCompressedQmsFromClipboardEntry} disabled={isImportPending}>
             从剪贴板压缩QMS导入
           </button>
         </div>
@@ -880,6 +928,9 @@ function ScheduleSettingsPage() {
         open={isHtmlImportMethodModalOpen}
         onOk={handleConfirmHtmlImportMethod}
         onCancel={() => setIsHtmlImportMethodModalOpen(false)}
+        confirmLoading={isImportPending}
+        okButtonProps={{ disabled: isImportPending }}
+        cancelButtonProps={{ disabled: isImportPending }}
         okText='继续'
         cancelText='取消'
       >
@@ -900,6 +951,9 @@ function ScheduleSettingsPage() {
         open={isHtmlInputModalOpen}
         onOk={handleConfirmHtmlInput}
         onCancel={() => setIsHtmlInputModalOpen(false)}
+        confirmLoading={isImportPending}
+        okButtonProps={{ disabled: isImportPending }}
+        cancelButtonProps={{ disabled: isImportPending }}
         okText='确定'
         cancelText='取消'
       >
@@ -930,7 +984,7 @@ function ScheduleSettingsPage() {
                 >
                   <span>{schedule.name}</span>
                   <span className='schedule-switch-meta'>
-                    来源：{schedule.source === 'wakeup' ? 'WakeUp' : '华工教务HTML'}
+                    来源：{getScheduleSourceLabel(schedule.source)}
                   </span>
                 </button>
                 <button
@@ -986,7 +1040,7 @@ function ScheduleSettingsPage() {
               >
                 <span>{schedule.name}</span>
                 <span className='schedule-switch-meta'>
-                  来源：{schedule.source === 'wakeup' ? 'WakeUp' : '华工教务HTML'}
+                  来源：{getScheduleSourceLabel(schedule.source)}
                 </span>
               </button>
             ))

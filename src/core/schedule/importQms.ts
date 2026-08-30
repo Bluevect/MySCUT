@@ -1,4 +1,6 @@
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId, WakeupTimeSlot } from './types'
+import { ScheduleImportError } from './importErrors'
+import { assertScheduleTextByteLength } from './importLimits'
 import { trimRedundantTimeSlots } from './timeSlotTrim'
 
 type QmsPayloadV1 = {
@@ -43,6 +45,26 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+function isScheduleSource(value: unknown): value is ScheduleData['source'] {
+  return value === 'wakeup' || value === 'scutHtml' || value === 'scutPdf' || value === 'intersection'
+}
+
+function isScutPdfRaw(value: unknown) {
+  if (!isObject(value) || value.kind !== 'scutPdf') {
+    return false
+  }
+
+  return (
+    (typeof value.sourceFileName === 'string' || value.sourceFileName === null) &&
+    (typeof value.byteLength === 'number' || value.byteLength === null) &&
+    (typeof value.pageCount === 'number' || value.pageCount === null) &&
+    (typeof value.pdfjsVersion === 'string' || value.pdfjsVersion === null) &&
+    (typeof value.extractedAt === 'string' || value.extractedAt === null) &&
+    value.layout === 'scut-student-timetable-v1' &&
+    value.parserVersion === 1
+  )
+}
+
 function normalizeTimeSlotPresetId(value: unknown): TimeSlotPresetId {
   if (value === 'universityTown' || value === 'wushan' || value === 'international' || value === 'builtIn' || value === 'union') {
     return value
@@ -60,7 +82,7 @@ function isScheduleData(value: unknown): value is ScheduleData {
     return false
   }
 
-  if (value.source !== 'wakeup' && value.source !== 'scutHtml' && value.source !== 'intersection') {
+  if (!isScheduleSource(value.source)) {
     return false
   }
 
@@ -68,7 +90,7 @@ function isScheduleData(value: unknown): value is ScheduleData {
     return false
   }
 
-  return true
+  return value.source !== 'scutPdf' || isScutPdfRaw(value.raw)
 }
 
 function isSavedSchedule(value: unknown): value is SavedSchedule {
@@ -76,7 +98,7 @@ function isSavedSchedule(value: unknown): value is SavedSchedule {
     return false
   }
 
-  if (typeof value.id !== 'string' || typeof value.name !== 'string') {
+  if (typeof value.id !== 'string' || typeof value.name !== 'string' || !isScheduleSource(value.source)) {
     return false
   }
 
@@ -88,7 +110,7 @@ function isSavedSchedule(value: unknown): value is SavedSchedule {
     return false
   }
 
-  return true
+  return value.source === value.scheduleData.source
 }
 
 function isQmsPayloadV1(value: unknown): value is QmsPayloadV1 {
@@ -127,14 +149,15 @@ function isQmsPayloadV2(value: unknown): value is QmsPayloadV2 {
     return false
   }
 
-  if (schedule.source !== 'wakeup' && schedule.source !== 'scutHtml' && schedule.source !== 'intersection') {
+  if (!isScheduleSource(schedule.source)) {
     return false
   }
 
   const scheduleData = schedule.scheduleData
   if (
     scheduleData.version !== 1 ||
-    (scheduleData.source !== 'wakeup' && scheduleData.source !== 'scutHtml' && scheduleData.source !== 'intersection') ||
+    !isScheduleSource(scheduleData.source) ||
+    schedule.source !== scheduleData.source ||
     typeof scheduleData.importedAt !== 'number' ||
     !isObject(scheduleData.table) ||
     !Array.isArray(scheduleData.courses) ||
@@ -148,6 +171,26 @@ function isQmsPayloadV2(value: unknown): value is QmsPayloadV2 {
   }
 
   return true
+}
+
+function createQmsImportedRaw(source: ScheduleData['source']): ScheduleData['raw'] {
+  if (source === 'scutPdf') {
+    return {
+      kind: 'scutPdf',
+      sourceFileName: null,
+      byteLength: null,
+      pageCount: null,
+      pdfjsVersion: null,
+      extractedAt: null,
+      layout: 'scut-student-timetable-v1',
+      parserVersion: 1,
+    }
+  }
+
+  return {
+    kind: 'scutHtml',
+    html: '',
+  }
 }
 
 function sanitizeScheduleDataTimeSlots(scheduleData: ScheduleData) {
@@ -196,10 +239,7 @@ function parseFromV2(payload: QmsPayloadV2): ParsedQmsResult {
     timeSlots: timeSlotPresetId === 'builtIn' ? trimmedTimeSlots : [],
     courses: schedule.scheduleData.courses,
     lessons: schedule.scheduleData.lessons,
-    raw: {
-      kind: 'scutHtml',
-      html: '',
-    },
+    raw: createQmsImportedRaw(schedule.scheduleData.source),
   }
 
   return {
@@ -212,12 +252,13 @@ function parseFromV2(payload: QmsPayloadV2): ParsedQmsResult {
 }
 
 export function parseQmsScheduleText(text: string): ParsedQmsResult {
+  assertScheduleTextByteLength(text, 'QMS')
   let parsed: unknown
 
   try {
     parsed = JSON.parse(text)
-  } catch {
-    throw new Error('QMS 文件解析失败：JSON 格式无效')
+  } catch (error) {
+    throw new ScheduleImportError('qms-invalid-json', 'QMS 文件解析失败：JSON 格式无效', error)
   }
 
   if (isQmsPayloadV1(parsed)) {
@@ -228,5 +269,5 @@ export function parseQmsScheduleText(text: string): ParsedQmsResult {
     return parseFromV2(parsed)
   }
 
-  throw new Error('QMS 文件结构无效或版本不受支持')
+  throw new ScheduleImportError('qms-invalid-structure', 'QMS 文件结构无效或版本不受支持')
 }
