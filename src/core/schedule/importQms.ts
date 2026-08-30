@@ -1,4 +1,5 @@
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId, WakeupTimeSlot } from './types'
+import { ScheduleImportError } from './importErrors'
 import { assertScheduleTextByteLength } from './importLimits'
 import { trimRedundantTimeSlots } from './timeSlotTrim'
 
@@ -256,8 +257,8 @@ export function parseQmsScheduleText(text: string): ParsedQmsResult {
 
   try {
     parsed = JSON.parse(text)
-  } catch {
-    throw new Error('QMS 文件解析失败：JSON 格式无效')
+  } catch (error) {
+    throw new ScheduleImportError('qms-invalid-json', 'QMS 文件解析失败：JSON 格式无效', error)
   }
 
   if (isQmsPayloadV1(parsed)) {
@@ -268,5 +269,5 @@ export function parseQmsScheduleText(text: string): ParsedQmsResult {
     return parseFromV2(parsed)
   }
 
-  throw new Error('QMS 文件结构无效或版本不受支持')
+  throw new ScheduleImportError('qms-invalid-structure', 'QMS 文件结构无效或版本不受支持')
 }

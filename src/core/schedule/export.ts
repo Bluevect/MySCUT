@@ -148,16 +148,9 @@ function convertCourseToWakeup(course: ScheduleCourse): WakeupCourse {
   }
 }
 
-function lessonTimeFromNode(timeSlots: WakeupTimeSlot[], node: number) {
-  const slot = timeSlots.find((item) => item.node === node)
-  return {
-    startTime: slot?.startTime ?? '',
-    endTime: slot?.endTime ?? '',
-  }
-}
-
 function convertLessonToWakeup(lesson: ScheduleLesson, timeSlots: WakeupTimeSlot[]): WakeupLesson {
-  const fallbackTimes = lessonTimeFromNode(timeSlots, lesson.startNode)
+  const startSlot = timeSlots.find((item) => item.node === lesson.startNode)
+  const endSlot = timeSlots.find((item) => item.node === lesson.endNode)
   const lessonSpan = Math.max(1, lesson.endNode - lesson.startNode + 1)
 
   return {
@@ -169,8 +162,8 @@ function convertLessonToWakeup(lesson: ScheduleLesson, timeSlots: WakeupTimeSlot
     endWeek: lesson.endWeek,
     step: lessonSpan,
     ownTime: lesson.ownTime,
-    startTime: lesson.startTime || fallbackTimes.startTime,
-    endTime: lesson.endTime || fallbackTimes.endTime,
+    startTime: lesson.startTime || startSlot?.startTime || '',
+    endTime: lesson.endTime || endSlot?.endTime || '',
     room: lesson.room,
     teacher: lesson.teacher,
     type: lesson.type,
