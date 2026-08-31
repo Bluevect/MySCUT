@@ -20,6 +20,7 @@ import {
   loadActiveScheduleEntry,
   loadSavedScheduleById,
   saveScheduleDataWithOptions,
+  setActiveSchedulePreferredName,
   setActiveScheduleThemeId,
   setActiveScheduleTimeSlotPreset,
   switchActiveSchedule,
@@ -114,6 +115,8 @@ function ScheduleSettingsPage() {
   const qmsFileInputRef = useRef<HTMLInputElement>(null)
   const htmlFileInputRef = useRef<HTMLInputElement>(null)
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
+  const [isChangeScheduleNameModalOpen, setIsChangeScheduleNameModalOpen] = useState(false)
+  const [newScheduleNameInputText, setNewScheduleNameInputText] = useState('')
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isHtmlImportMethodModalOpen, setIsHtmlImportMethodModalOpen] = useState(false)
   const [htmlImportMethod, setHtmlImportMethod] = useState<HtmlImportMethod>('file')
@@ -230,6 +233,26 @@ function ScheduleSettingsPage() {
 
   const handleCloseDateModal = () => {
     setIsDateModalOpen(false)
+  }
+
+  const handleOpenChangeScheduleNameModal = () => {
+    setIsChangeScheduleNameModalOpen(true)
+    setNewScheduleNameInputText(scheduleName)
+  }
+
+  const handleConfirmChangeScheduleName = () => {
+    const activeSchedule = loadActiveScheduleEntry()
+
+    if (!activeSchedule) {
+      messageApi.error('找不到该课表！')
+      return
+    }
+
+    setActiveSchedulePreferredName(newScheduleNameInputText)
+
+    setScheduleName(newScheduleNameInputText)
+    setIsChangeScheduleNameModalOpen(false)
+    messageApi.success('修改成功！')
   }
 
   const handleConfirmDate = () => {
@@ -786,6 +809,13 @@ function ScheduleSettingsPage() {
           >
             切换课表
           </button>
+          <button
+            type='button'
+            className='mine-group-button schedule-settings-action'
+            onClick={handleOpenChangeScheduleNameModal}
+          >
+            修改课表名称
+          </button>
         </div>
         <p className='schedule-settings-current-date'>
           当前课表：{scheduleName || '未导入'}
@@ -999,6 +1029,22 @@ function ScheduleSettingsPage() {
             ))
           )}
         </div>
+      </Modal>
+
+      <Modal
+        title='修改课表名称'
+        open={isChangeScheduleNameModalOpen}
+        onOk={() => handleConfirmChangeScheduleName()}
+        onCancel={() => setIsChangeScheduleNameModalOpen(false)}
+        okText='确定'
+        cancelText='取消'
+      >
+        <TextArea
+          rows={5}
+          placeholder='请填入要修改的名称'
+          value={newScheduleNameInputText}
+          onChange={(event) => setNewScheduleNameInputText(event.target.value)}
+        />
       </Modal>
 
       <Modal
