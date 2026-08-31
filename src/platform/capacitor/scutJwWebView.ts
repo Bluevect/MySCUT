@@ -310,6 +310,7 @@ export async function openScutJwWebView(
       persistWebViewData: false,
       preventDeeplink: true,
       toBack: true,
+      useTopInset: true,
     })
 
     webViewId = openedWebView.id

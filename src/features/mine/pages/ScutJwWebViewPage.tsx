@@ -16,8 +16,8 @@ import {
   openScutJwWebView,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
-import { restoreWebViewStatusBar, setWebViewStatusBar } from '../../../platform/capacitor/statusBarWebView'
 import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
+import { getStatusBarHeight } from '../../../platform/capacitor/getStatusBarHeight'
 
 type WebViewLocationState = {
   url?: string
@@ -130,12 +130,14 @@ function ScutJwWebViewPage() {
     if (!touch) {
       return
     }
+
+    const statusBarHeight = await getStatusBarHeight()
     
     event.preventDefault()
     void dispatchTouchEvent({
       type: event.type as 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
       x: touch.clientX,
-      y: touch.clientY,
+      y: touch.clientY - statusBarHeight,
     }).catch((error: unknown) => {
       console.error('[ScutJwImport] Failed to dispatch touch event:', error)
     })
@@ -156,9 +158,6 @@ function ScutJwWebViewPage() {
     
     document.documentElement.style.colorScheme = ''
     document.body.style.background = 'transparent'
-
-    // Prevent messageApi blinking under android status bar
-    void setWebViewStatusBar()
 
     let isCancelled = false
 
@@ -210,9 +209,6 @@ function ScutJwWebViewPage() {
       }
       document.documentElement.style.colorScheme = previousColorScheme
       document.body.style.backgroundColor = ''
-
-      // Restore status bar
-      void restoreWebViewStatusBar()
 
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
