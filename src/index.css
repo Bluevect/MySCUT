@@ -2021,6 +2021,15 @@ body {
   }
 }
 
+.scut-jw-webview-page {
+  height: auto;
+  min-height: 100vh;
+  background: transparent;
+  padding: 0 16px calc(24px + var(--safe-bottom-inset));
+  max-width: 560px;
+  margin: 0 auto;
+}
+
 .scut-jw-access-group {
   margin: 0;
   padding: 0;

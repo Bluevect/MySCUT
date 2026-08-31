@@ -537,8 +537,9 @@ function CoursesPage() {
       return
     }
 
-    messageApi.success(popupMessage)
-    navigate(location.pathname, { replace: true, state: null })
+    messageApi.success(popupMessage).then(() => {
+      navigate(location.pathname, { replace: true, state: null })
+    })
   }, [location, messageApi, navigate])
 
   useEffect(() => {
