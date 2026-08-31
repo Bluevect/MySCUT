@@ -435,6 +435,35 @@ export class ScheduleRepository {
     })
   }
 
+  async setActiveSchedulePreferredName(preferredName: string) {
+    return this.enqueueMutation(async () => {
+      const store = this.requireWritableStore()
+      if (this.snapshot === null) {
+        return false
+      }
+
+      const activeSchedule = this.snapshot.schedules.find(
+        (schedule) => schedule.id === this.snapshot?.activeScheduleId,
+      )
+      if (!activeSchedule) {
+        return false
+      }
+
+      const nextLibrary: ScheduleLibrary = {
+        ...this.snapshot,
+        schedules: this.snapshot.schedules.map((schedule) =>
+          schedule.id === activeSchedule.id
+            ? { ...schedule, name: preferredName }
+            : schedule,
+        ),
+      }
+
+      await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
+      this.snapshot = nextLibrary
+      return true
+    })
+  }
+
   async switchActiveSchedule(scheduleId: string) {
     return this.enqueueMutation(async () => {
       const store = this.requireWritableStore()
@@ -578,6 +607,10 @@ export function setActiveScheduleTimeSlotPreset(timeSlotPresetId: TimeSlotPreset
 
 export function setActiveScheduleThemeId(themeId: ScheduleThemeId) {
   return scheduleRepository.setActiveScheduleThemeId(themeId)
+}
+
+export function setActiveSchedulePreferredName(preferredName: string) {
+  return scheduleRepository.setActiveSchedulePreferredName(preferredName)
 }
 
 export function saveScheduleDataWithOptions(scheduleData: ScheduleData, options: SaveScheduleOptions) {
