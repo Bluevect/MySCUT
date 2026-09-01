@@ -72,11 +72,21 @@ type DispatchTouchEventOptions = {
   y: number
 }
 
+type BrowserPageLoadStartEvent = {
+  id?: string
+}
+
+type BrowserPageLoadedEvent = {
+  id?: string
+}
+
 type OpenScutJwWebViewOptions = {
   url: string
   onClose: () => void
   onError: (error: Error) => void
   onHtmlCaptured: (html: string) => void | Promise<void>
+  onBrowserPageLoadStart?: (event: BrowserPageLoadStartEvent) => void
+  onBrowserPageLoaded?: (event: BrowserPageLoadedEvent) => void
   top?: number
 }
 
@@ -108,19 +118,19 @@ async function removeListenerHandles(handles: PluginListenerHandle[]) {
 }
 
 export function hideActiveWebView() {
-  void InAppBrowser.hide()
+  return InAppBrowser.hide()
 }
 
 export function closeActiveWebView() {
-  void InAppBrowser.close()
+  return InAppBrowser.close()
 }
 
 export function goBackInActiveWebView() {
-  void InAppBrowser.goBack()
+  return InAppBrowser.goBack()
 }
 
 export function reloadActiveWebView() {
-  void InAppBrowser.reload()
+  return InAppBrowser.reload()
 }
 
 export async function dispatchTouchEvent(options: DispatchTouchEventOptions) {
@@ -226,7 +236,13 @@ export async function openScutJwWebView(
       }
     }))
 
+    listenerHandles.push(await InAppBrowser.addListener('browserPageLoadStart', (event) => {
+      options.onBrowserPageLoadStart?.(event)
+    }))
+
     listenerHandles.push(await InAppBrowser.addListener('browserPageLoaded', (event) => {
+      options.onBrowserPageLoaded?.(event)
+
       /*
         Don't use this guard.
         Button won't be injected in personal schedule page for some unknown reasons

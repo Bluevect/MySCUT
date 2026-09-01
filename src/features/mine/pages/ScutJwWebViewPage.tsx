@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -42,6 +42,8 @@ function ScutJwWebViewPage() {
   const statusBarHeightRef = useRef(0)
   const navbarHeightRef = useRef(0)
   const navbarRef = useRef<HTMLDivElement | null>(null)
+  const [isReloading, setIsReloading] = useState(false)
+  const [isGoingBack, setIsGoingBack] = useState(false)
 
   const importScheduleFromHtml = async (htmlText: string) => {
     const result = await importOperationRef.current.run(async () => {
@@ -104,7 +106,7 @@ function ScutJwWebViewPage() {
         }
 
         // Necessary to hide WebView, or navigation won't work!
-        hideActiveWebView()
+        void hideActiveWebView()
 
         navigate('/courses', {
           replace: true,
@@ -173,6 +175,7 @@ function ScutJwWebViewPage() {
 
     // Set body transparent
     const previousColorScheme = document.documentElement.style.colorScheme
+    const previousBackgroundColor = document.documentElement.style.backgroundColor
     const isDarkMode = document.documentElement.classList.contains('dark')
 
     if (isDarkMode) {
@@ -205,6 +208,14 @@ function ScutJwWebViewPage() {
           messageApi.error(error.message)
         },
         onHtmlCaptured: importScheduleFromHtml,
+        onBrowserPageLoadStart: () => {
+          setIsReloading(true)
+          setIsGoingBack(true)
+        },
+        onBrowserPageLoaded: () => {
+          setIsReloading(false)
+          setIsGoingBack(false)
+        },
         top: Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
       }).then((session) => {
         if (isCancelled) {
@@ -236,7 +247,7 @@ function ScutJwWebViewPage() {
         document.documentElement.classList.add('dark')
       }
       document.documentElement.style.colorScheme = previousColorScheme
-      document.body.style.backgroundColor = ''
+      document.body.style.backgroundColor = previousBackgroundColor
 
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
@@ -249,12 +260,12 @@ function ScutJwWebViewPage() {
         })
       }
 
-      closeActiveWebView()
+      void closeActiveWebView()
     }
   }, [isAndroidNative, messageApi, navigate, targetUrl])
 
-  const handleClose = () => {
-    closeActiveWebView()
+  const handleClose = async () => {
+    await closeActiveWebView()
 
     if (window.history.length > 1) {
       navigate(-1)
@@ -264,12 +275,26 @@ function ScutJwWebViewPage() {
     navigate('/mine/schedule-settings', { replace: true })
   }
 
-  const handleBack = () => {
-    goBackInActiveWebView()
+  const handleBack = async () => {
+    if (isGoingBack || isReloading) {
+      return
+    }
+
+    const result = await goBackInActiveWebView()
+    if (!result?.canGoBack) {
+      return
+    }
+
+    setIsGoingBack(true)
   }
 
-  const handleReload = () => {
-    reloadActiveWebView()
+  const handleReload = async () => {
+    if (isReloading || isGoingBack) {
+      return
+    }
+
+    setIsReloading(true)
+    await reloadActiveWebView()
   }
 
   return (
@@ -290,8 +315,18 @@ function ScutJwWebViewPage() {
         <p className='scut-jw-webview-nav-title'>从教务系统导入课表</p>
 
         <div className='scut-jw-webview-nav-group scut-jw-webview-nav-right'>
-          <CircleIconButton ariaLabel='返回上一页' icon={<LeftOutlined />} onClick={handleBack} />
-          <CircleIconButton ariaLabel='刷新页面' icon={<ReloadOutlined />} onClick={handleReload} />
+          <CircleIconButton
+            ariaLabel='返回上一页'
+            icon={<LeftOutlined />}
+            disabled={isGoingBack || isReloading}
+            onClick={handleBack}
+          />
+          <CircleIconButton
+            ariaLabel='刷新页面'
+            icon={<ReloadOutlined />}
+            disabled={isReloading || isGoingBack}
+            onClick={handleReload}
+          />
         </div>
       </header>
     </section>
