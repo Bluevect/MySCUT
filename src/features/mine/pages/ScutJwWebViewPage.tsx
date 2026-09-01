@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -12,12 +12,16 @@ import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/sched
 import {
   closeActiveWebView,
   dispatchTouchEvent,
+  goBackInActiveWebView,
   hideActiveWebView,
   openScutJwWebView,
+  reloadActiveWebView,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
 import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
 import { getStatusBarHeight } from '../../../platform/capacitor/getStatusBarHeight'
+import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
+import { CloseOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons'
 
 type WebViewLocationState = {
   url?: string
@@ -34,6 +38,10 @@ function ScutJwWebViewPage() {
 
   const targetUrl = (location.state as WebViewLocationState | null)?.url
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+
+  const statusBarHeightRef = useRef(0)
+  const navbarHeightRef = useRef(0)
+  const navbarRef = useRef<HTMLDivElement | null>(null)
 
   const importScheduleFromHtml = async (htmlText: string) => {
     const result = await importOperationRef.current.run(async () => {
@@ -127,24 +135,39 @@ function ScutJwWebViewPage() {
       ? event.changedTouches[0]
       : event.touches[0]
 
-    if (!touch) {
+    if (!touch || !statusBarHeightRef.current) {
       return
     }
 
-    const statusBarHeight = await getStatusBarHeight()
-    
+    if (touch.clientY <= statusBarHeightRef.current + navbarHeightRef.current) {
+      return
+    }
+
     event.preventDefault()
+
     void dispatchTouchEvent({
       type: event.type as 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
       x: touch.clientX,
-      y: touch.clientY - statusBarHeight,
+      y: touch.clientY - navbarHeightRef.current,
     }).catch((error: unknown) => {
       console.error('[ScutJwImport] Failed to dispatch touch event:', error)
     })
   }
 
+  useLayoutEffect(() => {
+    if (!navbarRef.current) {
+      return
+    }
+
+    navbarHeightRef.current = navbarRef.current.getBoundingClientRect().height
+  }, [])
+
   useEffect(() => {
     if (!isAndroidNative || !targetUrl) {
+      return
+    }
+
+    if (!navbarHeightRef.current) {
       return
     }
 
@@ -155,49 +178,54 @@ function ScutJwWebViewPage() {
     if (isDarkMode) {
       document.documentElement.classList.remove('dark')
     }
-    
+
     document.documentElement.style.colorScheme = ''
-    document.body.style.background = 'transparent'
+    document.body.style.backgroundColor = 'transparent'
 
     let isCancelled = false
 
-    void openScutJwWebView({
-      url: targetUrl,
-      onClose: () => {
-        if (isCancelled) {
-          return
-        }
+    getStatusBarHeight().then((value) => {
+      statusBarHeightRef.current = value
+    }).then(() => {
+      openScutJwWebView({
+        url: targetUrl,
+        onClose: () => {
+          if (isCancelled) {
+            return
+          }
 
-        webViewSessionRef.current = null
-        navigate('/mine/import-scut-jw', { replace: true })
-      },
-      onError: (error) => {
-        if (isCancelled) {
-          return
-        }
+          webViewSessionRef.current = null
+          navigate('/mine/import-scut-jw', { replace: true })
+        },
+        onError: (error) => {
+          if (isCancelled) {
+            return
+          }
 
-        messageApi.error(error.message)
-      },
-      onHtmlCaptured: importScheduleFromHtml,
-    }).then((session) => {
-      if (isCancelled) {
-        void session.close().catch(() => {
-          logScutJwImportDiagnostic({
-            stage: 'cancelled-session-close-failed',
-            targetUrl,
+          messageApi.error(error.message)
+        },
+        onHtmlCaptured: importScheduleFromHtml,
+        top: Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
+      }).then((session) => {
+        if (isCancelled) {
+          void session.close().catch(() => {
+            logScutJwImportDiagnostic({
+              stage: 'cancelled-session-close-failed',
+              targetUrl,
+            })
           })
-        })
-        return
-      }
+          return
+        }
 
-      webViewSessionRef.current = session
-    }).catch(() => {
-      if (isCancelled) {
-        return
-      }
+        webViewSessionRef.current = session
+      }).catch(() => {
+        if (isCancelled) {
+          return
+        }
 
-      messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
-      navigate('/mine/import-scut-jw', { replace: true })
+        messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
+        navigate('/mine/import-scut-jw', { replace: true })
+      })
     })
 
     return () => {
@@ -225,6 +253,25 @@ function ScutJwWebViewPage() {
     }
   }, [isAndroidNative, messageApi, navigate, targetUrl])
 
+  const handleClose = () => {
+    closeActiveWebView()
+
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/mine/schedule-settings', { replace: true })
+  }
+
+  const handleBack = () => {
+    goBackInActiveWebView()
+  }
+
+  const handleReload = () => {
+    reloadActiveWebView()
+  }
+
   return (
     <section
       className='scut-jw-webview-page'
@@ -234,6 +281,19 @@ function ScutJwWebViewPage() {
       onTouchStart={handleTouch}
     >
       {contextHolder}
+
+      <header ref={navbarRef} className='scut-jw-webview-navbar'>
+        <div className='scut-jw-webview-nav-group scut-jw-webview-nav-left'>
+          <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={handleClose} />
+        </div>
+
+        <p className='scut-jw-webview-nav-title'>从教务系统导入课表</p>
+
+        <div className='scut-jw-webview-nav-group scut-jw-webview-nav-right'>
+          <CircleIconButton ariaLabel='返回上一页' icon={<LeftOutlined />} onClick={handleBack} />
+          <CircleIconButton ariaLabel='刷新页面' icon={<ReloadOutlined />} onClick={handleReload} />
+        </div>
+      </header>
     </section>
   )
 }

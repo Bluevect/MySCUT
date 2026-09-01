@@ -4,6 +4,6 @@ export async function getStatusBarHeight() {
   const info = await StatusBar.getInfo()
 
   // Attribute 'height' actually exists, assert types
-  const height = (info as any).height
+  const height = (info as any).height as number
   return height
 }

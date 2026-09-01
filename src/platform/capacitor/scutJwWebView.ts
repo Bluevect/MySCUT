@@ -77,6 +77,7 @@ type OpenScutJwWebViewOptions = {
   onClose: () => void
   onError: (error: Error) => void
   onHtmlCaptured: (html: string) => void | Promise<void>
+  top?: number
 }
 
 function normalizeHttpUrl(rawUrl: string) {
@@ -114,6 +115,14 @@ export function closeActiveWebView() {
   void InAppBrowser.close()
 }
 
+export function goBackInActiveWebView() {
+  void InAppBrowser.goBack()
+}
+
+export function reloadActiveWebView() {
+  void InAppBrowser.reload()
+}
+
 export async function dispatchTouchEvent(options: DispatchTouchEventOptions) {
   await InAppBrowser.dispatchInputEvent(options)
 }
@@ -126,6 +135,10 @@ export async function openScutJwWebView(
   let webViewId: string | null = null
   let isClosed = false
   let isCapturePending = false
+
+  if (!options.top || options.top < 0) {
+    options.top = 0
+  }
 
   const isCurrentWebView = (eventId?: string) => (
     !isClosed && webViewId !== null && (!eventId || eventId === webViewId)
@@ -311,6 +324,7 @@ export async function openScutJwWebView(
       preventDeeplink: true,
       toBack: true,
       useTopInset: true,
+      y: options.top,
     })
 
     webViewId = openedWebView.id

@@ -2030,6 +2030,44 @@ body {
   margin: 0 auto;
 }
 
+.scut-jw-webview-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -16px;
+  padding: calc(var(--detail-header-top-gap) + var(--safe-top-inset)) 16px 12px;
+  background: var(--bg-page);
+  border-bottom: 1px solid transparent;
+}
+
+.scut-jw-webview-nav-group {
+  display: flex;
+  align-items: center;
+  min-width: 88px;
+}
+
+.scut-jw-webview-nav-left {
+  justify-content: flex-start;
+}
+
+.scut-jw-webview-nav-right {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.scut-jw-webview-nav-title {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .scut-jw-access-group {
   margin: 0;
   padding: 0;
