@@ -22,6 +22,7 @@ import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImp
 import { getStatusBarHeight } from '../../../platform/capacitor/getStatusBarHeight'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { CloseOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons'
+import { getPreferredGlobalThemeMode, resolveGlobalThemeMode } from '../../../core/theme/globalThemeStorage'
 
 type WebViewLocationState = {
   url?: string
@@ -165,18 +166,8 @@ function ScutJwWebViewPage() {
   }, [])
 
   useEffect(() => {
-    if (!isAndroidNative || !targetUrl) {
-      return
-    }
-
-    if (!navbarHeightRef.current) {
-      return
-    }
-
     // Set body transparent
-    const previousColorScheme = document.documentElement.style.colorScheme
-    const previousBackgroundColor = document.documentElement.style.backgroundColor
-    const isDarkMode = document.documentElement.classList.contains('dark')
+    let isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
 
     if (isDarkMode) {
       document.documentElement.classList.remove('dark')
@@ -184,6 +175,28 @@ function ScutJwWebViewPage() {
 
     document.documentElement.style.colorScheme = ''
     document.body.style.backgroundColor = 'transparent'
+
+    return () => {
+      // Restore background
+      isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
+
+      if (isDarkMode) {
+        if (!document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.add('dark')
+        }
+        document.documentElement.style.colorScheme = 'dark'
+      } else {
+        document.documentElement.style.colorScheme = ''
+      }
+      
+      document.body.style.backgroundColor = ''
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isAndroidNative || !targetUrl) {
+      return
+    }
 
     let isCancelled = false
 
@@ -241,13 +254,6 @@ function ScutJwWebViewPage() {
 
     return () => {
       isCancelled = true
-
-      // Restore background
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark')
-      }
-      document.documentElement.style.colorScheme = previousColorScheme
-      document.body.style.backgroundColor = previousBackgroundColor
 
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
