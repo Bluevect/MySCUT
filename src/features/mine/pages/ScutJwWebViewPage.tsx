@@ -166,19 +166,8 @@ function ScutJwWebViewPage() {
   }, [])
 
   useEffect(() => {
-    // Set body transparent
-    let isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
-
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark')
-    }
-
-    document.documentElement.style.colorScheme = ''
-    document.body.style.backgroundColor = 'transparent'
-
-    return () => {
-      // Restore background
-      isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
+    const restoreBackground = () => {
+      const isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
 
       if (isDarkMode) {
         if (!document.documentElement.classList.contains('dark')) {
@@ -190,6 +179,41 @@ function ScutJwWebViewPage() {
       }
       
       document.body.style.backgroundColor = ''
+    }
+
+    // Fallback to no listeners if matchMedia is not supported
+    if (typeof window.matchMedia !== 'function') {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark')
+      }
+      document.documentElement.style.colorScheme = ''
+      document.body.style.backgroundColor = 'transparent'
+
+      return () => {
+        restoreBackground()
+      }
+    }
+
+    // Add a listener for dark mode to set body transparent
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        document.documentElement.classList.remove('dark')
+      }
+      document.documentElement.style.colorScheme = ''
+      document.body.style.backgroundColor = 'transparent'
+    }
+    mediaQuery.addEventListener('change', handler)
+
+    // Set body transparent after mounted
+    handler(mediaQuery)
+
+    return () => {
+      // Restore background
+      restoreBackground()
+
+      // Remove dark mode listener
+      mediaQuery.removeEventListener('change', handler)
     }
   }, [])
 
