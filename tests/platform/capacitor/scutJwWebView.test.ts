@@ -98,7 +98,7 @@ describe('openScutJwWebView', () => {
 
     expect(pluginMocks.close).toHaveBeenCalledWith({ id: 'jw-webview' })
     expect(pluginMocks.clearAllCookies).toHaveBeenCalledTimes(2)
-    expect(pluginMocks.removeHandles).toHaveLength(5)
+    expect(pluginMocks.removeHandles).toHaveLength(6)
     for (const remove of pluginMocks.removeHandles) {
       expect(remove).toHaveBeenCalledOnce()
     }

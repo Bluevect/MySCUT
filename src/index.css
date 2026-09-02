@@ -2037,10 +2037,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   margin: 0 -16px;
   padding: calc(var(--detail-header-top-gap) + var(--safe-top-inset)) 16px 12px;
   background: var(--bg-page);
   border-bottom: 1px solid transparent;
+  overflow: hidden;
+}
+
+.scut-jw-webview-progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+}
+
+.scut-jw-webview-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), #67b7ff);
+  border-radius: 999px;
+  transition: width 120ms ease-out;
 }
 
 .scut-jw-webview-nav-group {

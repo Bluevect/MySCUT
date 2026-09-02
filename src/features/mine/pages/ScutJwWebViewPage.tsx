@@ -28,6 +28,8 @@ type WebViewLocationState = {
   url?: string
 }
 
+const PROGRESS_BAR_FADE_OUT_DELAY = 180
+
 function ScutJwWebViewPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -45,6 +47,7 @@ function ScutJwWebViewPage() {
   const navbarRef = useRef<HTMLDivElement | null>(null)
   const [isReloading, setIsReloading] = useState(false)
   const [isGoingBack, setIsGoingBack] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
 
   const importScheduleFromHtml = async (htmlText: string) => {
     const result = await importOperationRef.current.run(async () => {
@@ -246,12 +249,20 @@ function ScutJwWebViewPage() {
         },
         onHtmlCaptured: importScheduleFromHtml,
         onBrowserPageLoadStart: () => {
+          setLoadingProgress(0)
           setIsReloading(true)
           setIsGoingBack(true)
         },
+        onBrowserPageLoadProgress: (event) => {
+          setLoadingProgress(Math.min(Math.max(event.progress ?? 0, 0), 1))
+        },
         onBrowserPageLoaded: () => {
+          setLoadingProgress(1)
           setIsReloading(false)
           setIsGoingBack(false)
+          window.setTimeout(() => {
+            setLoadingProgress(0)
+          }, PROGRESS_BAR_FADE_OUT_DELAY)
         },
         top: Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
       }).then((session) => {
@@ -356,6 +367,13 @@ function ScutJwWebViewPage() {
             icon={<ReloadOutlined />}
             disabled={isReloading || isGoingBack}
             onClick={handleReload}
+          />
+        </div>
+
+        <div className='scut-jw-webview-progress-track' aria-hidden='true'>
+          <div
+            className='scut-jw-webview-progress-bar'
+            style={{ width: `${Math.max(0, Math.min(100, loadingProgress * 100))}%` }}
           />
         </div>
       </header>

@@ -80,12 +80,18 @@ type BrowserPageLoadedEvent = {
   id?: string
 }
 
+type BrowserPageLoadProgressEvent = {
+  id?: string
+  progress: number
+}
+
 type OpenScutJwWebViewOptions = {
   url: string
   onClose: () => void
   onError: (error: Error) => void
   onHtmlCaptured: (html: string) => void | Promise<void>
   onBrowserPageLoadStart?: (event: BrowserPageLoadStartEvent) => void
+  onBrowserPageLoadProgress?: (event: BrowserPageLoadProgressEvent) => void
   onBrowserPageLoaded?: (event: BrowserPageLoadedEvent) => void
   top?: number
 }
@@ -238,6 +244,10 @@ export async function openScutJwWebView(
 
     listenerHandles.push(await InAppBrowser.addListener('browserPageLoadStart', (event) => {
       options.onBrowserPageLoadStart?.(event)
+    }))
+
+    listenerHandles.push(await InAppBrowser.addListener('browserPageLoadProgress', (event) => {
+      options.onBrowserPageLoadProgress?.(event)
     }))
 
     listenerHandles.push(await InAppBrowser.addListener('browserPageLoaded', (event) => {
