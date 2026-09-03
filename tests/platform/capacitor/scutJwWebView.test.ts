@@ -98,7 +98,7 @@ describe('openScutJwWebView', () => {
 
     expect(pluginMocks.close).toHaveBeenCalledWith({ id: 'jw-webview' })
     expect(pluginMocks.clearAllCookies).toHaveBeenCalledTimes(2)
-    expect(pluginMocks.removeHandles).toHaveLength(4)
+    expect(pluginMocks.removeHandles).toHaveLength(6)
     for (const remove of pluginMocks.removeHandles) {
       expect(remove).toHaveBeenCalledOnce()
     }
@@ -155,9 +155,9 @@ describe('openScutJwWebView', () => {
   })
 
   it('disables the injected import button and ignores duplicate captures while importing', async () => {
-    let finishImport = () => undefined
+    let finishImport: () => void = () => undefined
     const pendingImport = new Promise<void>((resolve) => {
-      finishImport = resolve
+      finishImport = () => resolve()
     })
     const onHtmlCaptured = vi.fn(() => pendingImport)
     const session = await openScutJwWebView({

@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -12,16 +12,23 @@ import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/sched
 import {
   closeActiveWebView,
   dispatchTouchEvent,
+  goBackInActiveWebView,
   hideActiveWebView,
   openScutJwWebView,
+  reloadActiveWebView,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
 import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
 import { getStatusBarHeight } from '../../../platform/capacitor/getStatusBarHeight'
+import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
+import { CloseOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons'
+import { getPreferredGlobalThemeMode, resolveGlobalThemeMode } from '../../../core/theme/globalThemeStorage'
 
 type WebViewLocationState = {
   url?: string
 }
+
+const PROGRESS_BAR_FADE_OUT_DELAY = 180
 
 function ScutJwWebViewPage() {
   const navigate = useNavigate()
@@ -34,6 +41,13 @@ function ScutJwWebViewPage() {
 
   const targetUrl = (location.state as WebViewLocationState | null)?.url
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+
+  const statusBarHeightRef = useRef(0)
+  const navbarHeightRef = useRef(0)
+  const navbarRef = useRef<HTMLDivElement | null>(null)
+  const [isReloading, setIsReloading] = useState(false)
+  const [isGoingBack, setIsGoingBack] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
 
   const importScheduleFromHtml = async (htmlText: string) => {
     const result = await importOperationRef.current.run(async () => {
@@ -96,7 +110,7 @@ function ScutJwWebViewPage() {
         }
 
         // Necessary to hide WebView, or navigation won't work!
-        hideActiveWebView()
+        void hideActiveWebView()
 
         navigate('/courses', {
           replace: true,
@@ -127,88 +141,154 @@ function ScutJwWebViewPage() {
       ? event.changedTouches[0]
       : event.touches[0]
 
-    if (!touch) {
+    if (!touch || !statusBarHeightRef.current) {
       return
     }
 
-    const statusBarHeight = await getStatusBarHeight()
-    
+    if (touch.clientY <= statusBarHeightRef.current + navbarHeightRef.current) {
+      return
+    }
+
     event.preventDefault()
+
     void dispatchTouchEvent({
       type: event.type as 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
       x: touch.clientX,
-      y: touch.clientY - statusBarHeight,
+      y: touch.clientY - navbarHeightRef.current,
     }).catch((error: unknown) => {
       console.error('[ScutJwImport] Failed to dispatch touch event:', error)
     })
   }
+
+  useLayoutEffect(() => {
+    if (!navbarRef.current) {
+      return
+    }
+
+    navbarHeightRef.current = navbarRef.current.getBoundingClientRect().height
+  }, [])
+
+  useEffect(() => {
+    const restoreBackground = () => {
+      const isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
+
+      if (isDarkMode) {
+        if (!document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.add('dark')
+        }
+        document.documentElement.style.colorScheme = 'dark'
+      } else {
+        document.documentElement.style.colorScheme = ''
+      }
+      
+      document.body.style.backgroundColor = ''
+    }
+
+    // Fallback to no listeners if matchMedia is not supported
+    if (typeof window.matchMedia !== 'function') {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark')
+      }
+      document.documentElement.style.colorScheme = ''
+      document.body.style.backgroundColor = 'transparent'
+
+      return () => {
+        restoreBackground()
+      }
+    }
+
+    // Add a listener for dark mode to set body transparent
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        document.documentElement.classList.remove('dark')
+      }
+      document.documentElement.style.colorScheme = ''
+      document.body.style.backgroundColor = 'transparent'
+    }
+    mediaQuery.addEventListener('change', handler)
+
+    // Set body transparent after mounted
+    handler(mediaQuery)
+
+    return () => {
+      // Restore background
+      restoreBackground()
+
+      // Remove dark mode listener
+      mediaQuery.removeEventListener('change', handler)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isAndroidNative || !targetUrl) {
       return
     }
 
-    // Set body transparent
-    const previousColorScheme = document.documentElement.style.colorScheme
-    const isDarkMode = document.documentElement.classList.contains('dark')
-
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark')
-    }
-    
-    document.documentElement.style.colorScheme = ''
-    document.body.style.background = 'transparent'
-
     let isCancelled = false
 
-    void openScutJwWebView({
-      url: targetUrl,
-      onClose: () => {
-        if (isCancelled) {
-          return
-        }
+    getStatusBarHeight().then((value) => {
+      statusBarHeightRef.current = value
+    }).then(() => {
+      openScutJwWebView({
+        url: targetUrl,
+        onClose: () => {
+          if (isCancelled) {
+            return
+          }
 
-        webViewSessionRef.current = null
-        navigate('/mine/import-scut-jw', { replace: true })
-      },
-      onError: (error) => {
-        if (isCancelled) {
-          return
-        }
+          webViewSessionRef.current = null
+          navigate('/mine/import-scut-jw', { replace: true })
+        },
+        onError: (error) => {
+          if (isCancelled) {
+            return
+          }
 
-        messageApi.error(error.message)
-      },
-      onHtmlCaptured: importScheduleFromHtml,
-    }).then((session) => {
-      if (isCancelled) {
-        void session.close().catch(() => {
-          logScutJwImportDiagnostic({
-            stage: 'cancelled-session-close-failed',
-            targetUrl,
+          messageApi.error(error.message)
+        },
+        onHtmlCaptured: importScheduleFromHtml,
+        onBrowserPageLoadStart: () => {
+          setLoadingProgress(0)
+          setIsReloading(true)
+          setIsGoingBack(true)
+        },
+        onBrowserPageLoadProgress: (event) => {
+          setLoadingProgress(Math.min(Math.max(event.progress ?? 0, 0), 1))
+        },
+        onBrowserPageLoaded: () => {
+          setLoadingProgress(1)
+          setIsReloading(false)
+          setIsGoingBack(false)
+          window.setTimeout(() => {
+            setLoadingProgress(0)
+          }, PROGRESS_BAR_FADE_OUT_DELAY)
+        },
+        top: Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
+      }).then((session) => {
+        if (isCancelled) {
+          void session.close().catch(() => {
+            logScutJwImportDiagnostic({
+              stage: 'cancelled-session-close-failed',
+              targetUrl,
+            })
           })
-        })
-        return
-      }
+          return
+        }
 
-      webViewSessionRef.current = session
-    }).catch(() => {
-      if (isCancelled) {
-        return
-      }
+        webViewSessionRef.current = session
+      }).catch(() => {
+        if (isCancelled) {
+          return
+        }
 
-      messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
-      navigate('/mine/import-scut-jw', { replace: true })
+        messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
+        navigate('/mine/import-scut-jw', { replace: true })
+      })
     })
 
     return () => {
       isCancelled = true
-
-      // Restore background
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark')
-      }
-      document.documentElement.style.colorScheme = previousColorScheme
-      document.body.style.backgroundColor = ''
 
       const activeSession = webViewSessionRef.current
       webViewSessionRef.current = null
@@ -221,9 +301,42 @@ function ScutJwWebViewPage() {
         })
       }
 
-      closeActiveWebView()
+      void closeActiveWebView()
     }
   }, [isAndroidNative, messageApi, navigate, targetUrl])
+
+  const handleClose = async () => {
+    await closeActiveWebView()
+
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/mine/schedule-settings', { replace: true })
+  }
+
+  const handleBack = async () => {
+    if (isGoingBack || isReloading) {
+      return
+    }
+
+    const result = await goBackInActiveWebView()
+    if (!result?.canGoBack) {
+      return
+    }
+
+    setIsGoingBack(true)
+  }
+
+  const handleReload = async () => {
+    if (isReloading || isGoingBack) {
+      return
+    }
+
+    setIsReloading(true)
+    await reloadActiveWebView()
+  }
 
   return (
     <section
@@ -234,6 +347,36 @@ function ScutJwWebViewPage() {
       onTouchStart={handleTouch}
     >
       {contextHolder}
+
+      <header ref={navbarRef} className='scut-jw-webview-navbar'>
+        <div className='scut-jw-webview-nav-group scut-jw-webview-nav-left'>
+          <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={handleClose} />
+        </div>
+
+        <p className='scut-jw-webview-nav-title'>从教务系统导入课表</p>
+
+        <div className='scut-jw-webview-nav-group scut-jw-webview-nav-right'>
+          <CircleIconButton
+            ariaLabel='返回上一页'
+            icon={<LeftOutlined />}
+            disabled={isGoingBack || isReloading}
+            onClick={handleBack}
+          />
+          <CircleIconButton
+            ariaLabel='刷新页面'
+            icon={<ReloadOutlined />}
+            disabled={isReloading || isGoingBack}
+            onClick={handleReload}
+          />
+        </div>
+
+        <div className='scut-jw-webview-progress-track' aria-hidden='true'>
+          <div
+            className='scut-jw-webview-progress-bar'
+            style={{ width: `${Math.max(0, Math.min(100, loadingProgress * 100))}%` }}
+          />
+        </div>
+      </header>
     </section>
   )
 }

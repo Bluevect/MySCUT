@@ -1,4 +1,4 @@
-export const SCUT_JW_CAMPUS_URL = 'https://xsjw2018.jw.scut.edu.cn/'
+export const SCUT_JW_CAMPUS_URL = 'http://xsjw2018.jw.scut.edu.cn/'
 export const SCUT_JW_WEBVPN_URL = 'https://xsjw2018-jw.webvpn.scut.edu.cn/'
 
 export type ScutJwAccessMode = 'campus' | 'webvpn' | 'custom'

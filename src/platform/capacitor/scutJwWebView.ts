@@ -72,11 +72,28 @@ type DispatchTouchEventOptions = {
   y: number
 }
 
+type BrowserPageLoadStartEvent = {
+  id?: string
+}
+
+type BrowserPageLoadedEvent = {
+  id?: string
+}
+
+type BrowserPageLoadProgressEvent = {
+  id?: string
+  progress: number
+}
+
 type OpenScutJwWebViewOptions = {
   url: string
   onClose: () => void
   onError: (error: Error) => void
   onHtmlCaptured: (html: string) => void | Promise<void>
+  onBrowserPageLoadStart?: (event: BrowserPageLoadStartEvent) => void
+  onBrowserPageLoadProgress?: (event: BrowserPageLoadProgressEvent) => void
+  onBrowserPageLoaded?: (event: BrowserPageLoadedEvent) => void
+  top?: number
 }
 
 function normalizeHttpUrl(rawUrl: string) {
@@ -107,11 +124,19 @@ async function removeListenerHandles(handles: PluginListenerHandle[]) {
 }
 
 export function hideActiveWebView() {
-  void InAppBrowser.hide()
+  return InAppBrowser.hide()
 }
 
 export function closeActiveWebView() {
-  void InAppBrowser.close()
+  return InAppBrowser.close()
+}
+
+export function goBackInActiveWebView() {
+  return InAppBrowser.goBack()
+}
+
+export function reloadActiveWebView() {
+  return InAppBrowser.reload()
 }
 
 export async function dispatchTouchEvent(options: DispatchTouchEventOptions) {
@@ -126,6 +151,10 @@ export async function openScutJwWebView(
   let webViewId: string | null = null
   let isClosed = false
   let isCapturePending = false
+
+  if (!options.top || options.top < 0) {
+    options.top = 0
+  }
 
   const isCurrentWebView = (eventId?: string) => (
     !isClosed && webViewId !== null && (!eventId || eventId === webViewId)
@@ -213,7 +242,17 @@ export async function openScutJwWebView(
       }
     }))
 
+    listenerHandles.push(await InAppBrowser.addListener('browserPageLoadStart', (event) => {
+      options.onBrowserPageLoadStart?.(event)
+    }))
+
+    listenerHandles.push(await InAppBrowser.addListener('browserPageLoadProgress', (event) => {
+      options.onBrowserPageLoadProgress?.(event)
+    }))
+
     listenerHandles.push(await InAppBrowser.addListener('browserPageLoaded', (event) => {
+      options.onBrowserPageLoaded?.(event)
+
       /*
         Don't use this guard.
         Button won't be injected in personal schedule page for some unknown reasons
@@ -311,6 +350,7 @@ export async function openScutJwWebView(
       preventDeeplink: true,
       toBack: true,
       useTopInset: true,
+      y: options.top,
     })
 
     webViewId = openedWebView.id
