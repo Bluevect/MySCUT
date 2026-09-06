@@ -18,11 +18,15 @@
 
 ### WakeUp 文件
 
-`importWakeup.ts` 解析 WakeUp 多段 JSON 文本，保留兼容 raw 数据并转换为统一的 Course、Lesson 和时间表结构。
+`importWakeup.ts` 解析 WakeUp 多段 JSON 文本，保留兼容 raw 数据并转换为统一的 Course、Lesson 和时间表结构。`wakeup` raw 包含统一模型未覆盖的额外元数据，当前 WakeUp 导出优先使用它以提高保真度；非 WakeUp 来源可从统一模型合成基础 WakeUp 内容，但不能还原没有保留的源配置。
 
 ### 教务 HTML
 
 `importScutHtml.ts` 从完整课表周视图读取课程、单双周、多周段、教师、教室、学分和教学班详情。原生教务访问由 `scutJwAccess.ts` 与平台浏览器能力负责；解析器只接收 HTML 字符串。
+
+`scutHtml` raw 保存源 HTML 快照；当前代码没有从已持久化 raw HTML 重新解析课表的入口。
+
+自动教务导入目前是 Android 独占能力。校园网入口使用 HTTP，WebVPN 入口使用 HTTPS；对已知校园网入口的兼容不代表其他网络目标可以任意使用明文 HTTP。iOS 和 HarmonyOS 在具备相应的平台会话能力前不宣称支持同等自动导入。
 
 公开回归测试只使用 `tests/fixtures/public/scutSchedule.synthetic.html`。不得从真实教务页面复制数据到仓库。
 
@@ -40,7 +44,7 @@ PDF 导入页先生成仅驻留内存的待确认课表，展示课程数、上�
 
 ### QMS
 
-`importQms.ts` 校验 v1/v2 后恢复统一模型。格式见 [QMS_FORMAT.md](QMS_FORMAT.md)。
+`importQms.ts` 校验 v1/v2 后恢复统一模型。QMS v2 与压缩 QMS 从统一的 table、timeSlots、courses 和 lessons 字段恢复课表，不依赖 raw；格式见 [QMS_FORMAT.md](QMS_FORMAT.md)。
 
 ### 课表交集
 

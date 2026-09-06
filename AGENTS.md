@@ -2,6 +2,13 @@
 
 本文件只描述仓库操作规则。产品目标、架构边界和数据职责以 `PROJECT_BASIS.md` 为准。
 
+## 协作与领域文档
+
+- 工作项统一使用当前仓库的 GitHub Issues，见 [Issue tracker](docs/agents/issue-tracker.md)。
+- 使用五个轻量状态标签区分待评估、待补信息、Agent 可领取、需人工和不处理，见 [Triage labels](docs/agents/triage-labels.md)。
+- 开始产品或代码探索前，阅读根目录 [CONTEXT.md](CONTEXT.md) 和相关 [ADR](docs/adr/)，在讨论、测试和实现中使用统一词汇。
+- 产品词汇、架构决策与工程边界的文档职责见 [Domain docs](docs/agents/domain.md)。
+
 ## 环境与包管理
 
 - 使用 Node.js 22.13.0 或更高版本，推荐 Node 22 LTS。

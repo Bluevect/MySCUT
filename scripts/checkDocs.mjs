@@ -10,6 +10,7 @@ const rootDocuments = [
   'AGENTS.md',
   'CODE_OF_CONDUCT.md',
   'CONTRIBUTING.md',
+  'CONTEXT.md',
   'PRIVACY.md',
   'PROJECT_BASIS.md',
   'README.md',

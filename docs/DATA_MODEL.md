@@ -19,6 +19,10 @@
 
 `table` 包含 `id`、`name`、`campus`、`school`、`maxWeek`、`nodes`、`startDate`、`showSat`、`showSun` 和 `timeTable`。
 
+`raw.kind = 'wakeup'` 保存导入源数据，包括统一模型未覆盖的额外元数据；当前 WakeUp 导出优先使用它以提高 round-trip 保真度。非 WakeUp 来源可从统一模型生成基础 WakeUp 内容，但不能还原没有保留的源配置。
+
+`raw.kind = 'scutHtml'` 当前只保存源 HTML 快照，代码中没有从持久化快照重新解析课表的入口。QMS v2、压缩 QMS、课表展示和课表交集均从规范化字段工作，不依赖 raw；raw 不是 QMS v2 round-trip 的必要数据。
+
 ## Course 与 Lesson
 
 `ScheduleCourse` 包含 `id`、`tableId`、`name`、`color`、`credit` 和 `note`。
