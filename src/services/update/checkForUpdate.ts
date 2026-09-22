@@ -7,7 +7,7 @@ import {
 const DEFAULT_PRIMARY_MANIFEST_URL =
   'https://pub-2d4ca40983644b4295125ec388670de9.r2.dev/kozmos/releases/versions.json'
 const DEFAULT_FALLBACK_MANIFEST_URL =
-  'https://raw.githubusercontent.com/Kozmosa/MySCUT/refs/heads/main/versions.json'
+  'https://cdn.jsdelivr.net/gh/Kozmosa/MySCUT@main/versions.json'
 
 type RemoteVersionAssets = {
   apk?: string | RemoteAssetLink[]
@@ -191,6 +191,10 @@ function resolveDefaultManifestUrls() {
 function getManifestSourceName(url: string, index: number) {
   if (url.includes('.r2.dev/')) {
     return 'Cloudflare R2'
+  }
+
+  if (url.includes('cdn.jsdelivr.net/')) {
+    return 'jsDelivr CDN'
   }
 
   if (url.includes('raw.githubusercontent.com/')) {
