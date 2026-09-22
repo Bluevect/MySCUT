@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 以下权限声明由依赖库带入，本应用均不使用，合并时剔除：
+         - CAMERA：来自 @capgo/capacitor-inappbrowser。本应用不需要相机，
+           且声明 CAMERA 反而会导致系统相机 intent 需要运行时授权。
+         - USE_BIOMETRIC / USE_FINGERPRINT：来自 @capacitor-community/sqlite
+           的传递依赖 androidx.security:security-crypto -> androidx.biometric
+           （插件的数据库加密功能）。本应用以 no-encryption 模式打开数据库，
+           且未启用插件的 biometricAuth 配置，从不调用生物识别 API。
+           normal 权限只在安装时授予、无运行时请求；若将来启用该功能，
+           调用会立刻抛 SecurityException（快速失败、非静默），
+           届时删除对应的 tools:node="remove" 即可。 -->
+    <uses-permission
+        android:name="android.permission.CAMERA"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_BIOMETRIC"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT"
+        tools:node="remove" />
 
     <application
         android:allowBackup="true"
@@ -40,4 +61,5 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>
