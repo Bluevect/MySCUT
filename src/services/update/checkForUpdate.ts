@@ -26,8 +26,21 @@ type RemoteVersionItem = {
   assets?: RemoteVersionAssets
 }
 
+type NormalizedAssetLink = {
+  source: string
+  url: string
+  sha256?: string
+  size?: number
+}
+
 type RemoteVersionManifest = {
   latest: RemoteVersionItem
+}
+
+export type ApkAssetDescriptor = {
+  url: string
+  sha256?: string
+  size?: number
 }
 
 type CheckedManifest = {
@@ -35,6 +48,7 @@ type CheckedManifest = {
   providerName: string
   latestVersion: string
   downloadUrl: string | null
+  apkAsset: ApkAssetDescriptor | null
 }
 
 type UpdateCheckInput = {
@@ -50,6 +64,7 @@ type UpdateAvailableResult = {
   providerId: UpdateLinkProviderId
   providerName: string
   downloadUrl: string | null
+  apkAsset: ApkAssetDescriptor | null
 }
 
 type UpToDateResult = {
@@ -144,7 +159,7 @@ function normalizeAssetLinks(assetField: string | RemoteAssetLink[] | undefined)
     return []
   }
 
-  const links = []
+  const links: NormalizedAssetLink[] = []
   for (const entry of assetField) {
     if (!entry || typeof entry !== 'object') {
       continue
@@ -159,6 +174,8 @@ function normalizeAssetLinks(assetField: string | RemoteAssetLink[] | undefined)
     links.push({
       source: source || 'unknown',
       url,
+      sha256: typeof entry.sha256 === 'string' ? entry.sha256.trim().toLowerCase() : undefined,
+      size: typeof entry.size === 'number' ? entry.size : undefined,
     })
   }
 
@@ -181,6 +198,36 @@ function getManifestSourceName(url: string, index: number) {
   }
 
   return index === 0 ? '主版本源' : `备用版本源 ${index}`
+}
+
+function resolveApkAssetDescriptor(
+  assetField: string | RemoteAssetLink[] | undefined,
+  providerOrder: UpdateLinkProviderId[],
+): ApkAssetDescriptor | null {
+  const links = normalizeAssetLinks(assetField)
+  const preferredLink =
+    links.find((link) => link.source === 'r2' && link.sha256) ??
+    links.find((link) => link.source === 'r2') ??
+    links.find((link) => link.sha256) ??
+    links[0]
+
+  if (!preferredLink) {
+    return null
+  }
+
+  const url = preferredLink.url.toLowerCase().includes('github')
+    ? resolveGithubDownloadUrl(preferredLink.url, providerOrder)
+    : preferredLink.url
+
+  if (!url) {
+    return null
+  }
+
+  return {
+    url,
+    sha256: preferredLink.sha256,
+    size: preferredLink.size,
+  }
 }
 
 function resolveAssetUrl(assetField: string | RemoteAssetLink[] | undefined, providerOrder: UpdateLinkProviderId[]) {
@@ -235,6 +282,7 @@ async function loadVersionManifest(
         providerName: sourceName,
         latestVersion: responseJson.latest.version,
         downloadUrl: resolveDownloadUrl(responseJson.latest, providerOrder),
+        apkAsset: resolveApkAssetDescriptor(responseJson.latest.assets?.apk, providerOrder),
       }
     } catch (error) {
       const reason = error instanceof Error ? error.message : '未知错误'
@@ -264,6 +312,7 @@ export async function checkForAppUpdate({
       providerId: result.providerId,
       providerName: result.providerName,
       downloadUrl: result.downloadUrl,
+      apkAsset: result.apkAsset,
     }
   }
 

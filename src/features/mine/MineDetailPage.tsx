@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Modal, Switch, message } from 'antd'
+import { Button, Checkbox, Modal, Progress, Switch, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../components/buttons/CircleIconButton'
 import { HorizontalSlideSelector } from '../../components/HorizontalSlideSelector'
@@ -11,7 +11,8 @@ import { GLOBAL_THEME_FAMILY_OPTIONS } from '../../core/theme/globalThemePresets
 import { APP_TODO_ITEMS, MANUAL_TODO_ITEMS } from '../../generated/todoSnapshot'
 import { THIRD_PARTY_LICENSES } from '../../generated/thirdPartyLicenses'
 import { useGlobalTheme } from '../../platform/web/theme/GlobalThemeProvider'
-import { checkForAppUpdate } from '../../services/update'
+import { ApkUpdater, supportsInAppApkUpdate } from '../../platform/capacitor/apkUpdater'
+import { checkForAppUpdate, type ApkAssetDescriptor } from '../../services/update'
 
 type MineDetailPageProps = {
   title: string
@@ -88,6 +89,11 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
+  const [apkUpdateProgress, setApkUpdateProgress] = useState<{
+    stage: 'downloading' | 'installing'
+    receivedBytes: number
+    totalBytes: number | null
+  } | null>(null)
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
   const [transitionStage, setTransitionStage] = useState<TransitionStage>('entering')
   const closeTimerRef = useRef<number | null>(null)
@@ -181,6 +187,11 @@ function MineDetailPage({ title }: MineDetailPageProps) {
         okText: '去更新',
         cancelText: '稍后',
         onOk: () => {
+          if (supportsInAppApkUpdate() && result.apkAsset?.url) {
+            void handleInAppUpdate(result.apkAsset)
+            return
+          }
+
           if (!result.downloadUrl) {
             messageApi.error('远程未提供下载链接')
             return
@@ -197,11 +208,105 @@ function MineDetailPage({ title }: MineDetailPageProps) {
     }
   }
 
+  const formatMegabytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+
+  const launchApkInstall = async (path: string) => {
+    const result = await ApkUpdater.install({ path })
+
+    if (result.status === 'needs-permission') {
+      setApkUpdateProgress(null)
+      Modal.confirm({
+        title: '需要允许安装应用',
+        content: '已打开系统设置，请允许本应用「安装未知应用」后返回，点击「重试」继续安装。',
+        okText: '重试',
+        cancelText: '取消',
+        onOk: async () => {
+          await launchApkInstall(path)
+        },
+      })
+      return
+    }
+
+    setApkUpdateProgress(null)
+    messageApi.success('已启动安装，请在系统安装器中完成更新')
+  }
+
+  const handleInAppUpdate = async (asset: ApkAssetDescriptor) => {
+    setApkUpdateProgress({ stage: 'downloading', receivedBytes: 0, totalBytes: asset.size ?? null })
+
+    const listener = await ApkUpdater.addListener('apkDownloadProgress', (progress) => {
+      setApkUpdateProgress((current) =>
+        current
+          ? {
+              ...current,
+              receivedBytes: progress.receivedBytes,
+              totalBytes: progress.totalBytes ?? current.totalBytes,
+            }
+          : current,
+      )
+    })
+
+    try {
+      const download = await ApkUpdater.download({
+        url: asset.url,
+        expectedSha256: asset.sha256,
+        expectedSize: asset.size,
+      })
+
+      setApkUpdateProgress((current) => (current ? { ...current, stage: 'installing' } : current))
+      await launchApkInstall(download.path)
+    } catch (error) {
+      setApkUpdateProgress(null)
+      const errorMessage = error instanceof Error ? error.message : '下载安装包失败，请稍后重试'
+      messageApi.error(errorMessage)
+    } finally {
+      await listener.remove()
+    }
+  }
+
   return (
     <section
       className={`schedule-settings-page mine-detail-page settings-view-transition settings-view-transition--${transitionStage}`}
     >
       {contextHolder}
+      <Modal
+        title='正在更新'
+        open={apkUpdateProgress !== null}
+        keyboard={false}
+        maskClosable={false}
+        footer={null}
+        onCancel={() => setApkUpdateProgress(null)}
+      >
+        {apkUpdateProgress?.stage === 'installing' ? (
+          <p className='mine-detail-card-description'>下载完成，正在启动安装…</p>
+        ) : (
+          <>
+            <Progress
+              percent={
+                apkUpdateProgress?.totalBytes
+                  ? Math.min(
+                      99,
+                      Math.floor(
+                        (apkUpdateProgress.receivedBytes / apkUpdateProgress.totalBytes) * 100,
+                      ),
+                    )
+                  : 100
+              }
+              status='active'
+              format={
+                apkUpdateProgress?.totalBytes
+                  ? undefined
+                  : () => `已下载 ${formatMegabytes(apkUpdateProgress?.receivedBytes ?? 0)}`
+              }
+            />
+            <p className='mine-detail-card-description'>
+              {apkUpdateProgress?.totalBytes
+                ? `${formatMegabytes(apkUpdateProgress.receivedBytes)} / ${formatMegabytes(apkUpdateProgress.totalBytes)}`
+                : '正在获取下载进度…'}
+            </p>
+          </>
+        )}
+      </Modal>
       <header className='schedule-settings-header'>
         <div>
           <p className='schedule-settings-title'>{title}</p>
