@@ -16,6 +16,7 @@ import {
   hideActiveWebView,
   openScutJwWebView,
   reloadActiveWebView,
+  updateActiveWebViewDimensions,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
 import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
@@ -171,6 +172,30 @@ function ScutJwWebViewPage() {
   }, [])
 
   useEffect(() => {
+    if (!isAndroidNative || !targetUrl) {
+      return
+    }
+
+    // Handle WebView dimensions on resize and scroll events, to ensure the WebView is always correctly positioned below the navbar and status bar.
+    // Attempted fix for some certain input methods.
+    const updateWebViewDimensions = () => {
+      const top = Math.floor(navbarHeightRef.current) - statusBarHeightRef.current
+      void updateActiveWebViewDimensions(top).catch(() => undefined)
+    }
+    const viewport = window.visualViewport
+
+    window.addEventListener('resize', updateWebViewDimensions)
+    viewport?.addEventListener('resize', updateWebViewDimensions)
+    viewport?.addEventListener('scroll', updateWebViewDimensions)
+
+    return () => {
+      window.removeEventListener('resize', updateWebViewDimensions)
+      viewport?.removeEventListener('resize', updateWebViewDimensions)
+      viewport?.removeEventListener('scroll', updateWebViewDimensions)
+    }
+  }, [isAndroidNative, targetUrl])
+
+  useEffect(() => {
     const restoreBackground = () => {
       const isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
 
@@ -279,6 +304,10 @@ function ScutJwWebViewPage() {
         }
 
         webViewSessionRef.current = session
+
+        void updateActiveWebViewDimensions(
+          Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
+        ).catch(() => undefined)
       }).catch(() => {
         if (isCancelled) {
           return

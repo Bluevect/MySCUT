@@ -135,6 +135,12 @@ export function goBackInActiveWebView() {
   return InAppBrowser.goBack()
 }
 
+export function updateActiveWebViewDimensions(y: number) {
+  return InAppBrowser.updateDimensions({
+    y: Math.max(0, Math.floor(y)),
+  })
+}
+
 export function reloadActiveWebView() {
   return InAppBrowser.reload()
 }
