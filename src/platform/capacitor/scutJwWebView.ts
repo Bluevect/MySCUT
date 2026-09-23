@@ -348,7 +348,6 @@ export async function openScutJwWebView(
       handleDownloads: false,
       persistWebViewData: false,
       preventDeeplink: false,
-      activeNativeNavigationForWebview: true,
       ignoreUntrustedSSLError: true,
       toBack: true,
       useTopInset: true,
