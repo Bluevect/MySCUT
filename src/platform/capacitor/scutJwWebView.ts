@@ -135,6 +135,12 @@ export function goBackInActiveWebView() {
   return InAppBrowser.goBack()
 }
 
+export function updateActiveWebViewDimensions(y: number) {
+  return InAppBrowser.updateDimensions({
+    y: Math.max(0, Math.floor(y)),
+  })
+}
+
 export function reloadActiveWebView() {
   return InAppBrowser.reload()
 }
@@ -340,14 +346,15 @@ export async function openScutJwWebView(
 
     const openedWebView = await InAppBrowser.openWebView({
       url: targetUrl,
-      openBlankTargetInWebView: true,
+      openBlankTargetInWebView: false,
       toolbarType: ToolBarType.BLANK,
       closeAction: CloseAction.CLOSE,
       title: '从教务导入课表',
       backgroundColor: BackgroundColor.WHITE,
       handleDownloads: false,
       persistWebViewData: false,
-      preventDeeplink: true,
+      preventDeeplink: false,
+      ignoreUntrustedSSLError: true,
       toBack: true,
       useTopInset: true,
       y: options.top,

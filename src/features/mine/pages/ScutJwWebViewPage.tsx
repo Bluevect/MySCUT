@@ -16,6 +16,7 @@ import {
   hideActiveWebView,
   openScutJwWebView,
   reloadActiveWebView,
+  updateActiveWebViewDimensions,
   type ScutJwWebViewSession,
 } from '../../../platform/capacitor/scutJwWebView'
 import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
@@ -23,6 +24,7 @@ import { getStatusBarHeight } from '../../../platform/capacitor/getStatusBarHeig
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { CloseOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { getPreferredGlobalThemeMode, resolveGlobalThemeMode } from '../../../core/theme/globalThemeStorage'
+import { registerHardwareBackButtonHandler } from '../../../platform/capacitor/useHardwareBackButton'
 
 type WebViewLocationState = {
   url?: string
@@ -48,6 +50,7 @@ function ScutJwWebViewPage() {
   const [isReloading, setIsReloading] = useState(false)
   const [isGoingBack, setIsGoingBack] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
+  const backHandlerRef = useRef<() => Promise<boolean>>(() => Promise.resolve(false))
 
   const importScheduleFromHtml = async (htmlText: string) => {
     const result = await importOperationRef.current.run(async () => {
@@ -169,6 +172,30 @@ function ScutJwWebViewPage() {
   }, [])
 
   useEffect(() => {
+    if (!isAndroidNative || !targetUrl) {
+      return
+    }
+
+    // Handle WebView dimensions on resize and scroll events, to ensure the WebView is always correctly positioned below the navbar and status bar.
+    // Attempted fix for some certain input methods.
+    const updateWebViewDimensions = () => {
+      const top = Math.floor(navbarHeightRef.current) - statusBarHeightRef.current
+      void updateActiveWebViewDimensions(top).catch(() => undefined)
+    }
+    const viewport = window.visualViewport
+
+    window.addEventListener('resize', updateWebViewDimensions)
+    viewport?.addEventListener('resize', updateWebViewDimensions)
+    viewport?.addEventListener('scroll', updateWebViewDimensions)
+
+    return () => {
+      window.removeEventListener('resize', updateWebViewDimensions)
+      viewport?.removeEventListener('resize', updateWebViewDimensions)
+      viewport?.removeEventListener('scroll', updateWebViewDimensions)
+    }
+  }, [isAndroidNative, targetUrl])
+
+  useEffect(() => {
     const restoreBackground = () => {
       const isDarkMode = resolveGlobalThemeMode(getPreferredGlobalThemeMode()) === 'dark'
 
@@ -277,6 +304,10 @@ function ScutJwWebViewPage() {
         }
 
         webViewSessionRef.current = session
+
+        void updateActiveWebViewDimensions(
+          Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
+        ).catch(() => undefined)
       }).catch(() => {
         if (isCancelled) {
           return
@@ -316,17 +347,21 @@ function ScutJwWebViewPage() {
     navigate('/mine/schedule-settings', { replace: true })
   }
 
-  const handleBack = async () => {
+  const handleBack = async (): Promise<boolean> => {
     if (isGoingBack || isReloading) {
-      return
+      return true
     }
 
-    const result = await goBackInActiveWebView()
-    if (!result?.canGoBack) {
-      return
-    }
+    try {
+      const result = await goBackInActiveWebView()
+      if (result?.canGoBack) {
+        setIsGoingBack(true)
+        return true
+      }
+    } catch {}
 
-    setIsGoingBack(true)
+    await handleClose()
+    return true
   }
 
   const handleReload = async () => {
@@ -337,6 +372,16 @@ function ScutJwWebViewPage() {
     setIsReloading(true)
     await reloadActiveWebView()
   }
+
+  backHandlerRef.current = handleBack
+
+  useEffect(() => {
+    if (!isAndroidNative || !targetUrl) {
+      return
+    }
+
+    return registerHardwareBackButtonHandler(() => backHandlerRef.current())
+  }, [isAndroidNative, targetUrl])
 
   return (
     <section
