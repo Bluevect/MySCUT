@@ -48,6 +48,7 @@ import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
 import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import type { ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
 
 const { TextArea } = Input
 
@@ -117,6 +118,8 @@ function ScheduleSettingsPage() {
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
   const [isChangeScheduleNameModalOpen, setIsChangeScheduleNameModalOpen] = useState(false)
   const [newScheduleNameInputText, setNewScheduleNameInputText] = useState('')
+  const [isImportCompressedQMSModalOpen, setIsImportCompressedQMSModalOpen] = useState(false)
+  const [compressedQMSInputText, setCompressedQMSInputText] = useState('')
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isHtmlImportMethodModalOpen, setIsHtmlImportMethodModalOpen] = useState(false)
   const [htmlImportMethod, setHtmlImportMethod] = useState<HtmlImportMethod>('file')
@@ -255,6 +258,22 @@ function ScheduleSettingsPage() {
     messageApi.success('修改成功！')
   }
 
+  const handleConfirmImportCompressedQMS = async () => {
+    setIsImportCompressedQMSModalOpen(false)
+
+    await runImportOperation(async () => {
+      try {
+        const compressedQmsModule = await import('../../../core/schedule/compressedQms')
+        const decodeCompressedQmsText = compressedQmsModule.decodeCompressedQmsText
+        const qmsText = await decodeCompressedQmsText(compressedQMSInputText)
+        await handleImportQmsText(qmsText)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '压缩QMS导入失败'
+        messageApi.error(errorMessage)
+      }
+    })
+  }
+
   const handleConfirmDate = () => {
     if (!pendingDate) {
       messageApi.error('请先选择日期')
@@ -310,21 +329,27 @@ function ScheduleSettingsPage() {
   const handleImportCompressedQmsFromClipboardEntry = async () => {
     setIsImportModalOpen(false)
 
-    if (!navigator.clipboard?.readText) {
-      messageApi.error('当前环境不支持读取剪贴板')
-      return
-    }
-
     await runImportOperation(async () => {
       try {
-        const compressedQmsText = await navigator.clipboard.readText()
+        let compressedQmsText = null
+
+        try {
+          compressedQmsText = await clipboardReadText()
+        } catch (error) {
+          setIsImportCompressedQMSModalOpen(true)
+          return
+        }
+
         const compressedQmsModule = await import('../../../core/schedule/compressedQms')
         const decodeCompressedQmsText = compressedQmsModule.decodeCompressedQmsText
         const qmsText = await decodeCompressedQmsText(compressedQmsText)
         await handleImportQmsText(qmsText)
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '压缩QMS导入失败'
+        const errorMessage = error instanceof Error ?
+          `从剪切板导入压缩QMS失败，请再次输入。原因: ${error.message}` : '从剪切板导入压缩QMS失败'
         messageApi.error(errorMessage)
+        setIsImportCompressedQMSModalOpen(true)
+        return
       }
     })
   }
@@ -352,7 +377,7 @@ function ScheduleSettingsPage() {
 
     await runImportOperation(async () => {
       try {
-        const clipboardText = await navigator.clipboard.readText()
+        const clipboardText = await clipboardReadText()
         await handleImportScutHtml(clipboardText)
       } catch {
         messageApi.error('无法读取剪贴板，请检查浏览器权限')
@@ -735,16 +760,17 @@ function ScheduleSettingsPage() {
         const qmsText = buildQmsExportText(exportSchedule)
         downloadTextFile(`${baseFileName}.qms`, qmsText, 'application/json;charset=utf-8')
       } else {
-        if (!navigator.clipboard?.writeText) {
-          messageApi.error('当前环境不支持写入剪贴板')
-          return
-        }
-
         const qmsText = buildQmsExportText(exportSchedule)
         const compressedQmsModule = await import('../../../core/schedule/compressedQms')
         const encodeCompressedQmsText = compressedQmsModule.encodeCompressedQmsText
         const compressedQmsText = await encodeCompressedQmsText(qmsText)
-        await navigator.clipboard.writeText(compressedQmsText)
+
+        try {
+          await clipboardWriteText(compressedQmsText)
+        } catch (error) {
+          messageApi.error('当前环境不支持写入剪贴板')
+          return
+        }
       }
 
       messageApi.success('课表导出成功')
@@ -992,6 +1018,22 @@ function ScheduleSettingsPage() {
           placeholder='请粘贴华工教务系统课表 HTML'
           value={htmlInputText}
           onChange={(event) => setHtmlInputText(event.target.value)}
+        />
+      </Modal>
+
+      <Modal
+        title='粘贴压缩QMS'
+        open={isImportCompressedQMSModalOpen}
+        onOk={() => handleConfirmImportCompressedQMS()}
+        onCancel={() => setIsImportCompressedQMSModalOpen(false)}
+        okText='确定'
+        cancelText='取消'
+      >
+        <TextArea
+          rows={10}
+          placeholder='请填入要导入的课表QMS'
+          value={compressedQMSInputText}
+          onChange={(event) => setCompressedQMSInputText(event.target.value)}
         />
       </Modal>
 
