@@ -48,6 +48,7 @@ import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
 import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import type { ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
 
 const { TextArea } = Input
 
@@ -310,14 +311,17 @@ function ScheduleSettingsPage() {
   const handleImportCompressedQmsFromClipboardEntry = async () => {
     setIsImportModalOpen(false)
 
-    if (!navigator.clipboard?.readText) {
-      messageApi.error('当前环境不支持读取剪贴板')
-      return
-    }
-
     await runImportOperation(async () => {
       try {
-        const compressedQmsText = await navigator.clipboard.readText()
+        let compressedQmsText = null
+
+        try {
+          compressedQmsText = await clipboardReadText()
+        } catch (error) {
+          messageApi.error('当前环境不支持读取剪贴板')
+          return
+        }
+        
         const compressedQmsModule = await import('../../../core/schedule/compressedQms')
         const decodeCompressedQmsText = compressedQmsModule.decodeCompressedQmsText
         const qmsText = await decodeCompressedQmsText(compressedQmsText)
@@ -352,7 +356,7 @@ function ScheduleSettingsPage() {
 
     await runImportOperation(async () => {
       try {
-        const clipboardText = await navigator.clipboard.readText()
+        const clipboardText = await clipboardReadText()
         await handleImportScutHtml(clipboardText)
       } catch {
         messageApi.error('无法读取剪贴板，请检查浏览器权限')
@@ -735,16 +739,17 @@ function ScheduleSettingsPage() {
         const qmsText = buildQmsExportText(exportSchedule)
         downloadTextFile(`${baseFileName}.qms`, qmsText, 'application/json;charset=utf-8')
       } else {
-        if (!navigator.clipboard?.writeText) {
-          messageApi.error('当前环境不支持写入剪贴板')
-          return
-        }
-
         const qmsText = buildQmsExportText(exportSchedule)
         const compressedQmsModule = await import('../../../core/schedule/compressedQms')
         const encodeCompressedQmsText = compressedQmsModule.encodeCompressedQmsText
         const compressedQmsText = await encodeCompressedQmsText(qmsText)
-        await navigator.clipboard.writeText(compressedQmsText)
+        
+        try {
+          await clipboardWriteText(compressedQmsText)
+        } catch (error) {
+          messageApi.error('当前环境不支持写入剪贴板')
+          return
+        }
       }
 
       messageApi.success('课表导出成功')
