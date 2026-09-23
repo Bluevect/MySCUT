@@ -60,7 +60,7 @@ describe('openScutJwWebView', () => {
       url: 'https://jw.example.edu.cn/',
       handleDownloads: false,
       persistWebViewData: false,
-      preventDeeplink: true,
+      preventDeeplink: false,
     }))
 
     // Temporary approach, may need a better solution
