@@ -8,7 +8,7 @@ import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
 import { getScheduleThemeId } from '../../../core/schedule/themeStorage'
-import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import {
   closeActiveWebView,
   dispatchTouchEvent,
@@ -83,7 +83,7 @@ function ScutJwWebViewPage() {
         })
         const saveResult = await saveScheduleDataWithOptions(scheduleData, {
           themeId: themePreset.id,
-          timeSlotPresetId: 'builtIn',
+          timeSlotPresetId: DEFAULT_TIME_SLOT,
           semesterStartDate: nextSemesterStartDate,
           preferredName: scheduleData.table.name,
           setActive: true,

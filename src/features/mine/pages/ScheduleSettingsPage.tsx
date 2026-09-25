@@ -45,7 +45,7 @@ import {
   TIME_SLOT_PRESET_OPTIONS,
 } from '../../../core/schedule/timeSlotPresets'
 import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
-import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import type { ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
@@ -137,7 +137,7 @@ function ScheduleSettingsPage() {
   const [exportTargetScheduleId, setExportTargetScheduleId] = useState('')
   const [exportFormat, setExportFormat] = useState<ScheduleExportFormat>('wakeup')
   const [isExportCustomTimeSlotEnabled, setIsExportCustomTimeSlotEnabled] = useState(false)
-  const [exportTimeSlotPresetId, setExportTimeSlotPresetId] = useState<TimeSlotPresetId>('builtIn')
+  const [exportTimeSlotPresetId, setExportTimeSlotPresetId] = useState<TimeSlotPresetId>(DEFAULT_TIME_SLOT)
   const [isExportSanitizeEnabled, setIsExportSanitizeEnabled] = useState(false)
   const [exportSanitizeOptions, setExportSanitizeOptions] = useState<ExportSanitizeOptions>(DEFAULT_EXPORT_SANITIZE_OPTIONS)
   const [savedSchedules, setSavedSchedules] = useState<SavedScheduleItem[]>(() => listSavedSchedules())
@@ -151,7 +151,7 @@ function ScheduleSettingsPage() {
   })
   const [timeSlotPresetId, setTimeSlotPresetId] = useState<TimeSlotPresetId>(() => {
     const activeSchedule = loadActiveScheduleEntry()
-    return activeSchedule?.timeSlotPresetId ?? 'builtIn'
+    return activeSchedule?.timeSlotPresetId ?? DEFAULT_TIME_SLOT
   })
   const [transitionStage, setTransitionStage] = useState<TransitionStage>('entering')
   const closeTimerRef = useRef<number | null>(null)
@@ -218,7 +218,7 @@ function ScheduleSettingsPage() {
   const refreshScheduleState = () => {
     const activeSchedule = loadActiveScheduleEntry()
     setScheduleName(activeSchedule?.name ?? '')
-    setTimeSlotPresetId(activeSchedule?.timeSlotPresetId ?? 'builtIn')
+    setTimeSlotPresetId(activeSchedule?.timeSlotPresetId ?? DEFAULT_TIME_SLOT)
     setSavedSchedules(listSavedSchedules())
   }
 
@@ -489,7 +489,7 @@ function ScheduleSettingsPage() {
     scheduleData: ScheduleData,
     semesterDate: string,
     themeId: ScheduleThemeId,
-    timeSlotPreset: TimeSlotPresetId = 'builtIn',
+    timeSlotPreset: TimeSlotPresetId = DEFAULT_TIME_SLOT,
   ) => {
     const result = await saveScheduleDataWithOptions(scheduleData, {
       themeId,
@@ -741,7 +741,7 @@ function ScheduleSettingsPage() {
     }
 
     const targetSchedule = loadSavedScheduleById(exportTargetScheduleId)
-    const nextPresetId = targetSchedule?.timeSlotPresetId ?? 'builtIn'
+    const nextPresetId = targetSchedule?.timeSlotPresetId ?? DEFAULT_TIME_SLOT
     setExportTimeSlotPresetId(nextPresetId)
     setIsExportCustomTimeSlotEnabled(false)
     setIsScheduleExportModalOpen(false)

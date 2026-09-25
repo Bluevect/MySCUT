@@ -1,5 +1,8 @@
+import { getDefaultSemesterStartDate } from './schedule/semesterStartDateUtils'
+
 const SEMESTER_START_DATE_STORAGE_KEY = 'semesterStartDate'
-const DEFAULT_SEMESTER_START_DATE = '2026-02-23'
+
+export const DEFAULT_TIME_SLOT = 'universityTown'
 
 function isValidDateText(dateText: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(dateText)
@@ -9,16 +12,16 @@ export function getSemesterStartDate() {
   try {
     const storedDate = localStorage.getItem(SEMESTER_START_DATE_STORAGE_KEY)
     if (!storedDate) {
-      return DEFAULT_SEMESTER_START_DATE
+      return getDefaultSemesterStartDate()
     }
 
     if (isValidDateText(storedDate)) {
       return storedDate
     }
 
-    return DEFAULT_SEMESTER_START_DATE
+    return getDefaultSemesterStartDate()
   } catch {
-    return DEFAULT_SEMESTER_START_DATE
+    return getDefaultSemesterStartDate()
   }
 }
 

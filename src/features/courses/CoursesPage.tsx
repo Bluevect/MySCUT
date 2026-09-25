@@ -41,7 +41,7 @@ import {
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
-import { getSemesterStartDate } from '../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, getSemesterStartDate } from '../../core/scheduleSettings'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
 import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
 
@@ -515,7 +515,7 @@ function CoursesPage() {
       : null
     : persistedActiveScheduleEntry
   const scheduleData = activeScheduleEntry?.scheduleData ?? null
-  const scheduleTimeSlotPresetId: TimeSlotPresetId = activeScheduleEntry?.timeSlotPresetId ?? 'builtIn'
+  const scheduleTimeSlotPresetId: TimeSlotPresetId = activeScheduleEntry?.timeSlotPresetId ?? DEFAULT_TIME_SLOT
   const scheduleThemePreset = useMemo(() => getScheduleThemePreset(), [])
   const autoSimplifyHintEnabled = useMemo(() => getAutoSimplifyScheduleHintEnabled(), [])
 

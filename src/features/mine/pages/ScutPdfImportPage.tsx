@@ -26,7 +26,7 @@ import {
   TIME_SLOT_PRESET_OPTIONS,
 } from '../../../core/schedule/timeSlotPresets'
 import type { ScheduleData, ScheduleLesson, TimeSlotPresetId } from '../../../core/schedule/types'
-import { getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 
 const weekdayLabels = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
 
@@ -125,7 +125,7 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
   const [scheduleName, setScheduleName] = useState('')
   const [semesterStartDate, setSemesterStartDate] = useState(() => getSemesterStartDate())
   const [themeId, setThemeId] = useState<ScheduleThemeId>(() => getScheduleThemePreset().id)
-  const [timeSlotPresetId, setTimeSlotPresetId] = useState<TimeSlotPresetId>('builtIn')
+  const [timeSlotPresetId, setTimeSlotPresetId] = useState<TimeSlotPresetId>(DEFAULT_TIME_SLOT)
   const isBusy = isParsing || isSaving
   const preview = pendingImport ? buildScutPdfPreview(pendingImport.scheduleData) : null
 

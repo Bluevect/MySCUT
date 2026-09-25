@@ -5,17 +5,18 @@ import {
   type PersistentStorageRuntime,
   type StorageLike,
 } from '../storage'
+import { getDefaultSemesterStartDate } from './semesterStartDateUtils'
 import {
   resolveScheduleImportThemePreset,
   type ScheduleThemeId,
 } from './themePresets'
+import { DEFAULT_TIME_SLOT } from '../scheduleSettings'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from './types'
 
 const LEGACY_SCHEDULE_STORAGE_KEY = 'scheduleData'
 const LEGACY_SCHEDULE_LIBRARY_STORAGE_KEY = 'scheduleLibrary'
 const LEGACY_THEME_STORAGE_KEY = 'scheduleThemeId'
 const LEGACY_SEMESTER_START_DATE_STORAGE_KEY = 'semesterStartDate'
-const LEGACY_DEFAULT_SEMESTER_START_DATE = '2026-02-23'
 const SCHEDULE_LIBRARY_MIGRATION_ID = 'schedule-library-v1-from-localstorage'
 
 export type ScheduleLibrary = {
@@ -43,7 +44,7 @@ function normalizeTimeSlotPresetId(value: unknown): TimeSlotPresetId {
     return value
   }
 
-  return 'builtIn'
+  return DEFAULT_TIME_SLOT
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -173,7 +174,7 @@ function buildSavedSchedule(scheduleData: ScheduleData, options: SaveScheduleOpt
     name: options.preferredName || scheduleData.table.name || '未命名课表',
     source: scheduleData.source,
     themeId: options.themeId,
-    timeSlotPresetId: options.timeSlotPresetId ?? 'builtIn',
+    timeSlotPresetId: options.timeSlotPresetId ?? DEFAULT_TIME_SLOT,
     semesterStartDate: options.semesterStartDate,
     createdAt: Date.now(),
     scheduleData,
@@ -210,13 +211,13 @@ function readLegacyScheduleLibrary(storage: StorageLike) {
         ).id
         const semesterStartDate =
           readStorageValue(storage, LEGACY_SEMESTER_START_DATE_STORAGE_KEY) ||
-          LEGACY_DEFAULT_SEMESTER_START_DATE
+          getDefaultSemesterStartDate()
         const migratedSchedule: SavedSchedule = {
           id: 'legacy-schedule',
           name: parsedScheduleData.table.name || '历史课表',
           source: parsedScheduleData.source,
           themeId,
-          timeSlotPresetId: 'builtIn',
+          timeSlotPresetId: DEFAULT_TIME_SLOT,
           semesterStartDate,
           createdAt: parsedScheduleData.importedAt || Date.now(),
           scheduleData: parsedScheduleData,
@@ -590,12 +591,12 @@ export async function saveScheduleData(scheduleData: ScheduleData) {
   }
 
   const themeId = resolveScheduleImportThemePreset(storedThemeId).id
-  const semesterStartDate = storedSemesterStartDate || LEGACY_DEFAULT_SEMESTER_START_DATE
+  const semesterStartDate = storedSemesterStartDate || getDefaultSemesterStartDate()
 
   return scheduleRepository.saveScheduleDataWithOptions(scheduleData, {
     themeId,
     semesterStartDate,
-    timeSlotPresetId: 'builtIn',
+    timeSlotPresetId: DEFAULT_TIME_SLOT,
     preferredName: scheduleData.table.name,
     setActive: true,
   })

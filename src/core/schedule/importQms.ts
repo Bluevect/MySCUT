@@ -1,4 +1,5 @@
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId, WakeupTimeSlot } from './types'
+import { DEFAULT_TIME_SLOT } from '../scheduleSettings'
 import { ScheduleImportError } from './importErrors'
 import { assertScheduleTextByteLength } from './importLimits'
 import { trimRedundantTimeSlots } from './timeSlotTrim'
@@ -70,7 +71,7 @@ function normalizeTimeSlotPresetId(value: unknown): TimeSlotPresetId {
     return value
   }
 
-  return 'builtIn'
+  return DEFAULT_TIME_SLOT
 }
 
 function isScheduleData(value: unknown): value is ScheduleData {
