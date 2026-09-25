@@ -116,6 +116,7 @@ function ScheduleSettingsPage() {
   const qmsFileInputRef = useRef<HTMLInputElement>(null)
   const htmlFileInputRef = useRef<HTMLInputElement>(null)
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
+  const [isImportDateReminderOpen, setIsImportDateReminderOpen] = useState(false)
   const [isChangeScheduleNameModalOpen, setIsChangeScheduleNameModalOpen] = useState(false)
   const [newScheduleNameInputText, setNewScheduleNameInputText] = useState('')
   const [isImportCompressedQMSModalOpen, setIsImportCompressedQMSModalOpen] = useState(false)
@@ -236,6 +237,16 @@ function ScheduleSettingsPage() {
 
   const handleCloseDateModal = () => {
     setIsDateModalOpen(false)
+  }
+
+  const handleCloseImportDateReminder = () => {
+    setIsImportDateReminderOpen(false)
+  }
+
+  const handleConfirmImportDateReminder = () => {
+    setIsImportDateReminderOpen(false)
+    setPendingDate(semesterStartDate)
+    setIsDateModalOpen(true)
   }
 
   const handleOpenChangeScheduleNameModal = () => {
@@ -524,8 +535,10 @@ function ScheduleSettingsPage() {
 
           saveSemesterStartDate(nextSemesterStartDate)
           setSemesterStartDate(nextSemesterStartDate)
+          setPendingDate(nextSemesterStartDate)
           const matchedTimeSlotName = getTimeSlotPresetName(nextTimeSlotPresetId)
           messageApi.success(`课表导入成功，已应用配色：${selectedThemePreset.name}，自动匹配时间表：${matchedTimeSlotName}`)
+          setIsImportDateReminderOpen(true)
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '课表导入失败'
           messageApi.error(errorMessage)
@@ -560,8 +573,10 @@ function ScheduleSettingsPage() {
       setTimeSlotPresetId(parsedQms.timeSlotPresetId)
       saveSemesterStartDate(nextSemesterStartDate)
       setSemesterStartDate(nextSemesterStartDate)
+      setPendingDate(nextSemesterStartDate)
       refreshScheduleState()
       messageApi.success('QMS 课表导入成功')
+      setIsImportDateReminderOpen(true)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'QMS 课表导入失败'
       messageApi.error(errorMessage)
@@ -623,7 +638,9 @@ function ScheduleSettingsPage() {
 
       saveSemesterStartDate(nextSemesterStartDate)
       setSemesterStartDate(nextSemesterStartDate)
+      setPendingDate(nextSemesterStartDate)
       messageApi.success(`华工教务课表导入成功，已应用配色：${selectedThemePreset.name}`)
+      setIsImportDateReminderOpen(true)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
       messageApi.error(errorMessage)
@@ -924,6 +941,17 @@ function ScheduleSettingsPage() {
         disabled={isImportPending}
         onChange={handleImportHtmlFile}
       />
+
+      <Modal
+        title='设置学期起始时间'
+        open={isImportDateReminderOpen}
+        onOk={handleConfirmImportDateReminder}
+        onCancel={handleCloseImportDateReminder}
+        okText='去设置'
+        cancelText='稍后再说'
+      >
+        <p>导入成功！建议先设置学期起始时间，以保证周次、节次和课程日期计算准确。</p>
+      </Modal>
 
       <Modal
         title='设置学期起始时间'
