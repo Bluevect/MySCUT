@@ -52,6 +52,8 @@ const SCROLL_HINT_THRESHOLD = 2
 const PRELOAD_WEEK_RADIUS = 3
 const EMPTY_WEEK_RENDER_DATA = createEmptyWeekScheduleRenderData()
 const INTERSECTION_PREVIEW_PATH = '/courses/intersection-preview'
+const IMPORT_START_DATE_REMINDER_KEY = 'schedule-import-start-date-reminder'
+const SUCCESSFUL_IMPORT_MESSAGE_KEY = 'schedule-import-successful-message'
 
 type LessonTime = {
   startTime: string
@@ -530,17 +532,40 @@ function CoursesPage() {
 
   const swipeState = useMemo(() => createSwipeState(currentWeek, swipeDirection), [currentWeek, swipeDirection])
 
-  // Handle popup messages from ScutJwWebViewPage
   useEffect(() => {
     const popupMessage = location.state?.message
     if (typeof popupMessage !== 'string' || !popupMessage) {
       return
     }
 
-    messageApi.success(popupMessage).then(() => {
-      navigate(location.pathname, { replace: true, state: null })
-    })
-  }, [location, messageApi, navigate])
+  }, [location.state?.message, messageApi, navigate, location.pathname])
+
+  useEffect(() => {
+    let shouldOpenReminder = false
+    let popupMessage = null
+
+    try {
+      shouldOpenReminder = sessionStorage.getItem(IMPORT_START_DATE_REMINDER_KEY) === '1'
+      popupMessage = sessionStorage.getItem(SUCCESSFUL_IMPORT_MESSAGE_KEY)
+    } catch {
+      shouldOpenReminder = false
+      popupMessage = null
+    }
+
+    if (!shouldOpenReminder || !popupMessage) {
+      return
+    }
+
+    messageApi.success(popupMessage)
+    setIsStartDateReminderOpen(true)
+
+    try {
+      sessionStorage.removeItem(IMPORT_START_DATE_REMINDER_KEY)
+      sessionStorage.removeItem(SUCCESSFUL_IMPORT_MESSAGE_KEY)
+    } catch {
+      // no-op: keep the flow resilient if storage is unavailable
+    }
+  }, [])
 
   useEffect(() => {
     const nextWeekViewContext = `${scheduleWeekViewId}:${semesterStartDate}`
@@ -888,6 +913,7 @@ function CoursesPage() {
   const selectedWeekday = WEEKDAY_LABELS[selectedDay - 1] ?? ''
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false)
   const [isSaveNameModalOpen, setIsSaveNameModalOpen] = useState(false)
+  const [isStartDateReminderOpen, setIsStartDateReminderOpen] = useState(false)
   const [saveNameInput, setSaveNameInput] = useState('')
   const [isSavingIntersection, setIsSavingIntersection] = useState(false)
   const saveIntersectionOperationRef = useRef(new SinglePendingOperation())
@@ -942,6 +968,15 @@ function CoursesPage() {
     setSaveNameInput(intersectionPreviewPayload.defaultSaveName)
     setIsExitConfirmOpen(false)
     setIsSaveNameModalOpen(true)
+  }
+
+  const handleGoToScheduleSettings = () => {
+    setIsStartDateReminderOpen(false)
+    navigate('/mine/schedule-settings')
+  }
+
+  const handleCloseStartDateReminder = () => {
+    setIsStartDateReminderOpen(false)
   }
 
   const handleSubmitSaveName = async () => {
@@ -1115,6 +1150,17 @@ function CoursesPage() {
             )
           })}
         </div>
+      </Modal>
+
+      <Modal
+        title='设置学期起始时间'
+        open={isStartDateReminderOpen}
+        onOk={handleGoToScheduleSettings}
+        onCancel={handleCloseStartDateReminder}
+        okText='去设置'
+        cancelText='暂不设置'
+      >
+        <p className='schedule-switch-empty'>导入成功。建议先设置学期起始时间，以保证周次和课程日期更准确。你也可以先继续查看课表，之后随时在设置页调整。</p>
       </Modal>
 
       <Modal
