@@ -5,6 +5,7 @@ import {
   type PersistentStorageRuntime,
   type StorageLike,
 } from '../storage'
+import { getDefaultSemesterStartDate } from './semesterStartDateUtils'
 import {
   resolveScheduleImportThemePreset,
   type ScheduleThemeId,
@@ -15,7 +16,6 @@ const LEGACY_SCHEDULE_STORAGE_KEY = 'scheduleData'
 const LEGACY_SCHEDULE_LIBRARY_STORAGE_KEY = 'scheduleLibrary'
 const LEGACY_THEME_STORAGE_KEY = 'scheduleThemeId'
 const LEGACY_SEMESTER_START_DATE_STORAGE_KEY = 'semesterStartDate'
-const LEGACY_DEFAULT_SEMESTER_START_DATE = '2026-02-23'
 const SCHEDULE_LIBRARY_MIGRATION_ID = 'schedule-library-v1-from-localstorage'
 
 export type ScheduleLibrary = {
@@ -210,7 +210,7 @@ function readLegacyScheduleLibrary(storage: StorageLike) {
         ).id
         const semesterStartDate =
           readStorageValue(storage, LEGACY_SEMESTER_START_DATE_STORAGE_KEY) ||
-          LEGACY_DEFAULT_SEMESTER_START_DATE
+          getDefaultSemesterStartDate()
         const migratedSchedule: SavedSchedule = {
           id: 'legacy-schedule',
           name: parsedScheduleData.table.name || '历史课表',
@@ -590,7 +590,7 @@ export async function saveScheduleData(scheduleData: ScheduleData) {
   }
 
   const themeId = resolveScheduleImportThemePreset(storedThemeId).id
-  const semesterStartDate = storedSemesterStartDate || LEGACY_DEFAULT_SEMESTER_START_DATE
+  const semesterStartDate = storedSemesterStartDate || getDefaultSemesterStartDate()
 
   return scheduleRepository.saveScheduleDataWithOptions(scheduleData, {
     themeId,
