@@ -2,6 +2,8 @@ import { getDefaultSemesterStartDate } from './schedule/semesterStartDateUtils'
 
 const SEMESTER_START_DATE_STORAGE_KEY = 'semesterStartDate'
 
+export const DEFAULT_TIME_SLOT = 'universityTown'
+
 function isValidDateText(dateText: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(dateText)
 }
