@@ -31,6 +31,8 @@ type WebViewLocationState = {
 }
 
 const PROGRESS_BAR_FADE_OUT_DELAY = 180
+const IMPORT_START_DATE_REMINDER_KEY = 'schedule-import-start-date-reminder'
+const SUCCESSFUL_IMPORT_MESSAGE_KEY = 'schedule-import-successful-message'
 
 function ScutJwWebViewPage() {
   const navigate = useNavigate()
@@ -115,12 +117,14 @@ function ScutJwWebViewPage() {
         // Necessary to hide WebView, or navigation won't work!
         void hideActiveWebView()
 
-        navigate('/courses', {
-          replace: true,
-          state: {
-            message: `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
-          },
-        })
+        try {
+          sessionStorage.setItem(IMPORT_START_DATE_REMINDER_KEY, '1')
+          sessionStorage.setItem(SUCCESSFUL_IMPORT_MESSAGE_KEY, `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`)
+        } catch {
+          // no-op: storage may be unavailable in some environments
+        }
+
+        navigate('/courses', { replace: true })
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
         logScutJwImportDiagnostic({
