@@ -1,20 +1,31 @@
 import { message } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import {
+  getReloadManualEnabledStartup,
   getUseLocalManual,
   LOCAL_MANUAL_URL,
   REMOTE_MANUAL_URL,
   setUseLocalManual,
 } from '../../core/manual/manualSourceStorage'
+import { useLocation } from 'react-router-dom'
 
 const REMOTE_LOAD_TIMEOUT_MS = 10000
 
 function ManualPage() {
+  const location = useLocation()
+  const isActive = location.pathname === '/manual'
+  const [iframeEverActivated, setIframeEverActivated] = useState(isActive)
   const [messageApi, contextHolder] = message.useMessage()
   const [iframeSrc, setIframeSrc] = useState(() =>
     getUseLocalManual() ? LOCAL_MANUAL_URL : REMOTE_MANUAL_URL,
   )
   const remoteFallbackTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (isActive) {
+      setIframeEverActivated(true)
+    }
+  }, [isActive])
 
   const clearRemoteTimer = () => {
     if (remoteFallbackTimerRef.current === null) {
@@ -62,8 +73,15 @@ function ManualPage() {
     fallbackToLocalManual()
   }
 
+  if (!getReloadManualEnabledStartup() && !iframeEverActivated) {
+    return null
+  }
+
   return (
-    <section className='manual-page'>
+    <section
+      className='manual-page'
+      style={{ display: isActive || getReloadManualEnabledStartup() ? 'unset' : 'none' }}
+    >
       {contextHolder}
       <iframe
         className='manual-iframe'

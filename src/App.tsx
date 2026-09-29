@@ -6,6 +6,8 @@ import { useHardwareBackButton } from './platform/capacitor/useHardwareBackButto
 import { useAndroidViewportInset } from './platform/capacitor/useAndroidViewportInset'
 import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
 import { RouteContentErrorBoundary } from './components/AppRouteStates'
+import { ManualPage } from './features/manual'
+import { getReloadManualEnabledStartup } from './core/manual/manualSourceStorage'
 
 const TAB_ITEMS = [
   { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
@@ -37,6 +39,11 @@ function App() {
         >
           <AppRoutes />
         </RouteContentErrorBoundary>
+
+        {!getReloadManualEnabledStartup() && (
+          <ManualPage />
+        )}
+        
       </main>
 
       {!isMineDetailPage && (

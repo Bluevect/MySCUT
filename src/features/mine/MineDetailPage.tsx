@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../components/buttons/CircleIconButton'
 import { HorizontalSlideSelector } from '../../components/HorizontalSlideSelector'
 import { VerticalSlideSelector } from '../../components/VerticalSlideSelector'
-import { getUseLocalManual, setUseLocalManual } from '../../core/manual/manualSourceStorage'
+import { getUseLocalManual, setUseLocalManual, setReloadManualEnabled, getReloadManualEnabled } from '../../core/manual/manualSourceStorage'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
 import { GLOBAL_THEME_FAMILY_OPTIONS } from '../../core/theme/globalThemePresets'
 import { APP_TODO_ITEMS, MANUAL_TODO_ITEMS } from '../../generated/todoSnapshot'
@@ -86,6 +86,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const { themeFamily, mode, resolvedMode, setThemeFamily, setMode } = useGlobalTheme()
   const subtitle = DETAIL_SUBTITLE_MAP[title] ?? 'Details'
   const [isLocalManualEnabled, setIsLocalManualEnabled] = useState(() => getUseLocalManual())
+  const [isReloadManualEnabled, setIsReloadManualEnabled] = useState(() => getReloadManualEnabled())
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
@@ -162,6 +163,11 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const handleLocalManualSwitchChange = (checked: boolean) => {
     setIsLocalManualEnabled(checked)
     setUseLocalManual(checked)
+  }
+
+  const handleReloadManualSwitchChange = (checked: boolean) => {
+    setIsReloadManualEnabled(checked)
+    setReloadManualEnabled(checked)
   }
 
   const handleCheckUpdate = async () => {
@@ -378,6 +384,16 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                   <p className='mine-detail-card-description'>开启后优先加载应用内置手册资源</p>
                 </div>
                 <Switch checked={isLocalManualEnabled} onChange={handleLocalManualSwitchChange} />
+              </div>
+            </div>
+
+            <div className='mine-button-group'>
+              <div className='mine-group-button mine-setting-row'>
+                <div className='mine-setting-copy'>
+                  <p className='mine-detail-card-title'>进入手册时重新加载（需重启应用）</p>
+                  <p className='mine-detail-card-description'>关闭后手册内容保留上次浏览位置，开启后每次进入都会重新加载 <br /> 修改后需重启应用才能生效</p>
+                </div>
+                <Switch checked={isReloadManualEnabled} onChange={handleReloadManualSwitchChange} />
               </div>
             </div>
           </>
