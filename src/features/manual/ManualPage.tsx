@@ -9,7 +9,7 @@ import {
 } from '../../core/manual/manualSourceStorage'
 import { useLocation } from 'react-router-dom'
 import { registerHardwareBackButtonHandler } from '../../platform/capacitor/useHardwareBackButton'
-import { goBackInIframe } from '../../platform/web/iframeHistory'
+import { createIframeHistory, type IframeHistory } from '../../platform/web/iframeHistory'
 
 const REMOTE_LOAD_TIMEOUT_MS = 10000
 
@@ -22,7 +22,12 @@ function ManualPage() {
     getUseLocalManual() ? LOCAL_MANUAL_URL : REMOTE_MANUAL_URL,
   )
   const remoteFallbackTimerRef = useRef<number | null>(null)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const iframeHistoryRef = useRef<IframeHistory | null>(null)
+  const expectFrameDocumentRef = useRef(true)
+
+  if (iframeHistoryRef.current === null) {
+    iframeHistoryRef.current = createIframeHistory()
+  }
 
   useEffect(() => {
     if (isActive) {
@@ -31,12 +36,21 @@ function ManualPage() {
   }, [isActive])
 
   useEffect(() => {
+    // The app's own navigation adds history entries too, so the frame depth restarts from here
+    iframeHistoryRef.current?.reset()
+  }, [location.pathname])
+
+  useEffect(() => {
+    expectFrameDocumentRef.current = true
+  }, [iframeSrc])
+
+  useEffect(() => {
     if (!isActive) {
       return
     }
 
-    // The iframe keeps its own history: back walks it first, then leaves the tab
-    return registerHardwareBackButtonHandler(() => goBackInIframe(iframeRef.current))
+    // Back walks the manual first and only then leaves the tab
+    return registerHardwareBackButtonHandler(() => iframeHistoryRef.current?.goBack() ?? false)
   }, [isActive])
 
   const clearRemoteTimer = () => {
@@ -76,6 +90,12 @@ function ManualPage() {
   }, [iframeSrc])
 
   const handleIframeLoad = () => {
+    if (expectFrameDocumentRef.current) {
+      expectFrameDocumentRef.current = false
+      // A fresh frame document starts a new iframe history
+      iframeHistoryRef.current?.reset()
+    }
+
     if (iframeSrc === REMOTE_MANUAL_URL) {
       clearRemoteTimer()
     }
@@ -96,7 +116,6 @@ function ManualPage() {
     >
       {contextHolder}
       <iframe
-        ref={iframeRef}
         className='manual-iframe'
         src={iframeSrc}
         title='华工生存手册'

@@ -1,86 +1,65 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest'
-import { goBackInIframe } from '../../../src/platform/web/iframeHistory'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createIframeHistory } from '../../../src/platform/web/iframeHistory'
 
-type NavigationStub = {
-  canGoBack: boolean
-  currentEntry: { key: string } | null
-  back: ReturnType<typeof vi.fn>
-}
+const historyLength = { value: 0 }
 
-function createFrame(options: { canGoBack: boolean; onBack?: (navigation: NavigationStub) => void }) {
-  const navigation: NavigationStub = {
-    canGoBack: options.canGoBack,
-    currentEntry: { key: 'entry-1' },
-    back: vi.fn(async () => {
-      options.onBack?.(navigation)
-    }),
-  }
+beforeEach(() => {
+  historyLength.value = 0
+  Object.defineProperty(window.history, 'length', {
+    configurable: true,
+    get: () => historyLength.value,
+  })
+  vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+})
 
-  return {
-    frame: { contentWindow: { navigation } } as unknown as HTMLIFrameElement,
-    navigation,
-  }
-}
+afterEach(() => {
+  vi.restoreAllMocks()
+  delete (window.history as unknown as Record<string, unknown>).length
+})
 
-describe('goBackInIframe', () => {
-  it('ignores a missing frame', async () => {
-    await expect(goBackInIframe(null)).resolves.toBe(false)
+describe('createIframeHistory', () => {
+  it('leaves the press to the app while the frame has no entries of its own', () => {
+    const iframeHistory = createIframeHistory()
+
+    expect(iframeHistory.goBack()).toBe(false)
+    expect(window.history.back).not.toHaveBeenCalled()
   })
 
-  it('ignores frames without the navigation api', async () => {
-    const frame = { contentWindow: {} } as unknown as HTMLIFrameElement
+  it('claims the press once an iframe navigation added an entry', () => {
+    const iframeHistory = createIframeHistory()
+    historyLength.value += 1
 
-    await expect(goBackInIframe(frame)).resolves.toBe(false)
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(window.history.back).toHaveBeenCalledOnce()
   })
 
-  it('ignores frames that cannot go back on their own', async () => {
-    const { frame, navigation } = createFrame({ canGoBack: false })
+  it('walks one frame entry per press and stops at the frame root', () => {
+    const iframeHistory = createIframeHistory()
+    historyLength.value += 2
 
-    await expect(goBackInIframe(frame)).resolves.toBe(false)
-    expect(navigation.back).not.toHaveBeenCalled()
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(iframeHistory.goBack()).toBe(false)
+    expect(window.history.back).toHaveBeenCalledTimes(2)
   })
 
-  it('claims the press when the frame moves to another entry', async () => {
-    const { frame, navigation } = createFrame({
-      canGoBack: true,
-      onBack: (stub) => {
-        stub.currentEntry = { key: 'entry-2' }
-      },
-    })
+  it('forgets frame entries once the app has navigated again', () => {
+    const iframeHistory = createIframeHistory()
+    historyLength.value += 2
+    iframeHistory.reset()
 
-    await expect(goBackInIframe(frame)).resolves.toBe(true)
-    expect(navigation.back).toHaveBeenCalledOnce()
+    expect(iframeHistory.goBack()).toBe(false)
   })
 
-  it('leaves the press to the app when the frame entry does not change', async () => {
-    const { frame, navigation } = createFrame({ canGoBack: true })
+  it('forgets frame entries once the frame document is replaced', () => {
+    const iframeHistory = createIframeHistory()
+    historyLength.value += 1
+    historyLength.value += 1
+    iframeHistory.reset()
+    historyLength.value += 1
 
-    await expect(goBackInIframe(frame)).resolves.toBe(false)
-    expect(navigation.back).toHaveBeenCalledOnce()
-  })
-
-  it('claims the press when an aborted traversal still moved the frame', async () => {
-    const navigation: NavigationStub = {
-      canGoBack: true,
-      currentEntry: { key: 'entry-1' },
-      back: vi.fn(async () => {
-        navigation.currentEntry = { key: 'entry-2' }
-        throw new Error('traversal aborted')
-      }),
-    }
-    const frame = { contentWindow: { navigation } } as unknown as HTMLIFrameElement
-
-    await expect(goBackInIframe(frame)).resolves.toBe(true)
-  })
-
-  it('ignores frames whose window is not readable', async () => {
-    const frame = {
-      get contentWindow(): never {
-        throw new Error('cross origin')
-      },
-    } as unknown as HTMLIFrameElement
-
-    await expect(goBackInIframe(frame)).resolves.toBe(false)
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(iframeHistory.goBack()).toBe(false)
   })
 })

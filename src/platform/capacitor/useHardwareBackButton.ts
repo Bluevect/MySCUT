@@ -77,11 +77,6 @@ export function useHardwareBackButton({ onExitHint }: HardwareBackButtonOptions)
         return
       }
 
-      // The handlers above are async, so stop when one of them already moved the route
-      if (pathnameRef.current !== pathname) {
-        return
-      }
-
       if (isAppRootPath(pathname)) {
         const now = Date.now()
         if (now - lastExitHintAtRef.current < EXIT_HINT_WINDOW_MS) {
