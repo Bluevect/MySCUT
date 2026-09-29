@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { NotFoundPage, RouteLoadingView } from '../components/AppRouteStates'
+import { getReloadManualEnabledStartup } from '../core/manual/manualSourceStorage'
 
 const isWebPlatform = import.meta.env.VITE_TARGET_PLATFORM === 'web'
 
@@ -65,7 +66,7 @@ function AppRoutes() {
         <Route path='/' element={<Navigate to='/courses' replace />} />
         <Route path='/courses' element={<CoursesPage />} />
         <Route path='/courses/intersection-preview' element={<CoursesPage />} />
-        <Route path='/manual' element={<ManualPage />} />
+        <Route path='/manual' element={getReloadManualEnabledStartup() ? <ManualPage /> : null} />
         <Route path='/mine' element={<MinePage />} />
         <Route path='/mine/schedule-settings' element={<ScheduleSettingsPage />} />
         <Route path='/mine/schedule-intersection' element={<ScheduleIntersectionPage />} />
