@@ -1,8 +1,8 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useRef, useState } from 'react'
-import { Input, Modal, message } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { Input, message } from 'antd'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import {
   SCUT_JW_CAMPUS_URL,
@@ -10,7 +10,9 @@ import {
   resolveScutJwEntryUrl,
   type ScutJwAccessMode,
 } from '../../../core/schedule/scutJwAccess'
+import { resolveBackPath } from '../../../core/navigation/appBack'
 import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImportDiagnostics'
+import { infoWithBackDismiss } from '../../../platform/capacitor/useBackDismiss'
 
 const SCUT_JW_ACCESS_OPTIONS: Array<{
   value: ScutJwAccessMode
@@ -58,6 +60,7 @@ function getScutJwTargetUrl(targetUrl: string): string {
 
 function ScutJwImportPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const [accessMode, setAccessMode] = useState<ScutJwAccessMode>('campus')
   const [customUrl, setCustomUrl] = useState('')
@@ -75,20 +78,19 @@ function ScutJwImportPage() {
     }
 
     hasShownGuideRef.current = true
-    Modal.info({
+    const guideModal = infoWithBackDismiss({
       title: '导入提示',
       content: '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后点击网页右下角的“导入当前页面”。',
       okText: '知道了',
     })
+
+    return () => {
+      guideModal.close()
+    }
   }, [isAndroidNative])
 
   const handleClose = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine/schedule-settings', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const handleAccessModeChange = (nextAccessMode: ScutJwAccessMode) => {

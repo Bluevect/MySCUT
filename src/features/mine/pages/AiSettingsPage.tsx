@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Input, message } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import {
   clearOpenAiCompatibleSettings,
@@ -13,6 +13,7 @@ import {
   type AiProviderId,
 } from '../../../core/ai'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import { resolveBackPath } from '../../../core/navigation/appBack'
 
 type TransitionStage = 'entering' | 'entered' | 'closing'
 
@@ -34,6 +35,7 @@ const AI_PROVIDER_GUID = {
 
 function AiSettingsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const [providerId, setProviderId] = useState<AiProviderId>(() => getPreferredAiProvider())
   const [baseUrl, setBaseUrl] = useState(() => getOpenAiCompatibleSettings()?.baseUrl ?? '')
@@ -45,12 +47,7 @@ function AiSettingsPage() {
   const providerGuide = AI_PROVIDER_GUID
 
   const navigateBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const startClosingTransition = () => {

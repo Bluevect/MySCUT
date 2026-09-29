@@ -4,6 +4,7 @@ import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
+import { resolveBackPath } from '../../../core/navigation/appBack'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
@@ -342,13 +343,7 @@ function ScutJwWebViewPage() {
 
   const handleClose = async () => {
     await closeActiveWebView()
-
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine/schedule-settings', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const handleBack = async (): Promise<boolean> => {
