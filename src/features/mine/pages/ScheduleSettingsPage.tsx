@@ -15,6 +15,7 @@ import { parseQmsScheduleText } from '../../../core/schedule/importQms'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
 import {
+  applyScheduleNameToScheduleData,
   deleteSavedSchedule,
   listSavedSchedules,
   loadActiveScheduleEntry,
@@ -23,6 +24,7 @@ import {
   setActiveSchedulePreferredName,
   setActiveScheduleThemeId,
   setActiveScheduleTimeSlotPreset,
+  setSavedSchedulePreferredName,
   switchActiveSchedule,
 } from '../../../core/schedule/storage'
 import {
@@ -46,7 +48,7 @@ import {
 } from '../../../core/schedule/timeSlotPresets'
 import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
 import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
-import type { ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
+import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
 
@@ -762,10 +764,22 @@ function ScheduleSettingsPage() {
       return
     }
 
+    await setSavedSchedulePreferredName(targetSchedule.id, targetSchedule.name)
+
+    const latestTargetSchedule = loadSavedScheduleById(exportTargetScheduleId) ?? targetSchedule
+
+    const normalizedTargetSchedule: SavedSchedule = {
+      ...latestTargetSchedule,
+      scheduleData: applyScheduleNameToScheduleData(
+        latestTargetSchedule.scheduleData,
+        latestTargetSchedule.name,
+      ),
+    }
+
     try {
-      const baseFileName = `${sanitizeFileName(targetSchedule.name)}_${formatExportTimestamp(new Date())}`
-      const effectiveTimeSlotPresetId = isExportCustomTimeSlotEnabled ? exportTimeSlotPresetId : targetSchedule.timeSlotPresetId
-      const timeSlotBoundSchedule = applyTimeSlotPresetForExport(targetSchedule, effectiveTimeSlotPresetId)
+      const baseFileName = `${sanitizeFileName(normalizedTargetSchedule.name)}_${formatExportTimestamp(new Date())}`
+      const effectiveTimeSlotPresetId = isExportCustomTimeSlotEnabled ? exportTimeSlotPresetId : normalizedTargetSchedule.timeSlotPresetId
+      const timeSlotBoundSchedule = applyTimeSlotPresetForExport(normalizedTargetSchedule, effectiveTimeSlotPresetId)
       const exportSchedule = isExportSanitizeEnabled
         ? sanitizeScheduleForExport(timeSlotBoundSchedule, exportSanitizeOptions)
         : timeSlotBoundSchedule

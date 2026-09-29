@@ -453,8 +453,47 @@ export class ScheduleRepository {
       const nextLibrary: ScheduleLibrary = {
         ...this.snapshot,
         schedules: this.snapshot.schedules.map((schedule) =>
-          schedule.id === activeSchedule.id
-            ? { ...schedule, name: preferredName }
+          schedule.id === activeSchedule.id ? {
+            ...schedule,
+            name: preferredName,
+            scheduleData: applyScheduleNameToScheduleData(
+              schedule.scheduleData,
+              preferredName,
+            ),
+          } : schedule,
+        ),
+      }
+
+      await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
+      this.snapshot = nextLibrary
+      return true
+    })
+  }
+
+  async setSavedSchedulePreferredName(scheduleId: string, preferredName: string) {
+    return this.enqueueMutation(async () => {
+      const store = this.requireWritableStore()
+      if (this.snapshot === null) {
+        return false
+      }
+
+      const target = this.snapshot.schedules.find((schedule) => schedule.id === scheduleId)
+      if (!target) {
+        return false
+      }
+
+      const nextLibrary: ScheduleLibrary = {
+        ...this.snapshot,
+        schedules: this.snapshot.schedules.map((schedule) =>
+          schedule.id === scheduleId
+            ? {
+                ...schedule,
+                name: preferredName,
+                scheduleData: applyScheduleNameToScheduleData(
+                  schedule.scheduleData,
+                  preferredName,
+                ),
+              }
             : schedule,
         ),
       }
@@ -602,6 +641,39 @@ export async function saveScheduleData(scheduleData: ScheduleData) {
   })
 }
 
+export function applyScheduleNameToScheduleData(
+  scheduleData: ScheduleData,
+  name: string,
+): ScheduleData {
+  const nextTable = {
+    ...scheduleData.table,
+    name,
+  }
+
+  if (scheduleData.raw.kind === 'wakeup') {
+    return {
+      ...scheduleData,
+      table: nextTable,
+      raw: {
+        ...scheduleData.raw,
+        meta: {
+          ...scheduleData.raw.meta,
+          name,
+        },
+        tableConfig: {
+          ...scheduleData.raw.tableConfig,
+          tableName: name,
+        },
+      },
+    }
+  }
+
+  return {
+    ...scheduleData,
+    table: nextTable,
+  }
+}
+
 export function setActiveScheduleTimeSlotPreset(timeSlotPresetId: TimeSlotPresetId) {
   return scheduleRepository.setActiveScheduleTimeSlotPreset(timeSlotPresetId)
 }
@@ -612,6 +684,10 @@ export function setActiveScheduleThemeId(themeId: ScheduleThemeId) {
 
 export function setActiveSchedulePreferredName(preferredName: string) {
   return scheduleRepository.setActiveSchedulePreferredName(preferredName)
+}
+
+export function setSavedSchedulePreferredName(scheduleId: string, preferredName: string) {
+  return scheduleRepository.setSavedSchedulePreferredName(scheduleId, preferredName)
 }
 
 export function saveScheduleDataWithOptions(scheduleData: ScheduleData, options: SaveScheduleOptions) {
