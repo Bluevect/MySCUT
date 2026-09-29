@@ -8,6 +8,12 @@ import { dismissTopBackOverlay } from '../../core/navigation/backDismiss'
 
 type HardwareBackButtonHandler = () => boolean | Promise<boolean>
 
+type HardwareBackButtonOptions = {
+  onExitHint: () => void
+}
+
+const EXIT_HINT_WINDOW_MS = 3000
+
 const handlers: HardwareBackButtonHandler[] = []
 
 export function registerHardwareBackButtonHandler(handler: HardwareBackButtonHandler) {
@@ -35,10 +41,16 @@ async function requestRegisteredHandlers() {
   return false
 }
 
-export function useHardwareBackButton() {
+export function useHardwareBackButton({ onExitHint }: HardwareBackButtonOptions) {
   const navigate = useNavigate()
   const location = useLocation()
   const pathnameRef = useRef(location.pathname)
+  const onExitHintRef = useRef(onExitHint)
+  const lastExitHintAtRef = useRef(0)
+
+  useEffect(() => {
+    onExitHintRef.current = onExitHint
+  })
 
   useEffect(() => {
     pathnameRef.current = location.pathname
@@ -50,7 +62,9 @@ export function useHardwareBackButton() {
     }
 
     const listenerPromise = CapacitorApp.addListener('backButton', async () => {
-      // Fixed order: dismiss overlays, let the page handle it, then walk the app hierarchy (never browser history)
+      const pathname = pathnameRef.current
+
+      // Order: dismiss overlays, let the page handle it, then walk the app hierarchy
       if (dismissTopBackOverlay()) {
         return
       }
@@ -63,9 +77,21 @@ export function useHardwareBackButton() {
         return
       }
 
-      const pathname = pathnameRef.current
+      // The handlers above are async, so stop when one of them already moved the route
+      if (pathnameRef.current !== pathname) {
+        return
+      }
+
       if (isAppRootPath(pathname)) {
-        await CapacitorApp.exitApp()
+        const now = Date.now()
+        if (now - lastExitHintAtRef.current < EXIT_HINT_WINDOW_MS) {
+          await CapacitorApp.exitApp()
+          return
+        }
+
+        // First back at the root explains how to leave, pressing back again exits
+        lastExitHintAtRef.current = now
+        onExitHintRef.current()
         return
       }
 

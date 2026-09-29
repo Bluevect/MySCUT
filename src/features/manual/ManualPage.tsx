@@ -8,6 +8,8 @@ import {
   setUseLocalManual,
 } from '../../core/manual/manualSourceStorage'
 import { useLocation } from 'react-router-dom'
+import { registerHardwareBackButtonHandler } from '../../platform/capacitor/useHardwareBackButton'
+import { goBackInIframe } from '../../platform/web/iframeHistory'
 
 const REMOTE_LOAD_TIMEOUT_MS = 10000
 
@@ -20,11 +22,21 @@ function ManualPage() {
     getUseLocalManual() ? LOCAL_MANUAL_URL : REMOTE_MANUAL_URL,
   )
   const remoteFallbackTimerRef = useRef<number | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     if (isActive) {
       setIframeEverActivated(true)
     }
+  }, [isActive])
+
+  useEffect(() => {
+    if (!isActive) {
+      return
+    }
+
+    // The iframe keeps its own history: back walks it first, then leaves the tab
+    return registerHardwareBackButtonHandler(() => goBackInIframe(iframeRef.current))
   }, [isActive])
 
   const clearRemoteTimer = () => {
@@ -84,6 +96,7 @@ function ManualPage() {
     >
       {contextHolder}
       <iframe
+        ref={iframeRef}
         className='manual-iframe'
         src={iframeSrc}
         title='华工生存手册'
