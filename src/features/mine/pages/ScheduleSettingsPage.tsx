@@ -2,7 +2,7 @@ import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor } from '@capacitor/core'
 import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { VerticalSlideSelector } from '../../../components/VerticalSlideSelector'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
@@ -50,7 +50,9 @@ import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
 import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import { resolveBackPath } from '../../../core/navigation/appBack'
 import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
+import { useBackDismiss } from '../../../platform/capacitor/useBackDismiss'
 
 const { TextArea } = Input
 
@@ -113,6 +115,7 @@ const ENABLED_EXPORT_SANITIZE_OPTIONS: ExportSanitizeOptions = {
 
 function ScheduleSettingsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const wakeupFileInputRef = useRef<HTMLInputElement>(null)
   const qmsFileInputRef = useRef<HTMLInputElement>(null)
@@ -163,12 +166,7 @@ function ScheduleSettingsPage() {
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
 
   const navigateBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const startClosingTransition = () => {
@@ -825,6 +823,18 @@ function ScheduleSettingsPage() {
       messageApi.error('课表导出失败，请稍后重试')
     }
   }
+
+  useBackDismiss(isDateModalOpen, handleCloseDateModal)
+  useBackDismiss(isImportDateReminderOpen, handleCloseImportDateReminder)
+  useBackDismiss(isChangeScheduleNameModalOpen, () => setIsChangeScheduleNameModalOpen(false))
+  useBackDismiss(isImportCompressedQMSModalOpen, () => setIsImportCompressedQMSModalOpen(false))
+  useBackDismiss(isImportModalOpen, () => setIsImportModalOpen(false))
+  useBackDismiss(isHtmlImportMethodModalOpen, () => setIsHtmlImportMethodModalOpen(false))
+  useBackDismiss(isHtmlInputModalOpen, () => setIsHtmlInputModalOpen(false))
+  useBackDismiss(isScheduleSwitchModalOpen, () => setIsScheduleSwitchModalOpen(false))
+  useBackDismiss(isScheduleDeleteModalOpen, () => setIsScheduleDeleteModalOpen(false))
+  useBackDismiss(isScheduleExportModalOpen, () => setIsScheduleExportModalOpen(false))
+  useBackDismiss(isExportFormatModalOpen, () => setIsExportFormatModalOpen(false))
 
   return (
     <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>

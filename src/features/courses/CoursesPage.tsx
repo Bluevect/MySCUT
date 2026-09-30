@@ -19,6 +19,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
 import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
+import { resolveBackPath } from '../../core/navigation/appBack'
 import { clearIntersectionPreviewPayload, loadIntersectionPreviewPayload } from '../../core/schedule/intersectionPreview'
 import {
   buildWeekScheduleRenderData,
@@ -42,6 +43,7 @@ import {
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
 import { DEFAULT_TIME_SLOT, getSemesterStartDate } from '../../core/scheduleSettings'
+import { useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
 import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
 
@@ -920,12 +922,12 @@ function CoursesPage() {
 
   const finalizePreviewExit = () => {
     clearIntersectionPreviewPayload()
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
+    navigate(resolveBackPath(INTERSECTION_PREVIEW_PATH), { replace: true })
+  }
 
-    navigate('/mine/schedule-intersection', { replace: true })
+  const handleDiscardPreview = () => {
+    setIsExitConfirmOpen(false)
+    finalizePreviewExit()
   }
 
   const handleRequestExitPreview = () => {
@@ -1010,6 +1012,11 @@ function CoursesPage() {
       }
     }, setIsSavingIntersection)
   }
+
+  useBackDismiss(isCourseDetailOpen, handleCloseCourseDetail)
+  useBackDismiss(isStartDateReminderOpen, handleCloseStartDateReminder)
+  useBackDismiss(isExitConfirmOpen, handleDiscardPreview)
+  useBackDismiss(isSaveNameModalOpen, () => setIsSaveNameModalOpen(false))
 
   if (shouldShowCoursesFirstUseGuide(savedScheduleCount, isIntersectionPreviewMode)) {
     return (
@@ -1167,10 +1174,7 @@ function CoursesPage() {
         title='保存交集课表'
         open={isExitConfirmOpen}
         onOk={handleConfirmSavePreview}
-        onCancel={() => {
-          setIsExitConfirmOpen(false)
-          finalizePreviewExit()
-        }}
+        onCancel={handleDiscardPreview}
         okText='保存'
         cancelText='不保存'
       >

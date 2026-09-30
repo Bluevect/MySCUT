@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Tabbar, TabbarLink, ToolbarPane } from 'konsta/react'
 import { BookOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
+import { message } from 'antd'
 import AppRoutes from './app/routes'
 import { useHardwareBackButton } from './platform/capacitor/useHardwareBackButton'
 import { useAndroidViewportInset } from './platform/capacitor/useAndroidViewportInset'
@@ -16,7 +17,9 @@ const TAB_ITEMS = [
 ]
 
 function App() {
-  useHardwareBackButton()
+  const [messageApi, contextHolder] = message.useMessage()
+
+  useHardwareBackButton({ onExitHint: () => messageApi.info('再按一次返回键退出应用') })
   useAndroidViewportInset()
 
   const location = useLocation()
@@ -28,6 +31,7 @@ function App() {
 
   return (
     <div className='app-shell'>
+      {contextHolder}
       <StorageStatusBanner />
       <main
         className={`page-content ${isMineDetailPage ? 'page-content--fullscreen' : ''} ${isCoursesPage ? 'page-content--courses' : ''} ${isManualPage ? 'page-content--manual' : ''}`}

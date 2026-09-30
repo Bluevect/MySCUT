@@ -1,10 +1,11 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Input, Modal, Select, message } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import { resolveBackPath } from '../../../core/navigation/appBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
 import { assertScheduleTextFileSize } from '../../../core/schedule/importLimits'
 import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
@@ -15,6 +16,7 @@ import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
 import { listSavedSchedules, loadActiveScheduleEntry, loadSavedScheduleById } from '../../../core/schedule/storage'
 import type { ScheduleData } from '../../../core/schedule/types'
 import { getSemesterStartDate } from '../../../core/scheduleSettings'
+import { useBackDismiss } from '../../../platform/capacitor/useBackDismiss'
 
 const { TextArea } = Input
 
@@ -43,6 +45,7 @@ function getDefaultExternalName(index: number) {
 
 function ScheduleIntersectionPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const wakeupFileInputRef = useRef<HTMLInputElement>(null)
   const qmsFileInputRef = useRef<HTMLInputElement>(null)
@@ -71,12 +74,7 @@ function ScheduleIntersectionPage() {
   const calculateOperationRef = useRef(new SinglePendingOperation())
 
   const navigateBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const startClosingTransition = () => {
@@ -353,6 +351,15 @@ function ScheduleIntersectionPage() {
       }
     }, setIsCalculating)
   }
+
+  useBackDismiss(isImportModalOpen, () => setIsImportModalOpen(false))
+  useBackDismiss(isHtmlImportMethodModalOpen, () => setIsHtmlImportMethodModalOpen(false))
+  useBackDismiss(isHtmlInputModalOpen, () => setIsHtmlInputModalOpen(false))
+  useBackDismiss(isLocalScheduleModalOpen, () => setIsLocalScheduleModalOpen(false))
+  useBackDismiss(isExternalNameModalOpen, () => {
+    setPendingExternalSchedule(null)
+    setIsExternalNameModalOpen(false)
+  })
 
   return (
     <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>

@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Modal, Progress, Switch, message } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../components/buttons/CircleIconButton'
 import { HorizontalSlideSelector } from '../../components/HorizontalSlideSelector'
 import { VerticalSlideSelector } from '../../components/VerticalSlideSelector'
 import { getUseLocalManual, setUseLocalManual, setReloadManualEnabled, getReloadManualEnabled } from '../../core/manual/manualSourceStorage'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
+import { resolveBackPath } from '../../core/navigation/appBack'
 import { GLOBAL_THEME_FAMILY_OPTIONS } from '../../core/theme/globalThemePresets'
 import { APP_TODO_ITEMS, MANUAL_TODO_ITEMS } from '../../generated/todoSnapshot'
 import { THIRD_PARTY_LICENSES } from '../../generated/thirdPartyLicenses'
 import { useGlobalTheme } from '../../platform/web/theme/GlobalThemeProvider'
 import { ApkUpdater, supportsInAppApkUpdate } from '../../platform/capacitor/apkUpdater'
+import { confirmWithBackDismiss, useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import { checkForAppUpdate, type ApkAssetDescriptor } from '../../services/update'
 
 type MineDetailPageProps = {
@@ -82,6 +84,7 @@ const FAQ_ITEMS: Array<{ question: string; answer: string }> = [
 
 function MineDetailPage({ title }: MineDetailPageProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const { themeFamily, mode, resolvedMode, setThemeFamily, setMode } = useGlobalTheme()
   const subtitle = DETAIL_SUBTITLE_MAP[title] ?? 'Details'
@@ -102,12 +105,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const isClosingRef = useRef(false)
 
   const navigateBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const startClosingTransition = () => {
@@ -187,7 +185,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
         return
       }
 
-      Modal.confirm({
+      confirmWithBackDismiss({
         title: `发现新版本 v${result.latestVersion}`,
         content: `当前版本 v${result.localVersion}，检测来源：${result.providerName}`,
         okText: '去更新',
@@ -221,7 +219,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
 
     if (result.status === 'needs-permission') {
       setApkUpdateProgress(null)
-      Modal.confirm({
+      confirmWithBackDismiss({
         title: '需要允许安装应用',
         content: '已打开系统设置，请允许本应用「安装未知应用」后返回，点击「重试」继续安装。',
         okText: '重试',
@@ -269,6 +267,10 @@ function MineDetailPage({ title }: MineDetailPageProps) {
       await listener.remove()
     }
   }
+
+  useBackDismiss(isTermsModalOpen, () => setIsTermsModalOpen(false))
+  useBackDismiss(isLicenseModalOpen, () => setIsLicenseModalOpen(false))
+  useBackDismiss(isTodoModalOpen, () => setIsTodoModalOpen(false))
 
   return (
     <section

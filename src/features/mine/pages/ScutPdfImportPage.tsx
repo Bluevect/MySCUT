@@ -1,8 +1,9 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { type ChangeEvent, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
+import { resolveBackPath } from '../../../core/navigation/appBack'
 import {
   extractScutSchedulePdf,
   parseScutSchedulePdfContract,
@@ -113,6 +114,7 @@ const defaultServices: ScutPdfImportPageServices = {
 
 function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const parseOperationRef = useRef(new SinglePendingOperation())
   const saveOperationRef = useRef(new SinglePendingOperation())
@@ -130,12 +132,7 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
   const preview = pendingImport ? buildScutPdfPreview(pendingImport.scheduleData) : null
 
   const handleClose = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
-    navigate('/mine/schedule-settings', { replace: true })
+    navigate(resolveBackPath(location.pathname), { replace: true })
   }
 
   const handleChoosePdf = () => {
