@@ -10,7 +10,7 @@ beforeEach(() => {
     configurable: true,
     get: () => historyLength.value,
   })
-  vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+  vi.spyOn(window.history, 'go').mockImplementation(() => undefined)
 })
 
 afterEach(() => {
@@ -23,7 +23,7 @@ describe('createIframeHistory', () => {
     const iframeHistory = createIframeHistory()
 
     expect(iframeHistory.goBack()).toBe(false)
-    expect(window.history.back).not.toHaveBeenCalled()
+    expect(window.history.go).not.toHaveBeenCalled()
   })
 
   it('claims the press once an iframe navigation added an entry', () => {
@@ -31,7 +31,7 @@ describe('createIframeHistory', () => {
     historyLength.value += 1
 
     expect(iframeHistory.goBack()).toBe(true)
-    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(window.history.go).toHaveBeenCalledWith(-1)
   })
 
   it('walks one frame entry per press and stops at the frame root', () => {
@@ -41,15 +41,36 @@ describe('createIframeHistory', () => {
     expect(iframeHistory.goBack()).toBe(true)
     expect(iframeHistory.goBack()).toBe(true)
     expect(iframeHistory.goBack()).toBe(false)
-    expect(window.history.back).toHaveBeenCalledTimes(2)
+    expect(window.history.go).toHaveBeenNthCalledWith(1, -1)
+    expect(window.history.go).toHaveBeenNthCalledWith(2, -1)
   })
 
-  it('forgets frame entries once the app has navigated again', () => {
+  it('keeps frame entries across app pushes and skips tab entries on back', () => {
     const iframeHistory = createIframeHistory()
     historyLength.value += 2
-    iframeHistory.reset()
+    historyLength.value += 1
+    iframeHistory.noteAppPush()
+    historyLength.value += 1
+    iframeHistory.noteAppPush()
 
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(window.history.go).toHaveBeenNthCalledWith(1, -3)
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(window.history.go).toHaveBeenNthCalledWith(2, -1)
     expect(iframeHistory.goBack()).toBe(false)
+  })
+
+  it('uses a new iframe entry as the latest frame position', () => {
+    const iframeHistory = createIframeHistory()
+    historyLength.value += 2
+    historyLength.value += 1
+    iframeHistory.noteAppPush()
+    historyLength.value += 1
+    iframeHistory.noteAppPush()
+    historyLength.value += 1
+
+    expect(iframeHistory.goBack()).toBe(true)
+    expect(window.history.go).toHaveBeenCalledWith(-1)
   })
 
   it('forgets frame entries once the frame document is replaced', () => {

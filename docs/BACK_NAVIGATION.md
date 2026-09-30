@@ -40,6 +40,7 @@
 - 新增路由必须在 `APP_ROUTE_PATHS` 注册，并在 `PARENT_ROUTE_MAP` 中配置父页面；根页面和 `*` 除外。
 - `tests/core/navigation/appBack.test.ts` 会检查所有注册页面路由都有返回目标，且返回目标仍是已知页面路由。
 - `/manual` 依赖 app 与 iframe 共享 session history 的长度增量判断跨域 iframe 是否仍有内部历史。跨域 iframe 自身历史不可读，长度增量只能作为启发式判断。
+- 切换 tab 时 iframe 保持挂载，应用产生的历史条目会单独计数；再次进入 `/manual` 后返回，会先跳过这些 tab 历史并继续回退 iframe 内部页面。
 
 相关实现：
 

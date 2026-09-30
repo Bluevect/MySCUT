@@ -7,7 +7,7 @@ import {
   REMOTE_MANUAL_URL,
   setUseLocalManual,
 } from '../../core/manual/manualSourceStorage'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigationType } from 'react-router-dom'
 import { registerHardwareBackButtonHandler } from '../../platform/capacitor/useHardwareBackButton'
 import { createIframeHistory, type IframeHistory } from '../../platform/web/iframeHistory'
 
@@ -15,6 +15,7 @@ const REMOTE_LOAD_TIMEOUT_MS = 10000
 
 function ManualPage() {
   const location = useLocation()
+  const navigationType = useNavigationType()
   const isActive = location.pathname === '/manual'
   const [iframeEverActivated, setIframeEverActivated] = useState(isActive)
   const [messageApi, contextHolder] = message.useMessage()
@@ -36,9 +37,11 @@ function ManualPage() {
   }, [isActive])
 
   useEffect(() => {
-    // The app's own navigation adds history entries too, so the frame depth restarts from here
-    iframeHistoryRef.current?.reset()
-  }, [location.pathname])
+    // App pushes are skipped during back so iframe depth survives tab changes
+    if (navigationType === 'PUSH') {
+      iframeHistoryRef.current?.noteAppPush()
+    }
+  }, [location.key, navigationType])
 
   useEffect(() => {
     expectFrameDocumentRef.current = true
