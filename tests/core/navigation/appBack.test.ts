@@ -1,21 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { APP_ROOT_PATH, isAppRootPath, resolveBackPath } from '../../../src/core/navigation/appBack'
+import { APP_ROUTE_PATHS } from '../../../src/app/routePaths'
+import {
+  APP_ROOT_PATH,
+  PARENT_ROUTE_MAP,
+  isAppRootPath,
+  resolveBackPath,
+} from '../../../src/core/navigation/appBack'
 
-const KNOWN_APP_PATHS = [
-  '/courses',
-  '/courses/intersection-preview',
-  '/manual',
-  '/mine',
-  '/mine/schedule-settings',
-  '/mine/schedule-intersection',
-  '/mine/ai-settings',
-  '/mine/import-scut-pdf',
-  '/mine/import-scut-jw',
-  '/mine/import-scut-jw-webview',
-  '/mine/global-settings',
-  '/mine/faq',
-  '/mine/more',
-]
+const ROUTE_PATHS_WITHOUT_BACK_TARGET = new Set<string>([
+  APP_ROUTE_PATHS.root,
+  APP_ROUTE_PATHS.notFound,
+])
+const KNOWN_APP_PATHS = Object.values(APP_ROUTE_PATHS).filter(
+  (path) => !ROUTE_PATHS_WITHOUT_BACK_TARGET.has(path),
+)
+const KNOWN_APP_PATH_SET = new Set<string>(KNOWN_APP_PATHS)
+
+function isBackRouteCovered(pathname: string) {
+  return pathname === APP_ROOT_PATH || Object.prototype.hasOwnProperty.call(PARENT_ROUTE_MAP, pathname)
+}
 
 describe('resolveBackPath', () => {
   it('keeps the root page as the back target', () => {
@@ -71,5 +74,18 @@ describe('isAppRootPath', () => {
     for (const path of KNOWN_APP_PATHS.filter((candidate) => candidate !== APP_ROOT_PATH)) {
       expect(isAppRootPath(path)).toBe(false)
     }
+  })
+})
+
+describe('back route coverage', () => {
+  it('covers every app route and returns only known routes', () => {
+    const uncoveredPaths = KNOWN_APP_PATHS.filter((path) => !isBackRouteCovered(path))
+    const invalidTargets = KNOWN_APP_PATHS
+      .filter((path) => !isAppRootPath(path))
+      .map((path) => ({ path, target: resolveBackPath(path) }))
+      .filter(({ target }) => !KNOWN_APP_PATH_SET.has(target))
+
+    expect(uncoveredPaths).toEqual([])
+    expect(invalidTargets).toEqual([])
   })
 })

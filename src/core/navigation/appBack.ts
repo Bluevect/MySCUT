@@ -1,7 +1,7 @@
 export const APP_ROOT_PATH = '/courses'
 
 // Native back walks this fixed hierarchy, not browser history; unknown paths fall back to the root
-const PARENT_ROUTE_MAP: Record<string, string> = {
+export const PARENT_ROUTE_MAP: Readonly<Record<string, string>> = {
   '/manual': APP_ROOT_PATH,
   '/mine': APP_ROOT_PATH,
   '/courses/intersection-preview': '/mine/schedule-intersection',

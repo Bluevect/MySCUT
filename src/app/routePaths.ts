@@ -1,0 +1,17 @@
+export const APP_ROUTE_PATHS = {
+  root: '/',
+  courses: '/courses',
+  coursesIntersectionPreview: '/courses/intersection-preview',
+  manual: '/manual',
+  mine: '/mine',
+  mineScheduleSettings: '/mine/schedule-settings',
+  mineScheduleIntersection: '/mine/schedule-intersection',
+  mineAiSettings: '/mine/ai-settings',
+  mineImportScutPdf: '/mine/import-scut-pdf',
+  mineImportScutJw: '/mine/import-scut-jw',
+  mineImportScutJwWebView: '/mine/import-scut-jw-webview',
+  mineGlobalSettings: '/mine/global-settings',
+  mineFaq: '/mine/faq',
+  mineMore: '/mine/more',
+  notFound: '*',
+} as const
