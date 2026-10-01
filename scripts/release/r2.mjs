@@ -33,6 +33,12 @@ export function buildNightlyManifestObjectKey({ keyPrefix }) {
   return `${normalizedPrefix}/nightly/versions.json`
 }
 
+// stable 的永久下载别名：每次发版覆盖，内容随版本变化，外部页面（手册 App 介绍页）直接引用该 URL
+export function buildStableLatestApkObjectKey({ keyPrefix }) {
+  const normalizedPrefix = keyPrefix.replace(/^\/+|\/+$/g, '')
+  return `${normalizedPrefix}/latest/qmm-latest.apk`
+}
+
 export function buildNightlyLatestApkObjectKey({ keyPrefix, fileName }) {
   const normalizedPrefix = keyPrefix.replace(/^\/+|\/+$/g, '')
   return `${normalizedPrefix}/nightly/latest/${fileName}`
@@ -85,7 +91,7 @@ function createR2Client(r2Config) {
   })
 }
 
-export async function uploadReleaseAssetToR2({ localFilePath, objectKey, r2Config }) {
+export async function uploadReleaseAssetToR2({ localFilePath, objectKey, r2Config, cacheControl }) {
   const s3Client = createR2Client(r2Config)
 
   const body = readFileSync(localFilePath)
@@ -96,7 +102,9 @@ export async function uploadReleaseAssetToR2({ localFilePath, objectKey, r2Confi
       Key: objectKey,
       Body: body,
       ContentType: detectContentType(localFilePath),
-      CacheControl: detectCacheControl(localFilePath),
+      // cacheControl 覆盖默认值：覆盖式别名键（内容随版本变化）必须显式传 no-cache，
+      // 不能沿用版本化键的 immutable
+      CacheControl: cacheControl || detectCacheControl(localFilePath),
       Metadata: {
         sha256: metadata.sha256,
       },

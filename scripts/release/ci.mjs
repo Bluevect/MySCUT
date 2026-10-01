@@ -25,6 +25,7 @@ import {
   buildR2LatestVersionsObjectKey,
   buildR2PublicUrl,
   buildR2ReleaseObjectKey,
+  buildStableLatestApkObjectKey,
   deleteR2ObjectsByKeys,
   uploadAndVerifyReleaseAssetToR2,
 } from './r2.mjs'
@@ -252,6 +253,16 @@ async function main() {
   await uploadAndVerifyReleaseAssetToR2({ localFilePath: signedApk, objectKey: apkObjectKey, r2Config })
   await uploadAndVerifyReleaseAssetToR2({ localFilePath: versionsJsonPath, objectKey: versionedManifestKey, r2Config })
   await uploadAndVerifyReleaseAssetToR2({ localFilePath: versionsJsonPath, objectKey: latestManifestKey, r2Config })
+
+  // 永久下载别名：供手册 App 介绍页等外部页面直接引用，内容随版本覆盖，不可长缓存
+  const latestAliasKey = buildStableLatestApkObjectKey({ keyPrefix })
+  await uploadAndVerifyReleaseAssetToR2({
+    localFilePath: signedApk,
+    objectKey: latestAliasKey,
+    r2Config,
+    cacheControl: 'public, no-cache',
+  })
+  console.log(`Uploaded latest APK alias: ${buildR2PublicUrl({ publicBaseUrl: r2Config.publicBaseUrl, objectKey: latestAliasKey })}`)
 
   publishGithubRelease({
     tag,
