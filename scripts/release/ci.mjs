@@ -25,7 +25,7 @@ import {
   buildR2LatestVersionsObjectKey,
   buildR2PublicUrl,
   buildR2ReleaseObjectKey,
-  deleteR2ObjectsWithPrefix,
+  deleteR2ObjectsByKeys,
   uploadAndVerifyReleaseAssetToR2,
 } from './r2.mjs'
 import { loadR2Config } from './r2Config.mjs'
@@ -262,9 +262,17 @@ async function main() {
 
   const previousVersion = resolvePreviousVersion({ nextVersion })
   if (previousVersion) {
-    const previousPrefix = buildR2ReleaseObjectKey({ keyPrefix, version: previousVersion, fileName: '' })
-    const removed = await deleteR2ObjectsWithPrefix({ r2Config, prefix: previousPrefix })
-    console.log(`Removed ${removed} R2 objects of previous version prefix: ${previousPrefix}`)
+    const previousKeys = [
+      buildR2ReleaseObjectKey({ keyPrefix, version: previousVersion, fileName: `qmm-v${previousVersion}.apk` }),
+      buildR2ReleaseObjectKey({ keyPrefix, version: previousVersion, fileName: 'versions.json' }),
+    ]
+    try {
+      const removed = await deleteR2ObjectsByKeys({ r2Config, keys: previousKeys })
+      console.log(`Removed ${removed} R2 objects of previous version: ${previousVersion}`)
+    } catch (error) {
+      // 发布已完成，上一版残留对象仅占存储（免费额度内），清理失败不应判整个发版失败
+      console.warn(`WARN: failed to prune previous R2 objects of ${previousVersion}: ${error?.message ?? error}`)
+    }
   }
 
   rmSync(releaseArtifactDir, { recursive: true, force: true })

@@ -6,7 +6,6 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
-  paginateListObjectsV2,
 } from '@aws-sdk/client-s3'
 import { calculateFileMetadata } from './shared.mjs'
 
@@ -168,30 +167,26 @@ export async function uploadAndVerifyReleaseAssetToR2(input) {
   return verifyR2ReleaseAsset(input)
 }
 
-// 删除指定前缀下的全部对象（stable 发版成功后清理上一版目录，保持 R2 只留最新 stable）
-export async function deleteR2ObjectsWithPrefix({ r2Config, prefix }) {
+// 按确定键删除对象（stable 发版成功后清理上一版目录，保持 R2 只留最新 stable）。
+// 不用 ListObjectsV2：R2 的 Object Read & Write token 不含 List 权限，且 R2 对
+// 无法匹配对象的前缀会返回误导性的 NoSuchKey 404；上一版对象键完全可推导，无需枚举。
+export async function deleteR2ObjectsByKeys({ r2Config, keys }) {
+  if (keys.length === 0) {
+    return 0
+  }
+
   const s3Client = createR2Client(r2Config)
-  const keys = []
-  for await (const page of paginateListObjectsV2(
-    { client: s3Client },
-    { Bucket: r2Config.bucket, Prefix: prefix },
-  )) {
-    for (const item of page.Contents ?? []) {
-      if (item.Key) {
-        keys.push(item.Key)
-      }
-    }
+  const result = await s3Client.send(
+    new DeleteObjectsCommand({
+      Bucket: r2Config.bucket,
+      Delete: { Objects: keys.map((key) => ({ Key: key })) },
+    }),
+  )
+
+  const fatalErrors = (result.Errors ?? []).filter((entry) => entry.Code !== 'NoSuchKey')
+  if (fatalErrors.length > 0) {
+    throw new Error(`R2 delete failed: ${fatalErrors.map((entry) => `${entry.Key} (${entry.Code})`).join(', ')}`)
   }
 
-  for (let index = 0; index < keys.length; index += 1000) {
-    const chunk = keys.slice(index, index + 1000)
-    await s3Client.send(
-      new DeleteObjectsCommand({
-        Bucket: r2Config.bucket,
-        Delete: { Objects: chunk.map((key) => ({ Key: key })) },
-      }),
-    )
-  }
-
-  return keys.length
+  return keys.length - (result.Errors ?? []).length
 }
