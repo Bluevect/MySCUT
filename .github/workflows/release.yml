@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     # stable keystore 挂在 release environment 上，触发后需维护者审批才运行
     environment: release
@@ -41,6 +41,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+          # 全量历史与 tag：ci.mjs 需要解析 tag 目标提交（HEAD 与 tag 漂移时检出 tag 树）
+          fetch-depth: 0
           # 发版只构建与发布，不回推 main，无需推送凭证
           persist-credentials: false
 
