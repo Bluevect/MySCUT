@@ -119,13 +119,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git log -1 --pretty=%B > "$RUNNER_TEMP/nightly-notes.md"
           gh release create "nightly-$NIGHTLY_STAMP" \
             --repo Kozmosa/MySCUT \
             --prerelease \
             --title "nightly-$NIGHTLY_STAMP" \
-            --notes "nightly 构建版本：$NIGHTLY_VERSION（commit $(git rev-parse HEAD)）
-
-          安装说明：nightly 为独立包名 com.manual.univ.nightly，可与正式版并排安装；两者数据相互独立，更新仅覆盖 nightly 自身。更新清单走 R2 nightly 单源。" \
+            --notes-file "$RUNNER_TEMP/nightly-notes.md" \
             "$RUNNER_TEMP/qmm-nightly-$NIGHTLY_STAMP.apk"
 
       - name: Upload to R2 and publish nightly manifest
