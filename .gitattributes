@@ -1,1 +1,6 @@
 *.pdf binary
+
+# Capacitor CLI writes these generated files with LF; keep working copies LF so
+# re-syncing does not show phantom diffs on Windows (core.autocrlf=true).
+android/app/capacitor.build.gradle text eol=lf
+android/capacitor.settings.gradle text eol=lf
