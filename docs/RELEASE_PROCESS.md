@@ -20,7 +20,7 @@ npm run release:bump -- <版本> --note-file=.release-notes/v<版本>.md [--min-
 
 1. Actions → Stable Release → Run workflow，输入与 bump 相同的版本号（首个 CI 版本为 0.8.0）；
 2. 等待 environment 审批（Kozmosa 或 Bluevect 任一人批准）；
-3. workflow 执行 `scripts/release/ci.mjs <版本>`：校验 tag 指向 bump commit（HEAD 漂移时自动检出 tag 树）、三处版本一致、骨架 URL 与 R2 secrets 推导一致 → `npm run check` → gradle `assembleStableRelease` 构建并签名（证书指纹固定校验）→ 本地补全 versions.json 元数据 → R2 上传（版本化 APK、版本化清单、latest 清单，均含 Cache-Control）→ GitHub Release（`--verify-tag`）资产上传与 digest 核验 → 清理 R2 上一版前缀。
+3. workflow 执行 `scripts/release/ci.mjs <版本>`：校验 tag 指向 bump commit（HEAD 漂移时自动检出 tag 树）、三处版本一致、骨架 URL 与 R2 secrets 推导一致 → `npm run check` → gradle `assembleStableRelease` 构建并签名（证书指纹固定校验）→ 本地补全 versions.json 元数据 → R2 上传（版本化 APK、版本化清单、latest 清单，均含 Cache-Control）→ 上传永久下载别名 `releases/latest/qmm-latest.apk`（no-cache 覆盖，供手册 App 介绍页等外部页面直接引用）→ GitHub Release（`--verify-tag`）资产上传与 digest 核验 → 清理 R2 上一版前缀。
 
 骨架与元数据的分工：仓库中的 `versions.json` 只含骨架（无 size/sha256）；最终校验和只写入 R2 清单与 GitHub Release 资产中的 `versions.json`。jsDelivr 回退通道因此下载时不校验哈希（客户端兼容缺失字段；HTTPS 与 Android 签名连续性仍然兜底）。如需回退通道也带校验和，可在发布后手动提交补全（参考历史 backfill commit）。bump 推送后、CI 完成前的短窗口内，回退通道可能看到指向尚不存在对象的链接，主通道（R2 latest）不受影响。
 
