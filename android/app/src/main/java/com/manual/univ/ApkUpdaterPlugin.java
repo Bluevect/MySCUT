@@ -1,5 +1,6 @@
 package com.manual.univ;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -76,6 +77,7 @@ public class ApkUpdaterPlugin extends Plugin {
                 });
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     @PluginMethod
     public void install(final PluginCall call) {
         final String path = call.getString("path");
