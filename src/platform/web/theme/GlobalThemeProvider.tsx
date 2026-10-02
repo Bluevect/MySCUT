@@ -10,6 +10,7 @@ import {
 } from '../../../core/theme/globalThemeStorage'
 import type { GlobalThemeFamily, GlobalThemeMode, ResolvedGlobalThemeMode } from '../../../core/theme/types'
 import { syncStatusBarStyleForTheme } from '../../capacitor/syncStatusBarStyle'
+import { syncAndroidCourseWidgetAppearance } from '../../capacitor/courseWidgetSchedule'
 
 const THEME_TRANSITION_CLASS = 'theme-transitioning'
 const THEME_TRANSITION_MS = 240
@@ -77,7 +78,8 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
     const nextResolvedMode = resolveGlobalThemeMode(mode)
     setResolvedMode(nextResolvedMode)
     applyResolvedTheme(nextResolvedMode)
-  }, [mode, themeFamily])
+    syncAndroidCourseWidgetAppearance(mode, themeFamily)
+  }, [mode, resolvedMode, themeFamily])
 
   useEffect(() => {
     if (mode !== 'system' || typeof window.matchMedia !== 'function') {

@@ -4,4 +4,6 @@
     <string name="title_activity_main">启梦华工</string>
     <string name="package_name">com.manual.univ</string>
     <string name="custom_url_scheme">com.manual.univ</string>
+    <string name="course_widget_title">启梦华工</string>
+    <string name="course_widget_day_finished">今日课程已结束</string>
 </resources>

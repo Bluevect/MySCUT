@@ -44,6 +44,7 @@ import {
 } from '../../core/schedule/weekNavigation'
 import { DEFAULT_TIME_SLOT, getSemesterStartDate } from '../../core/scheduleSettings'
 import { useBackDismiss } from '../../platform/capacitor/useBackDismiss'
+import { syncAndroidCourseWidgetSchedule } from '../../platform/capacitor/courseWidgetSchedule'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
 import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
 
@@ -533,6 +534,12 @@ function CoursesPage() {
   const currentWeek = weekView.week
 
   const swipeState = useMemo(() => createSwipeState(currentWeek, swipeDirection), [currentWeek, swipeDirection])
+
+  useEffect(() => {
+    if (location.pathname === '/courses') {
+      syncAndroidCourseWidgetSchedule(getSemesterStartDate())
+    }
+  }, [location.pathname])
 
   useEffect(() => {
     const popupMessage = location.state?.message

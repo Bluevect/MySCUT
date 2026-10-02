@@ -182,6 +182,36 @@ describe('ScheduleRepository migration', () => {
 })
 
 describe('ScheduleRepository durable snapshots', () => {
+  it('notifies subscribers after schedule changes and supports unsubscribe', async () => {
+    const repository = new ScheduleRepository()
+    await repository.initialize({
+      store: new InMemoryPersistentStore(),
+      migrationJournal: new InMemoryMigrationJournal(),
+    }, new MemoryStorage())
+    let notificationCount = 0
+    const unsubscribe = repository.subscribe(() => {
+      notificationCount += 1
+    })
+
+    const firstSave = await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+      setActive: true,
+    })
+    await repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
+      themeId: 'bambooGrove',
+      semesterStartDate: '2026-02-23',
+      setActive: true,
+    })
+    await repository.switchActiveSchedule(firstSave.schedule.id)
+    await repository.deleteSavedSchedule(firstSave.schedule.id)
+
+    expect(notificationCount).toBe(4)
+    unsubscribe()
+    await repository.clearScheduleData()
+    expect(notificationCount).toBe(4)
+  })
+
   it('updates only the active schedule theme after the durable write succeeds', async () => {
     const persistentStore = new InMemoryPersistentStore()
     const repository = new ScheduleRepository()

@@ -266,6 +266,14 @@ export class ScheduleRepository {
   private writable = false
   private readOnlyError: StorageError | null = null
   private mutationQueue: Promise<void> = Promise.resolve()
+  private listeners = new Set<() => void>()
+
+  subscribe(listener: () => void) {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
 
   async initialize(runtime: PersistentStorageRuntime, legacyStorage: StorageLike | null) {
     this.storageRuntime = runtime
@@ -378,6 +386,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return {
         ok: true as const,
         schedule: nextSchedule,
@@ -403,6 +412,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return true
     })
   }
@@ -432,6 +442,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return true
     })
   }
@@ -466,6 +477,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return true
     })
   }
@@ -500,6 +512,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return true
     })
   }
@@ -523,6 +536,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return target
     })
   }
@@ -560,6 +574,7 @@ export class ScheduleRepository {
 
       await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
       this.snapshot = nextLibrary
+      this.notifyListeners()
       return {
         ok: true as const,
         nextActiveSchedule: findActiveSchedule(nextLibrary),
@@ -572,6 +587,7 @@ export class ScheduleRepository {
       const store = this.requireWritableStore()
       await store.remove(SCHEDULE_LIBRARY_KEY)
       this.snapshot = null
+      this.notifyListeners()
       return true
     })
   }
@@ -589,6 +605,12 @@ export class ScheduleRepository {
     }
 
     return this.storageRuntime.store
+  }
+
+  private notifyListeners() {
+    for (const listener of this.listeners) {
+      listener()
+    }
   }
 
   private enqueueMutation<T>(operation: () => T | Promise<T>) {
@@ -700,6 +722,10 @@ export function loadScheduleData() {
 
 export function loadActiveScheduleEntry() {
   return scheduleRepository.loadActiveScheduleEntry()
+}
+
+export function subscribeScheduleLibraryChanges(listener: () => void) {
+  return scheduleRepository.subscribe(listener)
 }
 
 export function listSavedSchedules() {

@@ -9,6 +9,7 @@ export const THIRD_PARTY_LICENSES = [
   { name: '@capacitor/clipboard', version: '8.0.1', license: 'MIT', sourceUrl: null, licenseUrl: null },
   { name: '@capacitor/core', version: '8.1.0', license: 'MIT', sourceUrl: null, licenseUrl: null },
   { name: '@capacitor/ios', version: '8.1.0', license: 'MIT', sourceUrl: null, licenseUrl: null },
+  { name: '@capacitor/preferences', version: '8.0.1', license: 'MIT', sourceUrl: null, licenseUrl: null },
   { name: '@capacitor/status-bar', version: '8.0.1', license: 'MIT', sourceUrl: null, licenseUrl: null },
   { name: '@capgo/capacitor-file-sharer', version: '8.1.10', license: 'MPL-2.0', sourceUrl: null, licenseUrl: null },
   { name: '@capgo/capacitor-inappbrowser', version: '8.15.3', license: 'MPL-2.0', sourceUrl: 'https://github.com/Cap-go/capacitor-inappbrowser/tree/8.15.3', licenseUrl: 'https://github.com/Cap-go/capacitor-inappbrowser/blob/8.15.3/LICENSE' },
