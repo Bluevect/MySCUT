@@ -7,13 +7,36 @@ android {
         applicationId "com.manual.univ"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7001
-        versionName "0.7.1"
+        versionCode 8000
+        versionName "0.8.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // 双通道变体：stable 为正式发布通道；nightly 为 CI 每日构建通道，
+    // 独立包名可与 stable 并排安装，versionCode 由 CI 通过 -PnightlyVersionCode 注入
+    // （与 stable 的 versionCode 互不约束，按 applicationId 各自计数）。
+    // 注意：defaultConfig 的 versionCode/versionName 由 scripts/release/syncNativeVersion.mjs
+    // 以正则回写，flavor 内不要出现 `versionCode <数字>` 字样以免误匹配。
+    flavorDimensions 'channel'
+    productFlavors {
+        stable {
+            dimension 'channel'
+        }
+        nightly {
+            dimension 'channel'
+            applicationIdSuffix '.nightly'
+            if (project.hasProperty('nightlyVersionName')) {
+                versionName project.property('nightlyVersionName')
+            } else {
+                versionNameSuffix '-dev'
+            }
+            if (project.hasProperty('nightlyVersionCode')) {
+                versionCode Integer.parseInt(project.property('nightlyVersionCode').toString())
+            }
         }
     }
     buildTypes {

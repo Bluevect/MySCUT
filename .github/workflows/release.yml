@@ -1,0 +1,65 @@
+name: Stable Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（需已执行 release:bump 并推送 tag vX；workflow 从该 tag 构建发布）'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stable-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # stable keystore 挂在 release environment 上，触发后需维护者审批才运行
+    environment: release
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+      R2_KEY_PREFIX: ${{ secrets.R2_KEY_PREFIX }}
+      R2_S3_ENDPOINT: ${{ secrets.R2_S3_ENDPOINT }}
+      KEYSTORE_STABLE: ${{ secrets.KEYSTORE_STABLE }}
+      KEYSTORE_STABLE_PASS: ${{ secrets.KEYSTORE_STABLE_PASS }}
+      # 证书指纹为公开信息（随每个 APK 分发），在此固定以防 secret 配错密钥
+      KEYSTORE_STABLE_CERT_SHA256: '56:5B:D0:43:9B:AB:27:7B:12:7E:D3:3B:31:60:85:D5:56:EA:25:0D:F1:47:53:4E:35:6E:4A:E5:77:C2:60:53'
+
+    steps:
+      - name: Checkout repository and pinned manual
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          # 全量历史与 tag：ci.mjs 需要解析 tag 目标提交（HEAD 与 tag 漂移时检出 tag 树）
+          fetch-depth: 0
+          # 发版只构建与发布，不回推 main，无需推送凭证
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build and publish from the tagged bump commit
+        run: node scripts/release/ci.mjs "${{ inputs.version }}"
