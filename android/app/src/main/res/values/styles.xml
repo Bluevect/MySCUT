@@ -19,4 +19,11 @@
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
     </style>
+
+    <style name="WidgetCourseTimeText">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">@color/course_widget_content_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
 </resources>

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react'
 import { AppBootstrapSkeleton } from '../../components/AppBootstrapSkeleton'
+import { startAndroidCourseWidgetScheduleSync } from '../capacitor/courseWidgetSchedule'
 import {
   bootstrapApplicationStorage,
   type ApplicationStorageRuntime,
@@ -45,6 +46,14 @@ export function StorageRuntimeProvider({ children, bootstrapRuntime }: StorageRu
       cancelled = true
     }
   }, [bootstrapRuntime])
+
+  useEffect(() => {
+    if (!runtime) {
+      return
+    }
+
+    return startAndroidCourseWidgetScheduleSync()
+  }, [runtime])
 
   const retry = useCallback(async () => {
     if (isRetrying) {

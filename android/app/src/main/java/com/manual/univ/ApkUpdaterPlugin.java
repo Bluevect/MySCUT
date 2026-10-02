@@ -13,6 +13,11 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,11 +27,6 @@ import java.security.MessageDigest;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 @CapacitorPlugin(name = "ApkUpdater")
 public class ApkUpdaterPlugin extends Plugin {
@@ -50,29 +50,30 @@ public class ApkUpdaterPlugin extends Plugin {
         final Integer expectedSize = call.getInt("expectedSize");
         final File targetFile = new File(resolveUpdateDir(), resolveFileName(url));
 
-        executor.execute(() -> {
-            try {
-                if (isCachedFileValid(targetFile, expectedSha256, expectedSize)) {
-                    JSObject result = new JSObject();
-                    result.put("path", targetFile.getAbsolutePath());
-                    result.put("cached", true);
-                    call.resolve(result);
-                    return;
-                }
+        executor.execute(
+                () -> {
+                    try {
+                        if (isCachedFileValid(targetFile, expectedSha256, expectedSize)) {
+                            JSObject result = new JSObject();
+                            result.put("path", targetFile.getAbsolutePath());
+                            result.put("cached", true);
+                            call.resolve(result);
+                            return;
+                        }
 
-                cleanUpOtherFiles(targetFile);
-                downloadToFileSync(url, targetFile, expectedSha256);
+                        cleanUpOtherFiles(targetFile);
+                        downloadToFileSync(url, targetFile, expectedSha256);
 
-                JSObject result = new JSObject();
-                result.put("path", targetFile.getAbsolutePath());
-                result.put("cached", false);
-                call.resolve(result);
-            } catch (Exception error) {
-                //noinspection ResultOfMethodCallIgnored
-                targetFile.delete();
-                call.reject("APK download failed: " + error.getMessage(), error);
-            }
-        });
+                        JSObject result = new JSObject();
+                        result.put("path", targetFile.getAbsolutePath());
+                        result.put("cached", false);
+                        call.resolve(result);
+                    } catch (Exception error) {
+                        //noinspection ResultOfMethodCallIgnored
+                        targetFile.delete();
+                        call.reject("APK download failed: " + error.getMessage(), error);
+                    }
+                });
     }
 
     @PluginMethod
@@ -91,9 +92,10 @@ public class ApkUpdaterPlugin extends Plugin {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 && !getContext().getPackageManager().canRequestPackageInstalls()) {
-            Intent settingsIntent = new Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + getContext().getPackageName()));
+            Intent settingsIntent =
+                    new Intent(
+                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:" + getContext().getPackageName()));
             settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             getContext().startActivity(settingsIntent);
 
@@ -103,10 +105,9 @@ public class ApkUpdaterPlugin extends Plugin {
             return;
         }
 
-        Uri contentUri = FileProvider.getUriForFile(
-                getContext(),
-                getContext().getPackageName() + ".fileprovider",
-                file);
+        Uri contentUri =
+                FileProvider.getUriForFile(
+                        getContext(), getContext().getPackageName() + ".fileprovider", file);
         Intent installIntent = new Intent(Intent.ACTION_VIEW);
         installIntent.setDataAndType(contentUri, "application/vnd.android.package-archive");
         installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -167,7 +168,8 @@ public class ApkUpdaterPlugin extends Plugin {
         }
     }
 
-    private void downloadToFileSync(String url, File targetFile, String expectedSha256) throws Exception {
+    private void downloadToFileSync(String url, File targetFile, String expectedSha256)
+            throws Exception {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder().url(url).build();
 
@@ -185,7 +187,7 @@ public class ApkUpdaterPlugin extends Plugin {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
             try (InputStream input = body.byteStream();
-                 OutputStream output = new FileOutputStream(targetFile)) {
+                    OutputStream output = new FileOutputStream(targetFile)) {
                 byte[] buffer = new byte[IO_BUFFER_SIZE];
                 long receivedBytes = 0;
                 long lastNotifyTime = 0;

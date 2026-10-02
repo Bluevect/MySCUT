@@ -52,6 +52,7 @@ import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from '../../../cor
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../../core/navigation/appBack'
 import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
+import { syncAndroidCourseWidgetSchedule } from '../../../platform/capacitor/courseWidgetSchedule'
 import { useBackDismiss } from '../../../platform/capacitor/useBackDismiss'
 
 const { TextArea } = Input
@@ -297,6 +298,7 @@ function ScheduleSettingsPage() {
       return
     }
 
+    syncAndroidCourseWidgetSchedule(pendingDate)
     setSemesterStartDate(pendingDate)
     setIsDateModalOpen(false)
     messageApi.success('学期起始时间已保存')
