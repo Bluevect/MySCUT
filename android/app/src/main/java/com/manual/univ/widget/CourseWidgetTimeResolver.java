@@ -54,6 +54,34 @@ final class CourseWidgetTimeResolver {
         return new String[] {startTime, endTime};
     }
 
+    static boolean isEndTimePassed(String endTime, long currentTimeMillis) {
+        long endTimeMillis = parseTimeOfDayMillis(endTime);
+        return endTimeMillis >= 0 && currentTimeMillis > endTimeMillis;
+    }
+
+    static long parseTimeOfDayMillis(String time) {
+        if (time == null) {
+            return -1;
+        }
+
+        String[] parts = time.split(":", -1);
+        if (parts.length != 2) {
+            return -1;
+        }
+
+        try {
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                return -1;
+            }
+
+            return (hour * 60L + minute) * 60_000L;
+        } catch (NumberFormatException error) {
+            return -1;
+        }
+    }
+
     private static TimeSlot findTimeSlot(
             String presetId, int node, List<TimeSlot> scheduleTimeSlots, int selectedTimeTable) {
         if (node < 1) {

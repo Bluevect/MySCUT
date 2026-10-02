@@ -51,6 +51,16 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/widget_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:textColor="@color/course_widget_footer_text"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
     <FrameLayout
         android:id="@+id/course_1_card"
         android:layout_width="match_parent"

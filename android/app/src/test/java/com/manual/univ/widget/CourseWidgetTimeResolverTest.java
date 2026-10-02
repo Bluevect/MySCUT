@@ -1,6 +1,8 @@
 package com.manual.univ.widget;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -65,7 +67,29 @@ public class CourseWidgetTimeResolverTest {
     @Test
     public void missingScheduleSlotFallsBackToLessonTimes() {
         assertResolvedTimes(
-                "builtIn", 1, 1, "07:30", "08:15", Collections.emptyList(), 0, "07:30", "08:15");
+                "builtIn", 1, 1, "07:30", "08:15", Collections.emptyList(), 0, "07:30",                 "08:15");
+    }
+
+    @Test
+    public void lessonIsFinishedAfterItsEndTime() {
+        assertTrue(CourseWidgetTimeResolver.isEndTimePassed("09:35", 9 * 3_600_000L + 36 * 60_000L));
+    }
+
+    @Test
+    public void lessonIsNotFinishedAtItsEndTime() {
+        assertFalse(CourseWidgetTimeResolver.isEndTimePassed("09:35", 9 * 3_600_000L + 35 * 60_000L));
+    }
+
+    @Test
+    public void lessonIsFinishedOneSecondAfterItsEndTime() {
+        assertTrue(
+                CourseWidgetTimeResolver.isEndTimePassed(
+                        "09:35", 9 * 3_600_000L + 35 * 60_000L + 1_000L));
+    }
+
+    @Test
+    public void invalidEndTimeIsNotTreatedAsFinished() {
+        assertFalse(CourseWidgetTimeResolver.isEndTimePassed("not-a-time", 24 * 3_600_000L));
     }
 
     private static void assertResolvedTimes(

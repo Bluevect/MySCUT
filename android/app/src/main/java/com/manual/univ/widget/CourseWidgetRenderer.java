@@ -10,6 +10,7 @@ import com.manual.univ.R;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -39,8 +40,36 @@ final class CourseWidgetRenderer {
         int currentWeek = CourseWidgetCourseManager.getCurrentWeek(data.schedule());
         String scheduleName = CourseWidgetCourseManager.getScheduleName(data.schedule());
         String timeSlotPresetId = CourseWidgetCourseManager.getTimeSlotPresetId(data.schedule());
-        List<JSONObject> todaysLessons =
+        List<JSONObject> scheduledLessons =
                 CourseWidgetCourseManager.getTodayLessons(scheduleData, weekdayNumber, currentWeek);
+        boolean hasLessonsToday = !scheduledLessons.isEmpty();
+        Calendar now = Calendar.getInstance();
+        long currentTimeMillis = getTimeOfDayMillis(now);
+        List<JSONObject> todaysLessons = new ArrayList<>();
+        long nextLessonEndAt = Long.MAX_VALUE;
+        for (JSONObject lesson : scheduledLessons) {
+            String endTime =
+                    CourseWidgetCourseManager.getLessonEndTime(
+                            scheduleData, timeSlotPresetId, lesson);
+            long lessonEndTimeMillis = CourseWidgetTimeResolver.parseTimeOfDayMillis(endTime);
+            if (lessonEndTimeMillis >= 0) {
+                Calendar lessonEnd = (Calendar) now.clone();
+                lessonEnd.set(Calendar.HOUR_OF_DAY, (int) (lessonEndTimeMillis / 3_600_000L));
+                lessonEnd.set(Calendar.MINUTE, (int) (lessonEndTimeMillis / 60_000L % 60L));
+                lessonEnd.set(Calendar.SECOND, 0);
+                lessonEnd.set(Calendar.MILLISECOND, 0);
+                long lessonEndAt = lessonEnd.getTimeInMillis();
+                if (lessonEndAt > now.getTimeInMillis()) {
+                    nextLessonEndAt = Math.min(nextLessonEndAt, lessonEndAt);
+                }
+            }
+
+            if (!CourseWidgetTimeResolver.isEndTimePassed(endTime, currentTimeMillis)) {
+                todaysLessons.add(lesson);
+            }
+        }
+        CourseWidgetProvider.scheduleNextRefresh(
+                context, nextLessonEndAt == Long.MAX_VALUE ? -1 : nextLessonEndAt);
 
         for (int appWidgetId : appWidgetIds) {
             RemoteViews views =
@@ -54,6 +83,8 @@ final class CourseWidgetRenderer {
                     data.scheduleTheme(),
                     timeSlotPresetId,
                     todaysLessons,
+                    hasLessonsToday,
+                    context.getString(R.string.course_widget_day_finished),
                     weekdayNumber);
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }
@@ -79,6 +110,7 @@ final class CourseWidgetRenderer {
             R.id.widget_schedule_name,
             R.id.widget_date,
             R.id.widget_week,
+            R.id.widget_status,
             R.id.course_1_card,
             R.id.course_1_bg,
             R.id.course_1_name,
@@ -108,6 +140,7 @@ final class CourseWidgetRenderer {
         views.setTextColor(R.id.widget_schedule_name, palette.primaryTextColor());
         views.setTextColor(R.id.widget_date, palette.primaryTextColor());
         views.setTextColor(R.id.widget_week, palette.primaryTextColor());
+        views.setTextColor(R.id.widget_status, palette.secondaryTextColor());
         views.setTextColor(R.id.widget_footer, palette.secondaryTextColor());
     }
 
@@ -129,13 +162,22 @@ final class CourseWidgetRenderer {
             JSONObject scheduleTheme,
             String timeSlotPresetId,
             List<JSONObject> todaysLessons,
+            boolean hasLessonsToday,
+            String dayFinishedText,
             int weekdayNumber) {
         if (todaysLessons.isEmpty()) {
             views.setViewVisibility(R.id.course_1_card, android.view.View.GONE);
             views.setViewVisibility(R.id.course_2_card, android.view.View.GONE);
+            views.setViewVisibility(
+                    R.id.widget_status,
+                    hasLessonsToday ? android.view.View.VISIBLE : android.view.View.GONE);
+            if (hasLessonsToday) {
+                views.setTextViewText(R.id.widget_status, dayFinishedText);
+            }
             return;
         }
 
+        views.setViewVisibility(R.id.widget_status, android.view.View.GONE);
         views.setViewVisibility(R.id.course_1_card, android.view.View.VISIBLE);
         CourseWidgetCourseManager.applyCourse(
                 views,
@@ -168,5 +210,12 @@ final class CourseWidgetRenderer {
                 + today.get(Calendar.DAY_OF_MONTH)
                 + "日 星期"
                 + WEEKDAY_LABELS[dayOfWeek - 1];
+    }
+
+    private static long getTimeOfDayMillis(Calendar calendar) {
+        return calendar.get(Calendar.HOUR_OF_DAY) * 3_600_000L
+                + calendar.get(Calendar.MINUTE) * 60_000L
+                + calendar.get(Calendar.SECOND) * 1_000L
+                + calendar.get(Calendar.MILLISECOND);
     }
 }

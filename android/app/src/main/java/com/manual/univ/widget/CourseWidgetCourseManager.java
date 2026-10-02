@@ -107,6 +107,11 @@ final class CourseWidgetCourseManager {
         return lessonsForToday;
     }
 
+    static String getLessonEndTime(
+            JSONObject scheduleData, String timeSlotPresetId, JSONObject lesson) {
+        return resolveLessonTimeParts(scheduleData, timeSlotPresetId, lesson)[1];
+    }
+
     static void applyCourse(
             RemoteViews views,
             JSONObject scheduleData,
