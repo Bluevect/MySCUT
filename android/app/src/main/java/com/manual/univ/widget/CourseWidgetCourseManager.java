@@ -23,32 +23,6 @@ import java.util.TimeZone;
 
 final class CourseWidgetCourseManager {
     private static final long DAY_IN_MILLIS = 24L * 60L * 60L * 1000L;
-    private static final String[][] UNIVERSITY_TOWN_TIME_SLOTS = {
-        {"1", "08:50", "09:35"},
-        {"2", "09:40", "10:25"},
-        {"3", "10:40", "11:25"},
-        {"4", "11:30", "12:15"},
-        {"5", "14:00", "14:45"},
-        {"6", "14:50", "15:35"},
-        {"7", "15:45", "16:30"},
-        {"8", "16:35", "17:20"},
-        {"9", "19:00", "19:45"},
-        {"10", "19:55", "20:40"},
-        {"11", "20:50", "21:35"},
-    };
-    private static final String[][] WUSHAN_TIME_SLOTS = {
-        {"1", "08:00", "08:45"},
-        {"2", "08:55", "09:40"},
-        {"3", "10:00", "10:45"},
-        {"4", "10:55", "11:40"},
-        {"5", "14:30", "15:15"},
-        {"6", "15:25", "16:10"},
-        {"7", "16:20", "17:05"},
-        {"8", "17:15", "18:00"},
-        {"9", "19:00", "19:45"},
-        {"10", "19:55", "20:40"},
-        {"11", "20:50", "21:35"},
-    };
     private static final float CORNER_RADIUS_PX = 24.0f;
 
     private CourseWidgetCourseManager() {}
@@ -183,68 +157,32 @@ final class CourseWidgetCourseManager {
 
     private static String[] resolveLessonTimeParts(
             JSONObject scheduleData, String presetId, JSONObject lesson) {
-        LessonTimeSlot startSlot = findTimeSlot(scheduleData, presetId, lesson.optInt("startNode"));
-        LessonTimeSlot endSlot = findTimeSlot(scheduleData, presetId, lesson.optInt("endNode"));
-        String startTime =
-                startSlot == null || startSlot.startTime.trim().isEmpty()
-                        ? lesson.optString("startTime", "")
-                        : startSlot.startTime;
-        String endTime =
-                endSlot == null || endSlot.endTime.trim().isEmpty()
-                        ? lesson.optString("endTime", "")
-                        : endSlot.endTime;
-        return new String[] {startTime, endTime};
-    }
-
-    private static LessonTimeSlot findTimeSlot(JSONObject scheduleData, String presetId, int node) {
-        if (scheduleData == null || node < 1) {
-            return null;
-        }
-
-        if ("universityTown".equals(presetId) || "international".equals(presetId)) {
-            return findPresetTimeSlot(UNIVERSITY_TOWN_TIME_SLOTS, node);
-        }
-        if ("wushan".equals(presetId)) {
-            return findPresetTimeSlot(WUSHAN_TIME_SLOTS, node);
-        }
-        return findScheduleTimeSlot(scheduleData, node);
-    }
-
-    private static LessonTimeSlot findScheduleTimeSlot(JSONObject scheduleData, int node) {
-        JSONArray timeSlots = scheduleData.optJSONArray("timeSlots");
-        if (timeSlots == null) {
-            return null;
-        }
-
-        JSONObject table = scheduleData.optJSONObject("table");
+        JSONArray timeSlots = scheduleData == null ? null : scheduleData.optJSONArray("timeSlots");
+        JSONObject table = scheduleData == null ? null : scheduleData.optJSONObject("table");
         int selectedTimeTable =
                 table == null ? Integer.MIN_VALUE : table.optInt("timeTable", Integer.MIN_VALUE);
-        LessonTimeSlot fallbackSlot = null;
-        for (int index = 0; index < timeSlots.length(); index++) {
-            JSONObject timeSlot = timeSlots.optJSONObject(index);
-            if (timeSlot == null || timeSlot.optInt("node") != node) {
-                continue;
-            }
-            LessonTimeSlot resolvedSlot =
-                    new LessonTimeSlot(
-                            timeSlot.optString("startTime", ""), timeSlot.optString("endTime", ""));
-            if (timeSlot.optInt("timeTable", Integer.MIN_VALUE) == selectedTimeTable) {
-                return resolvedSlot;
-            }
-            if (fallbackSlot == null) {
-                fallbackSlot = resolvedSlot;
+        List<CourseWidgetTimeResolver.TimeSlot> scheduleTimeSlots = new ArrayList<>();
+        if (timeSlots != null) {
+            for (int index = 0; index < timeSlots.length(); index++) {
+                JSONObject timeSlot = timeSlots.optJSONObject(index);
+                if (timeSlot != null) {
+                    scheduleTimeSlots.add(
+                            new CourseWidgetTimeResolver.TimeSlot(
+                                    timeSlot.optInt("node"),
+                                    timeSlot.optString("startTime", ""),
+                                    timeSlot.optString("endTime", ""),
+                                    timeSlot.optInt("timeTable", Integer.MIN_VALUE)));
+                }
             }
         }
-        return fallbackSlot;
-    }
-
-    private static LessonTimeSlot findPresetTimeSlot(String[][] preset, int node) {
-        for (String[] timeSlot : preset) {
-            if (Integer.parseInt(timeSlot[0]) == node) {
-                return new LessonTimeSlot(timeSlot[1], timeSlot[2]);
-            }
-        }
-        return null;
+        return CourseWidgetTimeResolver.resolveLessonTimeParts(
+                presetId,
+                lesson.optInt("startNode"),
+                lesson.optInt("endNode"),
+                lesson.optString("startTime", ""),
+                lesson.optString("endTime", ""),
+                scheduleTimeSlots,
+                selectedTimeTable);
     }
 
     private static JSONObject findCourse(JSONArray courses, int courseId) {
@@ -285,6 +223,4 @@ final class CourseWidgetCourseManager {
         canvas.drawRoundRect(0f, 0f, width, height, CORNER_RADIUS_PX, CORNER_RADIUS_PX, paint);
         return bitmap;
     }
-
-    private record LessonTimeSlot(String startTime, String endTime) {}
 }
