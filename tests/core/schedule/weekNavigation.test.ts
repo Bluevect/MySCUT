@@ -3,7 +3,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   getScheduleWeekNumber,
-  getScheduleCalendarWeekStartDate,
+  getScheduleLessonDayForColumn,
+  getScheduleWeekStartDate,
+  getScheduleWeekdayOffset,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../../src/core/schedule/weekNavigation'
@@ -23,16 +25,25 @@ describe('getScheduleWeekNumber', () => {
   })
 })
 
-describe('getScheduleCalendarWeekStartDate', () => {
-  it('returns Monday for each displayed week, even when semester start is midweek', () => {
-    expect(getScheduleCalendarWeekStartDate('2026-02-23', 1)).toEqual(new Date(2026, 1, 23))
-    expect(getScheduleCalendarWeekStartDate('2026-02-25', 1)).toEqual(new Date(2026, 1, 23))
-    expect(getScheduleCalendarWeekStartDate('2026-03-01', 1)).toEqual(new Date(2026, 1, 23))
-    expect(getScheduleCalendarWeekStartDate('2026-02-25', 2)).toEqual(new Date(2026, 2, 2))
+describe('schedule week start and columns', () => {
+  it('starts each displayed week on the configured initial date', () => {
+    expect(getScheduleWeekStartDate('2026-09-01', 1)).toEqual(new Date(2026, 8, 1))
+    expect(getScheduleWeekStartDate('2026-09-01', 2)).toEqual(new Date(2026, 8, 8))
   })
 
-  it('returns null for an invalid configured date', () => {
-    expect(getScheduleCalendarWeekStartDate('2026-02-31', 1)).toBeNull()
+  it('rotates weekday columns while keeping lesson days Monday-based', () => {
+    const offset = getScheduleWeekdayOffset('2026-09-01')
+
+    expect(offset).toBe(1)
+    expect(Array.from({ length: 7 }, (_, columnIndex) => (
+      getScheduleLessonDayForColumn(offset, columnIndex)
+    ))).toEqual([2, 3, 4, 5, 6, 7, 1])
+  })
+
+  it('defaults to Monday-first columns and placeholders for an invalid date', () => {
+    expect(getScheduleWeekStartDate('2026-02-31', 1)).toBeNull()
+    expect(getScheduleWeekdayOffset('2026-02-31')).toBe(0)
+    expect(getScheduleLessonDayForColumn(0, 0)).toBe(1)
   })
 })
 

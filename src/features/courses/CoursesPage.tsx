@@ -38,8 +38,10 @@ import type { ScheduleThemePreset } from '../../core/schedule/themePresets'
 import type { ScheduleLesson, TimeSlotPresetId, WakeupTimeSlot, WeekCellCourse } from '../../core/schedule/types'
 import {
   clearRememberedScheduleWeek,
-  getScheduleCalendarWeekStartDate,
+  getScheduleLessonDayForColumn,
+  getScheduleWeekStartDate,
   getScheduleWeekNumber,
+  getScheduleWeekdayOffset,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
@@ -254,7 +256,7 @@ function formatCourseCredit(credit: number) {
 }
 
 function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return WEEKDAY_LABELS.map(() => '--/--')
   }
@@ -263,7 +265,7 @@ function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
 }
 
 function getWeekMonthLabel(startDateText: string, weekNumber: number, fallbackDate: Date) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return formatMonthLabel(fallbackDate)
   }
@@ -403,6 +405,8 @@ function renderScheduleTable(
   weekRenderData: WeekScheduleRenderData,
   lessonIndexes: number[],
   lessonTimes: LessonTime[],
+  weekdayLabels: string[],
+  weekdayOffset: number,
   weekdayDateLabels: string[],
   monthLabel: string,
   onOpenDetail: (courses: WeekCellCourse[], day: number, node: number) => void,
@@ -414,7 +418,7 @@ function renderScheduleTable(
           <th scope='col' className='schedule-month-header'>
             {monthLabel}
           </th>
-          {WEEKDAY_LABELS.map((weekday, dayIndex) => (
+          {weekdayLabels.map((weekday, dayIndex) => (
             <th key={weekday} scope='col' className='schedule-weekday-header'>
               <span className='schedule-weekday-label'>{weekday}</span>
               <span className='schedule-weekday-date'>{weekdayDateLabels[dayIndex] ?? '--/--'}</span>
@@ -432,8 +436,8 @@ function renderScheduleTable(
               <span className='schedule-lesson-time'>{lessonTimes[lessonIndex]?.endTime ?? TIME_PLACEHOLDER}</span>
             </th>
 
-            {WEEKDAY_LABELS.map((weekday, dayIndex) => {
-              const day = dayIndex + 1
+            {weekdayLabels.map((weekday, dayIndex) => {
+              const day = getScheduleLessonDayForColumn(weekdayOffset, dayIndex)
               if (isCellCovered(weekRenderData, day, lessonNumber)) {
                 return null
               }
@@ -505,6 +509,11 @@ function CoursesPage() {
 
   const currentDate = new Date()
   const semesterStartDate = getSemesterStartDate()
+  const scheduleWeekdayOffset = getScheduleWeekdayOffset(semesterStartDate)
+  const scheduleWeekdayLabels = useMemo(
+    () => [...WEEKDAY_LABELS.slice(scheduleWeekdayOffset), ...WEEKDAY_LABELS.slice(0, scheduleWeekdayOffset)],
+    [scheduleWeekdayOffset],
+  )
   const dateText = getCurrentDateText(currentDate)
   const inferredCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
   const scheduleWeekViewId = activeScheduleEntry?.id ?? 'no-active-schedule'
@@ -1060,6 +1069,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.prevWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 prevWeekdayDateLabels,
                 prevMonthLabel,
                 handleOpenCourseDetail,
@@ -1074,6 +1085,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.currentWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 currentWeekdayDateLabels,
                 currentMonthLabel,
                 handleOpenCourseDetail,
@@ -1088,6 +1101,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.nextWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 nextWeekdayDateLabels,
                 nextMonthLabel,
                 handleOpenCourseDetail,

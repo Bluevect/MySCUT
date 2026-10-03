@@ -85,20 +85,32 @@ export function getScheduleWeekNumber(date: Date, semesterStartDateText: string)
   return Math.max(1, week)
 }
 
-export function getScheduleCalendarWeekStartDate(semesterStartDateText: string, weekNumber: number) {
+export function getScheduleWeekStartDate(semesterStartDateText: string, weekNumber: number) {
   const semesterStart = parseDateParts(semesterStartDateText)
   if (!semesterStart) {
     return null
   }
 
-  const weekday = new Date(semesterStart.year, semesterStart.month - 1, semesterStart.day).getDay()
-  const daysSinceMonday = (weekday + 6) % 7
   const normalizedWeek = Number.isInteger(weekNumber) && weekNumber >= 1 ? weekNumber : 1
   return new Date(
     semesterStart.year,
     semesterStart.month - 1,
-    semesterStart.day - daysSinceMonday + (normalizedWeek - 1) * 7,
+    semesterStart.day + (normalizedWeek - 1) * 7,
   )
+}
+
+export function getScheduleWeekdayOffset(semesterStartDateText: string) {
+  const semesterStart = parseDateParts(semesterStartDateText)
+  if (!semesterStart) {
+    return 0
+  }
+
+  const weekday = new Date(semesterStart.year, semesterStart.month - 1, semesterStart.day).getDay()
+  return (weekday + 6) % 7
+}
+
+export function getScheduleLessonDayForColumn(weekdayOffset: number, columnIndex: number) {
+  return (weekdayOffset + columnIndex) % 7 + 1
 }
 
 export function resolveInitialScheduleWeekView(
