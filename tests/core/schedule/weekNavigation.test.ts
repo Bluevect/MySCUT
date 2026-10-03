@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   getScheduleWeekNumber,
+  getScheduleCalendarWeekStartDate,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../../src/core/schedule/weekNavigation'
@@ -19,6 +20,19 @@ describe('getScheduleWeekNumber', () => {
     expect(getScheduleWeekNumber(new Date(2026, 1, 1), '2026-02-23')).toBe(1)
     expect(getScheduleWeekNumber(new Date(2026, 1, 23), '2026-02-31')).toBe(1)
     expect(getScheduleWeekNumber(new Date(Number.NaN), '2026-02-23')).toBe(1)
+  })
+})
+
+describe('getScheduleCalendarWeekStartDate', () => {
+  it('returns Monday for each displayed week, even when semester start is midweek', () => {
+    expect(getScheduleCalendarWeekStartDate('2026-02-23', 1)).toEqual(new Date(2026, 1, 23))
+    expect(getScheduleCalendarWeekStartDate('2026-02-25', 1)).toEqual(new Date(2026, 1, 23))
+    expect(getScheduleCalendarWeekStartDate('2026-03-01', 1)).toEqual(new Date(2026, 1, 23))
+    expect(getScheduleCalendarWeekStartDate('2026-02-25', 2)).toEqual(new Date(2026, 2, 2))
+  })
+
+  it('returns null for an invalid configured date', () => {
+    expect(getScheduleCalendarWeekStartDate('2026-02-31', 1)).toBeNull()
   })
 })
 

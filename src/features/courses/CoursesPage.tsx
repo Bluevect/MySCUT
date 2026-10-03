@@ -38,6 +38,7 @@ import type { ScheduleThemePreset } from '../../core/schedule/themePresets'
 import type { ScheduleLesson, TimeSlotPresetId, WakeupTimeSlot, WeekCellCourse } from '../../core/schedule/types'
 import {
   clearRememberedScheduleWeek,
+  getScheduleCalendarWeekStartDate,
   getScheduleWeekNumber,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
@@ -221,24 +222,6 @@ function getCurrentDateText(date: Date) {
   return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
 }
 
-function parseLocalDate(dateText: string) {
-  const match = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  if (!match) {
-    return null
-  }
-
-  const year = Number.parseInt(match[1], 10)
-  const month = Number.parseInt(match[2], 10)
-  const day = Number.parseInt(match[3], 10)
-
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
-    return null
-  }
-
-  const date = new Date(year, month - 1, day)
-  return Number.isNaN(date.getTime()) ? null : date
-}
-
 function addDays(baseDate: Date, days: number) {
   return new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + days)
 }
@@ -271,22 +254,20 @@ function formatCourseCredit(credit: number) {
 }
 
 function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
-  const semesterStart = parseLocalDate(startDateText)
-  if (!semesterStart) {
+  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  if (!weekStartDate) {
     return WEEKDAY_LABELS.map(() => '--/--')
   }
 
-  const weekStartDate = addDays(semesterStart, (weekNumber - 1) * 7)
   return WEEKDAY_LABELS.map((_, index) => formatMonthDay(addDays(weekStartDate, index)))
 }
 
 function getWeekMonthLabel(startDateText: string, weekNumber: number, fallbackDate: Date) {
-  const semesterStart = parseLocalDate(startDateText)
-  if (!semesterStart) {
+  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  if (!weekStartDate) {
     return formatMonthLabel(fallbackDate)
   }
 
-  const weekStartDate = addDays(semesterStart, (weekNumber - 1) * 7)
   return formatMonthLabel(weekStartDate)
 }
 
