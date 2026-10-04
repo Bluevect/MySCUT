@@ -105,12 +105,42 @@ describe('parseScutScheduleHtml', () => {
     expect(data.table.maxWeek).toBe(20)
   })
 
+  it('does not parse a room name ending with a four-digit number as a week range', () => {
+    const html = loadFixture().replace('TEST-PLACE-A, TEST-PLACE-B', 'TEST-PLACE-A, TEST-A1234 周A')
+    const data = parseScutScheduleHtml(html, {
+      fallbackSemesterStartDate: '2026-02-23',
+    })
+
+    expect(data.table.maxWeek).toBe(20)
+    expect(data.lessons.every((lesson) => lesson.endWeek <= 20)).toBe(true)
+  })
+
+  it('ignores week ranges above the reasonable semester limit', () => {
+    const html = loadFixture().replaceAll('1-15周(单)', '1-31周(单)')
+    const data = parseScutScheduleHtml(html, {
+      fallbackSemesterStartDate: '2026-02-23',
+    })
+
+    expect(data.table.maxWeek).toBe(20)
+    expect(data.lessons.some((lesson) => lesson.endWeek > 30)).toBe(false)
+  })
+
+  it('keeps valid week ranges up to the reasonable semester limit', () => {
+    const html = loadFixture().replaceAll('1-15周(单)', '1-30周(单)')
+    const data = parseScutScheduleHtml(html, {
+      fallbackSemesterStartDate: '2026-02-23',
+    })
+
+    expect(data.table.maxWeek).toBe(30)
+    expect(data.lessons.some((lesson) => lesson.endWeek === 30)).toBe(true)
+  })
+
   it('throws when the schedule grid is missing', () => {
     expect(() =>
       parseScutScheduleHtml('<html><body>not a schedule</body></html>', {
         fallbackSemesterStartDate: '2026-02-23',
       }),
-    ).toThrowError(/未找到华工课表表格/)
+    ).toThrow(/未找到华工课表表格/)
   })
 
   it('throws when the grid has no course cells', () => {
@@ -120,6 +150,6 @@ describe('parseScutScheduleHtml', () => {
     </tbody></table></body></html>`
     expect(() =>
       parseScutScheduleHtml(html, { fallbackSemesterStartDate: '2026-02-23' }),
-    ).toThrowError(/未解析到课程内容/)
+    ).toThrow(/未解析到课程内容/)
   })
 })

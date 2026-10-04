@@ -3,6 +3,8 @@ import { assertScheduleTextByteLength } from './importLimits'
 import { normalizeWakeupStartDate } from './importWakeup'
 import type { ScheduleCourse, ScheduleData, ScheduleLesson } from './types'
 
+const MAX_REASONABLE_WEEK = 30
+
 type ParseScutHtmlOptions = {
   fallbackSemesterStartDate: string
 }
@@ -93,6 +95,10 @@ function parseWeekRanges(text: string): WeekRange[] {
   for (const match of matches) {
     const rawStart = Number.parseInt(match[1], 10)
     const rawEnd = match[2] ? Number.parseInt(match[2], 10) : rawStart
+    if (rawStart > MAX_REASONABLE_WEEK || rawEnd > MAX_REASONABLE_WEEK) {
+      continue
+    }
+
     const parity = normalizeParityValue(match[3] || match[4])
     const range = normalizeWeekRange(rawStart, rawEnd, parity)
     if (!range) {
@@ -187,6 +193,24 @@ function buildScutDetailText(block: HTMLElement) {
   return cleanText(block.textContent ?? '')
 }
 
+function extractWeekText(block: HTMLElement) {
+  const weekParagraph = Array.from(block.querySelectorAll<HTMLParagraphElement>('p')).find((paragraph) => (
+    paragraph.querySelector('.glyphicon-calendar') ||
+    /^\s*(?:周数|周次)\s*[:：]/.test(paragraph.textContent ?? '')
+  ))
+
+  return cleanText(weekParagraph?.textContent ?? '')
+}
+
+function extractNodeRangeText(block: HTMLElement) {
+  const nodeRangeParagraph = Array.from(block.querySelectorAll<HTMLParagraphElement>('p')).find((paragraph) => (
+    paragraph.querySelector('.glyphicon-time') ||
+    /\(\s*\d+\s*(?:-\s*\d+)?\s*节\s*\)/.test(paragraph.textContent ?? '')
+  ))
+
+  return cleanText(nodeRangeParagraph?.textContent ?? '')
+}
+
 function createScutDetailKey(day: number, startNode: number, endNode: number, courseName: string, weekRange: WeekRange) {
   return `${day}-${startNode}-${endNode}-${courseName}-${weekRange.startWeek}-${weekRange.endWeek}-${weekRange.weekStep}`
 }
@@ -215,7 +239,7 @@ function parseScutHtmlDetailEntries(document: Document) {
 
     const detailText = buildScutDetailText(block)
     const credit = parseCreditFromText(detailText) ?? 0
-    const weekRanges = parseWeekRanges(detailText)
+    const weekRanges = parseWeekRanges(extractWeekText(block) || detailText)
 
     weekRanges.forEach((weekRange) => {
       entries.push({
@@ -289,6 +313,7 @@ export function parseScutScheduleHtml(html: string, options: ParseScutHtmlOption
       const titleElement = block.querySelector('.title')
       const courseName = cleanText(titleElement?.textContent ?? '未命名课程')
       const blockText = cleanText(block.textContent ?? '')
+      const weekText = extractWeekText(block)
       const blockDetailText = buildScutDetailText(block)
       const fallbackCredit = parseCreditFromText(blockText) ?? 0
 
@@ -313,8 +338,8 @@ export function parseScutScheduleHtml(html: string, options: ParseScutHtmlOption
         course.credit = fallbackCredit
       }
 
-      const weekRanges = parseWeekRanges(blockText)
-      const nodeInfo = parseNodeRange(blockText, fallbackNode, rowSpan)
+      const weekRanges = parseWeekRanges(weekText || blockText)
+      const nodeInfo = parseNodeRange(extractNodeRangeText(block) || blockText, fallbackNode, rowSpan)
 
       const roomElement = Array.from(block.querySelectorAll('p')).find((p) => p.querySelector('.glyphicon-map-marker'))
       const teacherElement = Array.from(block.querySelectorAll('p')).find((p) => p.querySelector('.glyphicon-user'))
