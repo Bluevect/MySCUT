@@ -9,12 +9,13 @@ import {
   useState,
 } from 'react'
 import {
+  CaretDownFilled,
   CloseOutlined,
   EllipsisOutlined,
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons'
-import { Input, Modal, message } from 'antd'
+import { Input, Modal, Select, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
 import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
@@ -216,10 +217,6 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
       )}
     </div>
   )
-}
-
-function getCurrentDateText(date: Date) {
-  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
 }
 
 function addDays(baseDate: Date, days: number) {
@@ -527,14 +524,24 @@ function CoursesPage() {
 
   const currentDate = new Date()
   const semesterStartDate = getSemesterStartDate()
-  const dateText = getCurrentDateText(currentDate)
   const inferredCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
   const scheduleWeekViewId = activeScheduleEntry?.id ?? 'no-active-schedule'
   const [weekView, setWeekView] = useState(() =>
     resolveInitialScheduleWeekView(scheduleWeekViewId, semesterStartDate, inferredCurrentWeek),
   )
+  const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false)
+  const [selectedWeekForPicker, setSelectedWeekForPicker] = useState(weekView.week)
   const weekViewContextRef = useRef(`${scheduleWeekViewId}:${semesterStartDate}`)
   const currentWeek = weekView.week
+  const maxSelectableWeek = Math.max(scheduleData?.table.maxWeek ?? 1, inferredCurrentWeek, currentWeek)
+  console.log(scheduleData)
+  const weekOptions = useMemo(
+    () => Array.from({ length: maxSelectableWeek }, (_, index) => ({
+      value: index + 1,
+      label: `第 ${index + 1} 周`,
+    })),
+    [maxSelectableWeek],
+  )
 
   const swipeState = useMemo(() => createSwipeState(currentWeek, swipeDirection), [currentWeek, swipeDirection])
 
@@ -899,6 +906,27 @@ function CoursesPage() {
     applyViewedWeek(inferredCurrentWeek)
   }
 
+  const handleOpenWeekPicker = () => {
+    if (isAnimating || isDragging) {
+      return
+    }
+
+    setSelectedWeekForPicker(currentWeek)
+    setIsWeekPickerOpen(true)
+  }
+
+  const handleConfirmWeekSelection = () => {
+    setIsWeekPickerOpen(false)
+    if (selectedWeekForPicker === currentWeek || isAnimating || isDragging) {
+      return
+    }
+
+    setSwipeDirection(null)
+    setIsResetting(false)
+    dragOffsetXRef.current = 0
+    applyViewedWeek(selectedWeekForPicker)
+  }
+
   const handleOpenCourseDetail = (courses: WeekCellCourse[], day: number, node: number) => {
     if (courses.length === 0) {
       return
@@ -1044,8 +1072,16 @@ function CoursesPage() {
       {contextHolder}
       <header className='courses-header'>
         <div className='courses-date-panel'>
-          <p className='courses-date'>{dateText}</p>
-          <p className='courses-week'>第 {currentWeek} 周</p>
+          <button
+            type='button'
+            className={`courses-week ${isWeekPickerOpen ? 'is-open' : ''}`}
+            aria-haspopup='dialog'
+            aria-label={`选择周次，当前第 ${currentWeek} 周`}
+            onClick={handleOpenWeekPicker}
+          >
+            <span>第 {currentWeek} 周</span>
+            <CaretDownFilled aria-hidden='true' />
+          </button>
         </div>
 
         <div className='courses-actions'>
@@ -1130,6 +1166,23 @@ function CoursesPage() {
           onReturn={handleReturnToCurrentWeek}
         />
       )}
+
+      <Modal
+        title='选择周次'
+        open={isWeekPickerOpen}
+        onOk={handleConfirmWeekSelection}
+        onCancel={() => setIsWeekPickerOpen(false)}
+        okText='确定'
+        cancelText='取消'
+      >
+        <Select
+          aria-label='选择周次'
+          style={{ width: '100%' }}
+          value={selectedWeekForPicker}
+          onChange={setSelectedWeekForPicker}
+          options={weekOptions}
+        />
+      </Modal>
 
       <Modal
         title={`课程详情 · 星期${selectedWeekday} 第${selectedNode}节`}

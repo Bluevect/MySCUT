@@ -517,7 +517,7 @@ body {
   z-index: 12;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   padding: calc(16px + env(safe-area-inset-top)) 16px 0;
   background: var(--overlay-glass);
   border-bottom: 1px solid transparent;
@@ -529,23 +529,46 @@ body {
   text-align: left;
 }
 
-.courses-date,
 .courses-week {
   margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: color 160ms ease, transform 160ms ease;
 }
 
-.courses-date {
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--text-strong);
+@media (hover: hover) {
+  .courses-week:hover {
+    color: var(--accent-primary);
+    transform: translateY(-1px);
+  }
 }
 
-.courses-week {
-  margin-top: 6px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text-secondary);
+.courses-week.is-open {
+  color: var(--accent-primary);
+}
+
+.courses-week:focus-visible,
+.courses-week:active {
+  color: var(--accent-primary);
+}
+
+.courses-week:active {
+  transform: scale(0.97);
+}
+
+.courses-week:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 4px;
 }
 
 .app-icon-button-square {
@@ -1358,6 +1381,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .courses-week,
   .return-current-week-fab,
   .return-current-week-fab-ripple,
   .courses-first-use-import-button,
