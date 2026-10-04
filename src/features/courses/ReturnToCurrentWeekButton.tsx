@@ -9,6 +9,8 @@ import {
 
 const VIEWPORT_EDGE_GAP = 12
 const DRAG_START_THRESHOLD = 4
+const RIPPLE_DURATION_MS = 620
+const RETURN_DELAY_MS = 120
 
 type Position = {
   left: number
@@ -51,10 +53,28 @@ function clampPosition(position: Position, width: number, height: number) {
   }
 }
 
+function createRippleElement(button: HTMLButtonElement, clientX: number, clientY: number) {
+  const rect = button.getBoundingClientRect()
+  const size = Math.max(rect.width, rect.height) * 2.4
+  const ripple = document.createElement('span')
+
+  ripple.className = 'return-current-week-fab-ripple'
+  ripple.setAttribute('aria-hidden', 'true')
+  ripple.style.left = `${clientX - rect.left}px`
+  ripple.style.top = `${clientY - rect.top}px`
+  ripple.style.width = `${size}px`
+  ripple.style.height = `${size}px`
+  ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
+
+  button.appendChild(ripple)
+  window.setTimeout(() => ripple.remove(), RIPPLE_DURATION_MS + 200)
+}
+
 function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCurrentWeekButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dragStateRef = useRef<DragState | null>(null)
   const suppressClickRef = useRef(false)
+  const returnTimeoutRef = useRef<number | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -76,14 +96,31 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     }
 
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (returnTimeoutRef.current !== null) {
+        window.clearTimeout(returnTimeoutRef.current)
+      }
+    }
   }, [])
+
+  const scheduleReturn = () => {
+    if (returnTimeoutRef.current !== null) {
+      return
+    }
+
+    returnTimeoutRef.current = window.setTimeout(() => {
+      returnTimeoutRef.current = null
+      onReturn()
+    }, RETURN_DELAY_MS)
+  }
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) {
       return
     }
 
+    createRippleElement(event.currentTarget, event.clientX, event.clientY)
     suppressClickRef.current = false
     const rect = event.currentTarget.getBoundingClientRect()
     dragStateRef.current = {
@@ -147,7 +184,7 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     }
 
     if (wasTap) {
-      onReturn()
+      scheduleReturn()
     }
   }
 
@@ -165,7 +202,7 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       return
     }
 
-    onReturn()
+    scheduleReturn()
   }
 
   const positionStyle: CSSProperties | undefined = position
