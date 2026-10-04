@@ -11,13 +11,14 @@ import {
 import {
   CaretDownFilled,
   CloseOutlined,
-  EllipsisOutlined,
   LeftOutlined,
+  PlusOutlined,
   RightOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
-import { Input, Modal, Select, message } from 'antd'
+import { Dropdown, Input, Modal, Select, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
+import { TransparentIconButton } from '../../components/buttons/TransparentIconButton'
 import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../core/navigation/appBack'
@@ -49,6 +50,7 @@ import { useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import { syncAndroidCourseWidgetSchedule } from '../../platform/capacitor/courseWidgetSchedule'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
 import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
+import { APP_ROUTE_PATHS } from '../../app/routePaths'
 
 const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
 const MAX_LESSON_COUNT = 12
@@ -1017,6 +1019,17 @@ function CoursesPage() {
     navigate('/mine/schedule-settings')
   }
 
+  const handleAddScheduleMenuClick = (key: string) => {
+    switch (key) {
+      case 'addCourses':
+        navigate(APP_ROUTE_PATHS.coursesAddCoursesPage)
+        return
+      case 'selectSchedule':
+        navigate(APP_ROUTE_PATHS.mineScheduleSettings)
+        return
+    }
+  }
+
   const handleCloseStartDateReminder = () => {
     setIsStartDateReminderOpen(false)
   }
@@ -1057,6 +1070,7 @@ function CoursesPage() {
   useBackDismiss(isStartDateReminderOpen, handleCloseStartDateReminder)
   useBackDismiss(isExitConfirmOpen, handleDiscardPreview)
   useBackDismiss(isSaveNameModalOpen, () => setIsSaveNameModalOpen(false))
+  useBackDismiss(isWeekPickerOpen, () => setIsWeekPickerOpen(false))
 
   if (shouldShowCoursesFirstUseGuide(savedScheduleCount, isIntersectionPreviewMode)) {
     return (
@@ -1085,19 +1099,35 @@ function CoursesPage() {
         </div>
 
         <div className='courses-actions'>
-          <RoundedSquareIconButton
+          <TransparentIconButton
             ariaLabel='上一周'
             icon={<LeftOutlined />}
             onClick={handleGoPrevWeek}
           />
-          <RoundedSquareIconButton
+          <TransparentIconButton
             ariaLabel='下一周'
             icon={<RightOutlined />}
             onClick={handleGoNextWeek}
           />
-          <RoundedSquareIconButton
+          <Dropdown
+            trigger={['click']}
+            placement='bottomRight'
+            menu={{
+              items: [
+                { key: 'addCourses', label: '添加课程' },
+                { key: 'selectSchedule', label: '选择课程表' },
+              ],
+              onClick: ({ key }) => handleAddScheduleMenuClick(key),
+            }}
+          >
+            <TransparentIconButton
+              ariaLabel='添加课表'
+              icon={<PlusOutlined />}
+            />
+          </Dropdown>
+          <TransparentIconButton
             ariaLabel={isIntersectionPreviewMode ? '关闭临时课表' : '更多操作'}
-            icon={isIntersectionPreviewMode ? <CloseOutlined /> : <EllipsisOutlined />}
+            icon={isIntersectionPreviewMode ? <CloseOutlined /> : <SettingOutlined />}
             onClick={handleRequestExitPreview}
           />
         </div>

@@ -339,6 +339,44 @@ body {
   overflow-x: hidden;
 }
 
+.add-courses-page {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: hidden;
+}
+
+.add-courses-header {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 8px;
+  background: var(--overlay-glass);
+  border-bottom: 1px solid transparent;
+  backdrop-filter: blur(20px) saturate(155%);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr auto 1fr;
+  justify-content: initial;
+}
+
+.add-courses-left-panel {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  text-align: left;
+}
+
+.add-courses-title {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+  font-size: 18px;
+}
+
 .courses-page--first-use {
   background:
     radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 34%),
@@ -518,7 +556,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(16px + env(safe-area-inset-top)) 16px 0;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 8px;
   background: var(--overlay-glass);
   border-bottom: 1px solid transparent;
   backdrop-filter: blur(20px) saturate(155%);
@@ -590,6 +628,30 @@ body {
 
 .app-icon-button-square .anticon {
   font-size: 18px;
+}
+
+.app-icon-button-transparent {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 36px;
+  color: var(--button-soft-text);
+  font-size: 22px;
+  line-height: 0;
+  letter-spacing: 1px;
+}
+
+.app-icon-button-transparent:active {
+  background: var(--button-soft-bg-active);
+}
+
+.app-icon-button-transparent .anticon {
+  font-size: 22px;
 }
 
 .courses-actions {
@@ -1367,6 +1429,7 @@ body {
 .theme-transitioning .schedule-settings-subtitle,
 .theme-transitioning .app-icon-button-square,
 .theme-transitioning .app-icon-button-circle,
+.theme-transitioning .app-icon-button-transparent,
 .theme-transitioning .schedule-settings-current-date,
 .theme-transitioning .scut-jw-access-option,
 .theme-transitioning .scut-jw-access-radio,

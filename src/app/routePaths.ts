@@ -2,6 +2,7 @@ export const APP_ROUTE_PATHS = {
   root: '/',
   courses: '/courses',
   coursesIntersectionPreview: '/courses/intersection-preview',
+  coursesAddCoursesPage: '/courses/add-courses',
   manual: '/manual',
   mine: '/mine',
   mineScheduleSettings: '/mine/schedule-settings',

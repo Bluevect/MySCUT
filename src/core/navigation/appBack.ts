@@ -5,6 +5,7 @@ export const PARENT_ROUTE_MAP: Readonly<Record<string, string>> = {
   '/manual': APP_ROOT_PATH,
   '/mine': APP_ROOT_PATH,
   '/courses/intersection-preview': '/mine/schedule-intersection',
+  '/courses/add-courses': APP_ROOT_PATH,
   '/mine/schedule-settings': '/mine',
   '/mine/schedule-intersection': '/mine',
   '/mine/ai-settings': '/mine',

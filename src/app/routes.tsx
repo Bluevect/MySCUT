@@ -11,6 +11,11 @@ const CoursesPage = lazy(async () => {
   return { default: module.default }
 })
 
+const AddCoursesPage = lazy(async () => {
+  const module = await import('../features/courses/AddCoursesPage')
+  return { default: module.default }
+})
+
 const ManualPage = lazy(async () => {
   const module = await import('../features/manual/ManualPage')
   return { default: module.default }
@@ -66,6 +71,7 @@ function AppRoutes() {
       <Routes>
         <Route path={APP_ROUTE_PATHS.root} element={<Navigate to={APP_ROUTE_PATHS.courses} replace />} />
         <Route path={APP_ROUTE_PATHS.courses} element={<CoursesPage />} />
+        <Route path={APP_ROUTE_PATHS.coursesAddCoursesPage} element={<AddCoursesPage />} />
         <Route path={APP_ROUTE_PATHS.coursesIntersectionPreview} element={<CoursesPage />} />
         <Route path={APP_ROUTE_PATHS.manual} element={getReloadManualEnabledStartup() ? <ManualPage /> : null} />
         <Route path={APP_ROUTE_PATHS.mine} element={<MinePage />} />

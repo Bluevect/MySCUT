@@ -26,6 +26,7 @@ function App() {
   const navigate = useNavigate()
   const isMineDetailPage = location.pathname.startsWith('/mine/')
   const isCoursesPage = location.pathname === '/courses'
+  const isAddCoursesPage = location.pathname === '/courses/add-courses'
   const isManualPage = location.pathname === '/manual'
   const routeBoundaryKey = `${location.key}:${location.pathname}`
 
@@ -34,7 +35,13 @@ function App() {
       {contextHolder}
       <StorageStatusBanner />
       <main
-        className={`page-content ${isMineDetailPage ? 'page-content--fullscreen' : ''} ${isCoursesPage ? 'page-content--courses' : ''} ${isManualPage ? 'page-content--manual' : ''}`}
+        className={`
+          page-content 
+          ${isMineDetailPage ? 'page-content--fullscreen' : ''}
+          ${isCoursesPage ? 'page-content--courses' : ''}
+          ${isAddCoursesPage ? 'page-content--courses' : ''}
+          ${isManualPage ? 'page-content--manual' : ''}
+        `}
       >
         <RouteContentErrorBoundary
           key={routeBoundaryKey}
