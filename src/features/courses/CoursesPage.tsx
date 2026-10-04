@@ -798,11 +798,13 @@ function CoursesPage() {
         return
       }
 
+      setIsResetting(false)
       setIsAnimating(true)
       setSwipeDirection('prev')
       return
     }
 
+    setIsResetting(false)
     setIsAnimating(true)
     setSwipeDirection('next')
   }
@@ -812,20 +814,18 @@ function CoursesPage() {
       return
     }
 
+    if (swipeDirection) {
+      const nextWeek = swipeDirection === 'prev' ? Math.max(1, currentWeek - 1) : currentWeek + 1
+      applyViewedWeek(nextWeek)
+
+      setSwipeDirection(null)
+      setIsAnimating(false)
+      return
+    }
+
     if (isResetting) {
       setIsResetting(false)
-      return
     }
-
-    if (!swipeDirection) {
-      return
-    }
-
-    const nextWeek = swipeDirection === 'prev' ? Math.max(1, currentWeek - 1) : currentWeek + 1
-    applyViewedWeek(nextWeek)
-
-    setSwipeDirection(null)
-    setIsAnimating(false)
   }
 
   const trackClassName = useMemo(() => {
@@ -851,6 +851,7 @@ function CoursesPage() {
       return
     }
 
+    setIsResetting(false)
     setIsAnimating(true)
     setSwipeDirection('prev')
   }
@@ -860,6 +861,7 @@ function CoursesPage() {
       return
     }
 
+    setIsResetting(false)
     setIsAnimating(true)
     setSwipeDirection('next')
   }

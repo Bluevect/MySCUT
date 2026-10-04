@@ -24,6 +24,7 @@ type DragState = {
   width: number
   height: number
   hasMoved: boolean
+  hasPointerCapture: boolean
 }
 
 type ReturnToCurrentWeekButtonProps = {
@@ -94,8 +95,8 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       width: rect.width,
       height: rect.height,
       hasMoved: false,
+      hasPointerCapture: false,
     }
-    event.currentTarget.setPointerCapture(event.pointerId)
   }
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -111,6 +112,11 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     }
 
     dragState.hasMoved = true
+    if (!dragState.hasPointerCapture) {
+      event.currentTarget.setPointerCapture(event.pointerId)
+      dragState.hasPointerCapture = true
+    }
+
     event.preventDefault()
     setIsDragging(true)
     setPosition(
@@ -125,19 +131,32 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     )
   }
 
-  const finishDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const finishPointerInteraction = (event: ReactPointerEvent<HTMLButtonElement>, canceled: boolean) => {
     const dragState = dragStateRef.current
     if (!dragState || dragState.pointerId !== event.pointerId) {
       return
     }
 
-    suppressClickRef.current = dragState.hasMoved
+    const wasTap = !canceled && !dragState.hasMoved
+    suppressClickRef.current = !canceled
     dragStateRef.current = null
     setIsDragging(false)
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (dragState.hasPointerCapture && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
+
+    if (wasTap) {
+      onReturn()
+    }
+  }
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    finishPointerInteraction(event, false)
+  }
+
+  const handlePointerCancel = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    finishPointerInteraction(event, true)
   }
 
   const handleClick = () => {
@@ -168,8 +187,8 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       onClick={handleClick}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={finishDrag}
-      onPointerCancel={finishDrag}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
     >
       <AimOutlined aria-hidden='true' />
       <span>回到当前周</span>
