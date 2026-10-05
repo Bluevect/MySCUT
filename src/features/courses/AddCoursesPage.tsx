@@ -117,7 +117,9 @@ function AddCoursesPage() {
       const nextScheduleData: ScheduleData = {
         ...scheduleData,
         importedAt: Date.now(),
-        courses: [...scheduleData.courses, nextCourse],
+        courses: scheduleData.courses.some(c => c.name === nextCourse.name)
+          ? scheduleData.courses
+          : [...scheduleData.courses, nextCourse],
         lessons: [...scheduleData.lessons, nextLesson],
       }
 
