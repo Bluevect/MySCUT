@@ -480,9 +480,19 @@ body {
   padding: 16px;
 }
 
+.edit-course-page .add-courses-content {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
 .add-courses-save-button {
   width: 100%;
   margin-top: 64px;
+}
+
+.edit-course-delete-button {
+  width: 100%;
 }
 
 .add-courses-form-card {

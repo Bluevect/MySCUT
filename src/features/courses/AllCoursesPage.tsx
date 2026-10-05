@@ -1,7 +1,7 @@
 import { EditOutlined, LeftOutlined, SearchOutlined } from '@ant-design/icons'
-import { Input } from 'antd'
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Input, message } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { TransparentIconButton } from '../../components/buttons/TransparentIconButton'
 import type { ScheduleLesson } from '../../core/schedule/types'
 import { loadActiveScheduleEntry } from '../../core/schedule/storage'
@@ -32,6 +32,8 @@ function formatLessonValue(lesson: ScheduleLesson, key: keyof ScheduleLesson) {
 
 function AllCoursesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [messageApi, contextHolder] = message.useMessage()
   const [searchText, setSearchText] = useState('')
   const activeSchedule = useMemo(() => loadActiveScheduleEntry(), [])
   const scheduleId = activeSchedule?.id
@@ -61,8 +63,20 @@ function AllCoursesPage() {
     })
     : lessons
 
+  useEffect(() => {
+    const popupMessage = location.state?.message
+    if (typeof popupMessage !== 'string' || popupMessage.length === 0) {
+      return
+    }
+
+    messageApi.success(popupMessage).then(() => {
+      navigate(location.pathname, { replace: true, state: null })
+    })
+  }, [location.pathname, location.state, messageApi, navigate])
+
   return (
     <div className='all-courses-page'>
+      {contextHolder}
       <header className='all-courses-header'>
         <div className='all-courses-back'>
           <TransparentIconButton

@@ -1,5 +1,5 @@
 import { LeftOutlined } from '@ant-design/icons'
-import { Button, Input, InputNumber, Select, message } from 'antd'
+import { Button, Input, InputNumber, Modal, Select, message } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { APP_ROUTE_PATHS } from '../../app/routePaths'
@@ -48,6 +48,8 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const [classroom, setClassroom] = useState(lesson?.room ?? '')
   const [teacher, setTeacher] = useState(lesson?.teacher ?? '')
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   function handleReturn() {
     navigate(APP_ROUTE_PATHS.coursesAllCoursesPage)
@@ -131,12 +133,44 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
         throw new Error('课表已不存在，请返回课程列表后重试')
       }
 
-      messageApi.success('课程修改已保存')
-      navigate(APP_ROUTE_PATHS.coursesAllCoursesPage)
+      navigate(APP_ROUTE_PATHS.coursesAllCoursesPage, {
+        state: { message: `课程“${normalizedName}”修改已保存` },
+      })
     } catch (error) {
       messageApi.error(error instanceof Error ? error.message : '课程修改失败')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!scheduleData || !course || !lesson) {
+      messageApi.error('找不到要删除的课表或课程，请返回课程列表后重试')
+      setIsDeleteModalOpen(false)
+      return
+    }
+
+    const updatedScheduleData = {
+      ...scheduleData,
+      courses: scheduleData.courses.filter((item) => item.id !== courseId),
+      lessons: scheduleData.lessons.filter((item) => item.courseId !== courseId),
+    }
+
+    try {
+      setIsDeleting(true)
+      const saved = await updateSavedScheduleData(scheduleId, updatedScheduleData)
+      if (!saved) {
+        throw new Error('课表已不存在，请返回课程列表后重试')
+      }
+
+      navigate(APP_ROUTE_PATHS.coursesAllCoursesPage, {
+        state: { message: `课程“${course.name}”已删除` },
+      })
+    } catch (error) {
+      messageApi.error(error instanceof Error ? error.message : '课程删除失败')
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteModalOpen(false)
     }
   }
 
@@ -266,7 +300,8 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
               className='add-courses-save-button'
               type='primary'
               size='large'
-              loading={isSaving}
+              loading={isSaving || isDeleting}
+              disabled={isDeleting}
               onClick={handleSave}
             >
               保存
@@ -278,7 +313,40 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
             <Button type='link' onClick={handleReturn}>返回课程列表</Button>
           </div>
         )}
+
+        {hasCourseTarget && (
+          <div className='add-courses-form-card edit-course-danger-card'>
+            <div className='add-courses-field'>
+              <span className='add-courses-label'>危险区域</span>
+              <Button
+                className='edit-course-delete-button'
+                danger
+                type='primary'
+                size='large'
+                disabled={isSaving || isDeleting}
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                删除课程
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <Modal
+        title='删除课程确认'
+        open={isDeleteModalOpen}
+        confirmLoading={isDeleting}
+        okText='确认删除'
+        cancelText='取消'
+        okButtonProps={{ danger: true }}
+        onOk={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      >
+        <p>
+          确定删除“{course?.name ?? '该课程'}”吗？该课程的所有上课安排都会从此课表中删除，且无法撤销。
+        </p>
+      </Modal>
     </div>
   )
 }
