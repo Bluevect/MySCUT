@@ -1197,6 +1197,13 @@ body {
   color: var(--text-strong);
 }
 
+.course-detail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .course-detail-line {
   margin: 8px 0 0;
   font-size: 13px;

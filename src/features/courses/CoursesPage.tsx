@@ -11,6 +11,7 @@ import {
 import {
   CaretDownFilled,
   CloseOutlined,
+  EditOutlined,
   LeftOutlined,
   PlusOutlined,
   RightOutlined,
@@ -1232,7 +1233,22 @@ function CoursesPage() {
 
             return (
               <article key={course.lesson.instanceId} className='course-detail-item'>
-                <h3 className='course-detail-name'>{course.name}</h3>
+                <div className='course-detail-title-row'>
+                  <h3 className='course-detail-name'>{course.name}</h3>
+                  {activeScheduleEntry && !isIntersectionPreviewMode && (
+                    <TransparentIconButton
+                      ariaLabel={`修改 ${course.name}`}
+                      onClick={() => navigate(
+                        APP_ROUTE_PATHS.coursesEditCoursePage
+                          .replace(':scheduleId', encodeURIComponent(activeScheduleEntry.id))
+                          .replace(':courseId', String(course.courseId))
+                          .replace(':instanceId', encodeURIComponent(course.lesson.instanceId)),
+                      )}
+                      icon={<EditOutlined />}
+                    />
+                  )}
+                </div>
+
                 <p className='course-detail-line'>学分：{formatCourseCredit(course.credit)}</p>
                 <p className='course-detail-line'>教室：{course.room || '-'}</p>
                 <p className='course-detail-line'>教师：{course.teacher || '-'}</p>
