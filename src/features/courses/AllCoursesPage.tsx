@@ -6,6 +6,7 @@ import { TransparentIconButton } from '../../components/buttons/TransparentIconB
 import type { ScheduleLesson } from '../../core/schedule/types'
 import { loadActiveScheduleEntry } from '../../core/schedule/storage'
 import { APP_ROUTE_PATHS } from '../../app/routePaths'
+import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
 
 const WEEKDAY_LABELS = ['', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
 
@@ -116,19 +117,17 @@ function AllCoursesPage() {
                         {`${index + 1} ${coursesById.get(lesson.courseId)?.name ?? '未命名课程'}`}
                       </h2>
                       {scheduleId && (
-                        <button
-                          aria-label={`修改${coursesById.get(lesson.courseId)?.name ?? '课程'}`}
+                        <RoundedSquareIconButton
+                          ariaLabel={`修改${coursesById.get(lesson.courseId)?.name ?? '课程'}`}
                           className='all-courses-edit-button'
-                          type='button'
                           onClick={() => navigate(
                             APP_ROUTE_PATHS.coursesEditCoursePage
                               .replace(':scheduleId', encodeURIComponent(scheduleId))
                               .replace(':courseId', String(lesson.courseId))
                               .replace(':instanceId', encodeURIComponent(lesson.instanceId)),
                           )}
-                        >
-                          <EditOutlined />
-                        </button>
+                          icon={<EditOutlined />}
+                        />
                       )}
                     </div>
 

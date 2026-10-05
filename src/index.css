@@ -424,17 +424,7 @@ body {
 }
 
 .all-courses-edit-button {
-  width: 40px;
-  height: 40px;
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--border-soft);
-  border-radius: 10px;
-  background: var(--bg-surface-alt);
-  color: var(--text-secondary);
-  font-size: 16px;
-  cursor: pointer;
 }
 
 .all-courses-fields {
@@ -801,20 +791,21 @@ body {
 }
 
 .app-icon-button-square {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: var(--button-soft-bg);
   color: var(--button-soft-text);
-  font-size: 24px;
+  font-size: 22px;
   line-height: 0;
   letter-spacing: 1px;
+  cursor: pointer;
 }
 
 .app-icon-button-square .anticon {
