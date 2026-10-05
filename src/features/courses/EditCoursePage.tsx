@@ -40,6 +40,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const maxWeek = scheduleData?.table.maxWeek ?? 20
 
   const [courseName, setCourseName] = useState(course?.name ?? '')
+  const [credit, setCredit] = useState<number | null>(course?.credit ?? 0)
   const [day, setDay] = useState<ScheduleLesson['day']>(lesson?.day ?? 1)
   const [startNode, setStartNode] = useState<number | null>(lesson?.startNode ?? 1)
   const [endNode, setEndNode] = useState<number | null>(lesson?.endNode ?? 2)
@@ -64,6 +65,11 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
     const normalizedName = courseName.trim()
     if (!normalizedName) {
       messageApi.error('请填写课程名称')
+      return
+    }
+
+    if (credit === null || !Number.isFinite(credit) || credit < 0) {
+      messageApi.error('学分必须是大于或等于 0 的数字')
       return
     }
 
@@ -117,7 +123,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
         showSun: scheduleData.table.showSun || day === 7,
       },
       courses: scheduleData.courses.map((item) =>
-        item.id === courseId ? { ...item, name: normalizedName } : item,
+        item.id === courseId ? { ...item, name: normalizedName, credit } : item,
       ),
       lessons: scheduleData.lessons.map((item) =>
         item.courseId === courseId && item.instanceId === instanceId
@@ -201,6 +207,19 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
                   placeholder='课程名称'
                   value={courseName}
                   onChange={(event) => setCourseName(event.target.value)}
+                />
+              </div>
+
+              <div className='add-courses-field'>
+                <span className='add-courses-label'>学分</span>
+                <InputNumber
+                  min={0}
+                  step={0.5}
+                  size='large'
+                  placeholder='学分'
+                  value={credit}
+                  onChange={setCredit}
+                  style={{ width: '100%' }}
                 />
               </div>
 

@@ -39,15 +39,16 @@ function AllCoursesPage() {
   const scheduleId = activeSchedule?.id
   const scheduleData = activeSchedule?.scheduleData ?? null
   const lessons = scheduleData?.lessons ?? []
-  const courseNames = useMemo(
-    () => new Map(scheduleData?.courses.map((course) => [course.id, course.name]) ?? []),
+  const coursesById = useMemo(
+    () => new Map(scheduleData?.courses.map((course) => [course.id, course]) ?? []),
     [scheduleData],
   )
   const normalizedSearchText = searchText.trim().toLocaleLowerCase()
   const filteredLessons = normalizedSearchText
     ? lessons.filter((lesson) => {
       const searchableText = [
-        courseNames.get(lesson.courseId),
+        coursesById.get(lesson.courseId)?.name,
+        coursesById.get(lesson.courseId)?.credit,
         WEEKDAY_LABELS[lesson.day],
         lesson.startNode,
         lesson.endNode,
@@ -112,11 +113,11 @@ function AllCoursesPage() {
                   <article className='all-courses-card' key={`${lesson.instanceId}-${index}`}>
                     <div className='all-courses-card-title-row'>
                       <h2 className='all-courses-card-title'>
-                        {`${index + 1} ${courseNames.get(lesson.courseId) ?? '未命名课程'}`}
+                        {`${index + 1} ${coursesById.get(lesson.courseId)?.name ?? '未命名课程'}`}
                       </h2>
                       {scheduleId && (
                         <button
-                          aria-label={`修改${courseNames.get(lesson.courseId) ?? '课程'}`}
+                          aria-label={`修改${coursesById.get(lesson.courseId)?.name ?? '课程'}`}
                           className='all-courses-edit-button'
                           type='button'
                           onClick={() => navigate(
@@ -140,6 +141,15 @@ function AllCoursesPage() {
                       <div className='all-courses-field'>
                         <dt>周数</dt>
                         <dd>{lesson.startWeek}-{lesson.endWeek}</dd>
+                      </div>
+
+                      <div className='all-courses-field'>
+                        <dt>学分</dt>
+                        <dd>
+                          {(coursesById.get(lesson.courseId)?.credit ?? 0) > 0
+                            ? coursesById.get(lesson.courseId)?.credit
+                            : '未填写'}
+                        </dd>
                       </div>
 
                       {LESSON_FIELDS.map(({ key, label }) => (
