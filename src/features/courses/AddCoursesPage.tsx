@@ -33,6 +33,7 @@ function AddCoursesPage() {
   const [endWeek, setEndWeek] = useState<number | null>(maxWeek)
   const [classroom, setClassroom] = useState('待定教室')
   const [teacher, setTeacher] = useState('待定老师')
+  const [detailText, setDetailText] = useState('')
   const [credit, setCredit] = useState<number | null>(0)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -70,6 +71,7 @@ function AddCoursesPage() {
 
       const nextCourseId =
         scheduleData.courses.reduce((maxId, course) => Math.max(maxId, course.id), 0) + 1
+
       const nextCourse: ScheduleCourse = {
         id: nextCourseId,
         tableId: scheduleData.table.id,
@@ -86,7 +88,7 @@ function AddCoursesPage() {
       const endTimeSlot = timeSlotMap.get(safeEndNode)
 
       const nextLesson: ScheduleLesson = {
-        instanceId: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        instanceId: `custom-${day}-${safeStartNode}-${safeEndNode}-${safeStartWeek}-${safeEndWeek}-${nextCourseId}`,
         courseId: nextCourseId,
         tableId: scheduleData.table.id,
         day,
@@ -100,6 +102,7 @@ function AddCoursesPage() {
         endTime: endTimeSlot?.endTime ?? '',
         room: normalizedRoom,
         teacher: normalizedTeacher,
+        detailText: detailText.trim(),
         type: 0,
         level: 0,
       }
@@ -250,6 +253,16 @@ function AddCoursesPage() {
                 value={credit}
                 onChange={setCredit}
                 style={{ width: '100%' }}
+              />
+            </div>
+
+            <div className='add-courses-field'>
+              <span className='add-courses-label'>详细信息（选填）</span>
+              <Input.TextArea
+                rows={4}
+                placeholder='课程详细信息'
+                value={detailText}
+                onChange={(event) => setDetailText(event.target.value)}
               />
             </div>
           </div>

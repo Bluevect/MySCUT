@@ -48,6 +48,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const [endWeek, setEndWeek] = useState<number | null>(lesson?.endWeek ?? maxWeek)
   const [classroom, setClassroom] = useState(lesson?.room ?? '')
   const [teacher, setTeacher] = useState(lesson?.teacher ?? '')
+  const [detailText, setDetailText] = useState(lesson?.detailText ?? '')
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -108,6 +109,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       endWeek,
       room: classroom.trim(),
       teacher: teacher.trim(),
+      detailText: detailText.trim(),
       startTime: lesson.ownTime
         ? lesson.startTime
         : startTimeSlot?.startTime ?? (startNode === lesson.startNode ? lesson.startTime : ''),
@@ -115,6 +117,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
         ? lesson.endTime
         : endTimeSlot?.endTime ?? (endNode === lesson.endNode ? lesson.endTime : ''),
     }
+    
     const updatedScheduleData = {
       ...scheduleData,
       table: {
@@ -311,6 +314,16 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
                   placeholder='教师'
                   value={teacher}
                   onChange={(event) => setTeacher(event.target.value)}
+                />
+              </div>
+
+              <div className='add-courses-field'>
+                <span className='add-courses-label'>详细信息（选填）</span>
+                <Input.TextArea
+                  rows={4}
+                  placeholder='课程详细信息'
+                  value={detailText}
+                  onChange={(event) => setDetailText(event.target.value)}
                 />
               </div>
             </div>
