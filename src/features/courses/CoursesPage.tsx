@@ -554,10 +554,13 @@ function CoursesPage() {
 
   useEffect(() => {
     const popupMessage = location.state?.message
-    if (typeof popupMessage !== 'string' || !popupMessage) {
+    if (typeof popupMessage !== 'string' || popupMessage.length === 0) {
       return
     }
 
+    messageApi.success(popupMessage).then(() => {
+      navigate(location.pathname, { replace: true, state: null })
+    })
   }, [location.state?.message, messageApi, navigate, location.pathname])
 
   useEffect(() => {

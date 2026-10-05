@@ -124,8 +124,9 @@ function AddCoursesPage() {
         throw new Error('课表保存失败')
       }
 
-      messageApi.success('课程已添加')
-      navigate(APP_ROUTE_PATHS.courses)
+      navigate(APP_ROUTE_PATHS.courses, {
+        state: { message: `课程“${normalizedName}”已添加` },
+      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '课程添加失败'
       messageApi.error(errorMessage)
