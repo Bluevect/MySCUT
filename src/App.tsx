@@ -27,6 +27,7 @@ function App() {
   const isMineDetailPage = location.pathname.startsWith('/mine/')
   const isCoursesPage = location.pathname === '/courses'
   const isAddCoursesPage = location.pathname === '/courses/add-courses'
+  const isAllCoursesPage = location.pathname === '/courses/all-courses'
   const isManualPage = location.pathname === '/manual'
   const routeBoundaryKey = `${location.key}:${location.pathname}`
 
@@ -40,6 +41,7 @@ function App() {
           ${isMineDetailPage ? 'page-content--fullscreen' : ''}
           ${isCoursesPage ? 'page-content--courses' : ''}
           ${isAddCoursesPage ? 'page-content--courses' : ''}
+          ${isAllCoursesPage ? 'page-content--courses' : ''}
           ${isManualPage ? 'page-content--manual' : ''}
         `}
       >

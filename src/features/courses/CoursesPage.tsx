@@ -536,7 +536,6 @@ function CoursesPage() {
   const weekViewContextRef = useRef(`${scheduleWeekViewId}:${semesterStartDate}`)
   const currentWeek = weekView.week
   const maxSelectableWeek = Math.max(scheduleData?.table.maxWeek ?? 1, inferredCurrentWeek, currentWeek)
-  console.log(scheduleData)
   const weekOptions = useMemo(
     () => Array.from({ length: maxSelectableWeek }, (_, index) => ({
       value: index + 1,
@@ -1024,6 +1023,9 @@ function CoursesPage() {
       case 'addCourses':
         navigate(APP_ROUTE_PATHS.coursesAddCoursesPage)
         return
+      case 'viewAllCourses':
+        navigate(APP_ROUTE_PATHS.coursesAllCoursesPage)
+        return
       case 'selectSchedule':
         navigate(APP_ROUTE_PATHS.mineScheduleSettings)
         return
@@ -1115,6 +1117,7 @@ function CoursesPage() {
             menu={{
               items: [
                 { key: 'addCourses', label: '添加课程' },
+                { key: 'viewAllCourses', label: '查看所有课程' },
                 { key: 'selectSchedule', label: '选择课程表' },
               ],
               onClick: ({ key }) => handleAddScheduleMenuClick(key),
