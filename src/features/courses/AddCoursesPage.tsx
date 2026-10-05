@@ -7,6 +7,8 @@ import { TransparentIconButton } from '../../components/buttons/TransparentIconB
 import { loadActiveScheduleEntry, updateActiveScheduleData } from '../../core/schedule/storage'
 import type { ScheduleCourse, ScheduleData, ScheduleLesson } from '../../core/schedule/types'
 
+type DayValue = 1 | 2 | 3 | 4 | 5 | 6 | 7
+
 const WEEKDAY_OPTIONS = [
   { label: '周一', value: 1 },
   { label: '周二', value: 2 },
@@ -26,7 +28,7 @@ function AddCoursesPage() {
   const maxWeek = scheduleData?.table.maxWeek ?? 20
 
   const [courseName, setCourseName] = useState('新课程')
-  const [day, setDay] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1)
+  const [day, setDay] = useState<DayValue>(1)
   const [startNode, setStartNode] = useState<number | null>(1)
   const [endNode, setEndNode] = useState<number | null>(2)
   const [startWeek, setStartWeek] = useState<number | null>(1)
@@ -63,6 +65,11 @@ function AddCoursesPage() {
 
     if (safeEndWeek < safeStartWeek) {
       messageApi.error('结束周数不能小于起始周数')
+      return
+    }
+
+    if (credit === null || !Number.isFinite(credit) || credit < 0) {
+      messageApi.error('学分必须是大于或等于 0 的数字')
       return
     }
 
@@ -165,7 +172,7 @@ function AddCoursesPage() {
                 style={{ width: '100%' }}
                 options={WEEKDAY_OPTIONS}
                 value={day}
-                onChange={(value) => setDay(value as 1 | 2 | 3 | 4 | 5 | 6 | 7)}
+                onChange={(value) => setDay(value as DayValue)}
               />
             </div>
 
@@ -248,6 +255,8 @@ function AddCoursesPage() {
             <div className='add-courses-field'>
               <span className='add-courses-label'>学分（选填）</span>
               <InputNumber
+                min={0}
+                step={0.5}
                 size='large'
                 placeholder='学分'
                 value={credit}
