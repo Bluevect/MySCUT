@@ -1,26 +1,142 @@
-import { LeftOutlined } from "@ant-design/icons"
-import { TransparentIconButton } from "../../components/buttons/TransparentIconButton"
-import { useNavigate } from "react-router-dom"
-import { APP_ROUTE_PATHS } from "../../app/routePaths"
-import { Button, Input, InputNumber, Select } from "antd"
-import { useState } from "react"
+import { LeftOutlined } from '@ant-design/icons'
+import { Button, Input, InputNumber, Select, message } from 'antd'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { APP_ROUTE_PATHS } from '../../app/routePaths'
+import { TransparentIconButton } from '../../components/buttons/TransparentIconButton'
+import { loadActiveScheduleEntry, saveScheduleDataWithOptions } from '../../core/schedule/storage'
+import type { ScheduleCourse, ScheduleData, ScheduleLesson } from '../../core/schedule/types'
+import { getSemesterStartDate } from '../../core/scheduleSettings'
+
+const WEEKDAY_OPTIONS = [
+  { label: '周一', value: 1 },
+  { label: '周二', value: 2 },
+  { label: '周三', value: 3 },
+  { label: '周四', value: 4 },
+  { label: '周五', value: 5 },
+  { label: '周六', value: 6 },
+  { label: '周日', value: 7 },
+]
 
 function AddCoursesPage() {
   const navigate = useNavigate()
-  const [courseName, setCourseName] = useState("")
-  const [startNode, setStartNode] = useState<number | null>(null)
-  const [endNode, setEndNode] = useState<number | null>(null)
-  const [startWeek, setStartWeek] = useState<number | null>(null)
-  const [endWeek, setEndWeek] = useState<number | null>(null)
-  const [classroom, setClassroom] = useState("")
-  const [teacher, setTeacher] = useState("")
+  const [messageApi, contextHolder] = message.useMessage()
+  const activeSchedule = useMemo(() => loadActiveScheduleEntry(), [])
+  const scheduleData = activeSchedule?.scheduleData ?? null
+  const maxNode = scheduleData?.table.nodes ?? 12
+  const maxWeek = scheduleData?.table.maxWeek ?? 20
+
+  const [courseName, setCourseName] = useState('新课程')
+  const [day, setDay] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1)
+  const [startNode, setStartNode] = useState<number | null>(1)
+  const [endNode, setEndNode] = useState<number | null>(2)
+  const [startWeek, setStartWeek] = useState<number | null>(1)
+  const [endWeek, setEndWeek] = useState<number | null>(maxWeek)
+  const [classroom, setClassroom] = useState('待定教室')
+  const [teacher, setTeacher] = useState('待定老师')
+  const [credit, setCredit] = useState<number | null>(0)
+  const [isSaving, setIsSaving] = useState(false)
 
   function handleReturn() {
     navigate(APP_ROUTE_PATHS.courses)
   }
 
+  async function handleSave() {
+    if (!scheduleData) {
+      messageApi.error('请先导入或选择一个课表后再添加课程')
+      return
+    }
+
+    const normalizedName = courseName.trim() || '新课程'
+    const normalizedRoom = classroom.trim() || '待定教室'
+    const normalizedTeacher = teacher.trim() || '待定老师'
+
+    const safeStartNode = Math.max(1, Math.min(maxNode, Number(startNode ?? 1)))
+    const safeEndNode = Math.max(safeStartNode, Math.min(maxNode, Number(endNode ?? safeStartNode)))
+    const safeStartWeek = Math.max(1, Math.min(maxWeek, Number(startWeek ?? 1)))
+    const safeEndWeek = Math.max(safeStartWeek, Math.min(maxWeek, Number(endWeek ?? safeStartWeek)))
+
+    if (safeEndNode < safeStartNode) {
+      messageApi.error('结束节数不能小于起始节数')
+      return
+    }
+
+    if (safeEndWeek < safeStartWeek) {
+      messageApi.error('结束周数不能小于起始周数')
+      return
+    }
+
+    try {
+      setIsSaving(true)
+
+      const nextCourseId =
+        scheduleData.courses.reduce((maxId, course) => Math.max(maxId, course.id), 0) + 1
+      const nextCourse: ScheduleCourse = {
+        id: nextCourseId,
+        tableId: scheduleData.table.id,
+        name: normalizedName,
+        color: '',
+        credit: credit ?? 0,
+        note: '',
+      }
+
+      const timeSlotMap = new Map(
+        scheduleData.timeSlots.map((timeSlot) => [timeSlot.node, timeSlot] as const),
+      )
+      const startTimeSlot = timeSlotMap.get(safeStartNode)
+      const endTimeSlot = timeSlotMap.get(safeEndNode)
+
+      const nextLesson: ScheduleLesson = {
+        instanceId: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        courseId: nextCourseId,
+        tableId: scheduleData.table.id,
+        day,
+        startNode: safeStartNode,
+        endNode: safeEndNode,
+        startWeek: safeStartWeek,
+        endWeek: safeEndWeek,
+        weekStep: 1,
+        ownTime: false,
+        startTime: startTimeSlot?.startTime ?? '',
+        endTime: endTimeSlot?.endTime ?? '',
+        room: normalizedRoom,
+        teacher: normalizedTeacher,
+        type: 0,
+        level: 0,
+      }
+
+      const nextScheduleData: ScheduleData = {
+        ...scheduleData,
+        importedAt: Date.now(),
+        courses: [...scheduleData.courses, nextCourse],
+        lessons: [...scheduleData.lessons, nextLesson],
+      }
+
+      const result = await saveScheduleDataWithOptions(nextScheduleData, {
+        themeId: activeSchedule?.themeId ?? 'skyBlue',
+        semesterStartDate: activeSchedule?.semesterStartDate ?? getSemesterStartDate(),
+        timeSlotPresetId: activeSchedule?.timeSlotPresetId ?? 'builtIn',
+        preferredName: activeSchedule?.name ?? scheduleData.table.name,
+        setActive: true,
+      })
+
+      if (!result.ok) {
+        throw new Error('课表保存失败')
+      }
+
+      messageApi.success('课程已添加')
+      navigate(APP_ROUTE_PATHS.courses)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '课程添加失败'
+      messageApi.error(errorMessage)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className='add-courses-page'>
+      {contextHolder}
       <header className='add-courses-header'>
         <div className='add-courses-left-panel'>
           <TransparentIconButton
@@ -48,7 +164,13 @@ function AddCoursesPage() {
 
             <div className='add-courses-field'>
               <span className='add-courses-label'>上课时间（星期）</span>
-              <Select size='large' style={{ width: '100%' }} />
+              <Select
+                size='large'
+                style={{ width: '100%' }}
+                options={WEEKDAY_OPTIONS}
+                value={day}
+                onChange={(value) => setDay(value as 1 | 2 | 3 | 4 | 5 | 6 | 7)}
+              />
             </div>
 
             <div className='add-courses-field'>
@@ -57,6 +179,8 @@ function AddCoursesPage() {
                 <label className='add-courses-range-field'>
                   <span>从</span>
                   <InputNumber
+                    min={1}
+                    max={maxNode}
                     size='large'
                     style={{ width: '100%' }}
                     value={startNode}
@@ -66,6 +190,8 @@ function AddCoursesPage() {
                 <label className='add-courses-range-field'>
                   <span>到</span>
                   <InputNumber
+                    min={1}
+                    max={maxNode}
                     size='large'
                     style={{ width: '100%' }}
                     value={endNode}
@@ -81,6 +207,8 @@ function AddCoursesPage() {
                 <label className='add-courses-range-field'>
                   <span>从</span>
                   <InputNumber
+                    min={1}
+                    max={maxWeek}
                     size='large'
                     style={{ width: '100%' }}
                     value={startWeek}
@@ -90,6 +218,8 @@ function AddCoursesPage() {
                 <label className='add-courses-range-field'>
                   <span>到</span>
                   <InputNumber
+                    min={1}
+                    max={maxWeek}
                     size='large'
                     style={{ width: '100%' }}
                     value={endWeek}
@@ -118,9 +248,26 @@ function AddCoursesPage() {
                 onChange={(event) => setTeacher(event.target.value)}
               />
             </div>
+
+            <div className='add-courses-field'>
+              <span className='add-courses-label'>学分（选填）</span>
+              <InputNumber
+                size='large'
+                placeholder='学分'
+                value={credit}
+                onChange={setCredit}
+                style={{ width: '100%' }}
+              />
+            </div>
           </div>
 
-          <Button className='add-courses-save-button' type='primary' size='large'>
+          <Button
+            className='add-courses-save-button'
+            type='primary'
+            size='large'
+            loading={isSaving}
+            onClick={handleSave}
+          >
             保存
           </Button>
         </div>
