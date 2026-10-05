@@ -9,6 +9,8 @@ import {
 
 const VIEWPORT_EDGE_GAP = 12
 const DRAG_START_THRESHOLD = 4
+const RIPPLE_DURATION_MS = 620
+const RETURN_DELAY_MS = 120
 
 type Position = {
   left: number
@@ -24,6 +26,7 @@ type DragState = {
   width: number
   height: number
   hasMoved: boolean
+  hasPointerCapture: boolean
 }
 
 type ReturnToCurrentWeekButtonProps = {
@@ -50,10 +53,28 @@ function clampPosition(position: Position, width: number, height: number) {
   }
 }
 
+function createRippleElement(button: HTMLButtonElement, clientX: number, clientY: number) {
+  const rect = button.getBoundingClientRect()
+  const size = Math.max(rect.width, rect.height) * 2.4
+  const ripple = document.createElement('span')
+
+  ripple.className = 'return-current-week-fab-ripple'
+  ripple.setAttribute('aria-hidden', 'true')
+  ripple.style.left = `${clientX - rect.left}px`
+  ripple.style.top = `${clientY - rect.top}px`
+  ripple.style.width = `${size}px`
+  ripple.style.height = `${size}px`
+  ripple.addEventListener('animationend', () => ripple.remove(), { once: true })
+
+  button.appendChild(ripple)
+  window.setTimeout(() => ripple.remove(), RIPPLE_DURATION_MS + 200)
+}
+
 function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCurrentWeekButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dragStateRef = useRef<DragState | null>(null)
   const suppressClickRef = useRef(false)
+  const returnTimeoutRef = useRef<number | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -75,14 +96,31 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     }
 
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (returnTimeoutRef.current !== null) {
+        window.clearTimeout(returnTimeoutRef.current)
+      }
+    }
   }, [])
+
+  const scheduleReturn = () => {
+    if (returnTimeoutRef.current !== null) {
+      return
+    }
+
+    returnTimeoutRef.current = window.setTimeout(() => {
+      returnTimeoutRef.current = null
+      onReturn()
+    }, RETURN_DELAY_MS)
+  }
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) {
       return
     }
 
+    createRippleElement(event.currentTarget, event.clientX, event.clientY)
     suppressClickRef.current = false
     const rect = event.currentTarget.getBoundingClientRect()
     dragStateRef.current = {
@@ -94,8 +132,8 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       width: rect.width,
       height: rect.height,
       hasMoved: false,
+      hasPointerCapture: false,
     }
-    event.currentTarget.setPointerCapture(event.pointerId)
   }
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -111,6 +149,11 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     }
 
     dragState.hasMoved = true
+    if (!dragState.hasPointerCapture) {
+      event.currentTarget.setPointerCapture(event.pointerId)
+      dragState.hasPointerCapture = true
+    }
+
     event.preventDefault()
     setIsDragging(true)
     setPosition(
@@ -125,19 +168,32 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     )
   }
 
-  const finishDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const finishPointerInteraction = (event: ReactPointerEvent<HTMLButtonElement>, canceled: boolean) => {
     const dragState = dragStateRef.current
     if (!dragState || dragState.pointerId !== event.pointerId) {
       return
     }
 
-    suppressClickRef.current = dragState.hasMoved
+    const wasTap = !canceled && !dragState.hasMoved
+    suppressClickRef.current = !canceled
     dragStateRef.current = null
     setIsDragging(false)
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (dragState.hasPointerCapture && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
+
+    if (wasTap) {
+      scheduleReturn()
+    }
+  }
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    finishPointerInteraction(event, false)
+  }
+
+  const handlePointerCancel = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    finishPointerInteraction(event, true)
   }
 
   const handleClick = () => {
@@ -146,7 +202,7 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       return
     }
 
-    onReturn()
+    scheduleReturn()
   }
 
   const positionStyle: CSSProperties | undefined = position
@@ -168,8 +224,8 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       onClick={handleClick}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={finishDrag}
-      onPointerCancel={finishDrag}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
     >
       <AimOutlined aria-hidden='true' />
       <span>回到当前周</span>

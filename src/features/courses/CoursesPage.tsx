@@ -9,14 +9,17 @@ import {
   useState,
 } from 'react'
 import {
+  CaretDownFilled,
   CloseOutlined,
-  EllipsisOutlined,
+  EditOutlined,
   LeftOutlined,
+  PlusOutlined,
   RightOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
-import { Input, Modal, message } from 'antd'
+import { Dropdown, Input, Modal, Select, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { RoundedSquareIconButton } from '../../components/buttons/RoundedSquareIconButton'
+import { TransparentIconButton } from '../../components/buttons/TransparentIconButton'
 import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
 import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../core/navigation/appBack'
@@ -48,6 +51,7 @@ import { useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import { syncAndroidCourseWidgetSchedule } from '../../platform/capacitor/courseWidgetSchedule'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
 import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
+import { APP_ROUTE_PATHS } from '../../app/routePaths'
 
 const WEEKDAY_LABELS = ['一', '二', '三', '四', '五', '六', '日']
 const MAX_LESSON_COUNT = 12
@@ -218,10 +222,6 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
   )
 }
 
-function getCurrentDateText(date: Date) {
-  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
-}
-
 function addDays(baseDate: Date, days: number) {
   return new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + days)
 }
@@ -260,6 +260,22 @@ function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
   }
 
   return WEEKDAY_LABELS.map((_, index) => formatMonthDay(addDays(weekStartDate, index)))
+}
+
+function getCurrentWeekdayIndex(startDateText: string, weekNumber: number, currentDate: Date) {
+  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  if (!weekStartDate) {
+    return -1
+  }
+
+  return WEEKDAY_LABELS.findIndex((_, index) => {
+    const date = addDays(weekStartDate, index)
+    return (
+      date.getFullYear() === currentDate.getFullYear() &&
+      date.getMonth() === currentDate.getMonth() &&
+      date.getDate() === currentDate.getDate()
+    )
+  })
 }
 
 function getWeekMonthLabel(startDateText: string, weekNumber: number, fallbackDate: Date) {
@@ -404,6 +420,7 @@ function renderScheduleTable(
   lessonIndexes: number[],
   lessonTimes: LessonTime[],
   weekdayDateLabels: string[],
+  currentWeekdayIndex: number,
   monthLabel: string,
   onOpenDetail: (courses: WeekCellCourse[], day: number, node: number) => void,
 ) {
@@ -415,7 +432,12 @@ function renderScheduleTable(
             {monthLabel}
           </th>
           {WEEKDAY_LABELS.map((weekday, dayIndex) => (
-            <th key={weekday} scope='col' className='schedule-weekday-header'>
+            <th
+              key={weekday}
+              scope='col'
+              className={`schedule-weekday-header ${dayIndex === currentWeekdayIndex ? 'is-today' : ''}`}
+              aria-current={dayIndex === currentWeekdayIndex ? 'date' : undefined}
+            >
               <span className='schedule-weekday-label'>{weekday}</span>
               <span className='schedule-weekday-date'>{weekdayDateLabels[dayIndex] ?? '--/--'}</span>
             </th>
@@ -505,14 +527,23 @@ function CoursesPage() {
 
   const currentDate = new Date()
   const semesterStartDate = getSemesterStartDate()
-  const dateText = getCurrentDateText(currentDate)
   const inferredCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
   const scheduleWeekViewId = activeScheduleEntry?.id ?? 'no-active-schedule'
   const [weekView, setWeekView] = useState(() =>
     resolveInitialScheduleWeekView(scheduleWeekViewId, semesterStartDate, inferredCurrentWeek),
   )
+  const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false)
+  const [selectedWeekForPicker, setSelectedWeekForPicker] = useState(weekView.week)
   const weekViewContextRef = useRef(`${scheduleWeekViewId}:${semesterStartDate}`)
   const currentWeek = weekView.week
+  const maxSelectableWeek = Math.max(scheduleData?.table.maxWeek ?? 1, inferredCurrentWeek, currentWeek)
+  const weekOptions = useMemo(
+    () => Array.from({ length: maxSelectableWeek }, (_, index) => ({
+      value: index + 1,
+      label: `第 ${index + 1} 周`,
+    })),
+    [maxSelectableWeek],
+  )
 
   const swipeState = useMemo(() => createSwipeState(currentWeek, swipeDirection), [currentWeek, swipeDirection])
 
@@ -524,10 +555,13 @@ function CoursesPage() {
 
   useEffect(() => {
     const popupMessage = location.state?.message
-    if (typeof popupMessage !== 'string' || !popupMessage) {
+    if (typeof popupMessage !== 'string' || popupMessage.length === 0) {
       return
     }
 
+    messageApi.success(popupMessage).then(() => {
+      navigate(location.pathname, { replace: true, state: null })
+    })
   }, [location.state?.message, messageApi, navigate, location.pathname])
 
   useEffect(() => {
@@ -798,11 +832,13 @@ function CoursesPage() {
         return
       }
 
+      setIsResetting(false)
       setIsAnimating(true)
       setSwipeDirection('prev')
       return
     }
 
+    setIsResetting(false)
     setIsAnimating(true)
     setSwipeDirection('next')
   }
@@ -812,20 +848,18 @@ function CoursesPage() {
       return
     }
 
+    if (swipeDirection) {
+      const nextWeek = swipeDirection === 'prev' ? Math.max(1, currentWeek - 1) : currentWeek + 1
+      applyViewedWeek(nextWeek)
+
+      setSwipeDirection(null)
+      setIsAnimating(false)
+      return
+    }
+
     if (isResetting) {
       setIsResetting(false)
-      return
     }
-
-    if (!swipeDirection) {
-      return
-    }
-
-    const nextWeek = swipeDirection === 'prev' ? Math.max(1, currentWeek - 1) : currentWeek + 1
-    applyViewedWeek(nextWeek)
-
-    setSwipeDirection(null)
-    setIsAnimating(false)
   }
 
   const trackClassName = useMemo(() => {
@@ -851,6 +885,7 @@ function CoursesPage() {
       return
     }
 
+    setIsResetting(false)
     setIsAnimating(true)
     setSwipeDirection('prev')
   }
@@ -860,6 +895,7 @@ function CoursesPage() {
       return
     }
 
+    setIsResetting(false)
     setIsAnimating(true)
     setSwipeDirection('next')
   }
@@ -873,6 +909,27 @@ function CoursesPage() {
     setIsResetting(false)
     dragOffsetXRef.current = 0
     applyViewedWeek(inferredCurrentWeek)
+  }
+
+  const handleOpenWeekPicker = () => {
+    if (isAnimating || isDragging) {
+      return
+    }
+
+    setSelectedWeekForPicker(currentWeek)
+    setIsWeekPickerOpen(true)
+  }
+
+  const handleConfirmWeekSelection = () => {
+    setIsWeekPickerOpen(false)
+    if (selectedWeekForPicker === currentWeek || isAnimating || isDragging) {
+      return
+    }
+
+    setSwipeDirection(null)
+    setIsResetting(false)
+    dragOffsetXRef.current = 0
+    applyViewedWeek(selectedWeekForPicker)
   }
 
   const handleOpenCourseDetail = (courses: WeekCellCourse[], day: number, node: number) => {
@@ -965,6 +1022,20 @@ function CoursesPage() {
     navigate('/mine/schedule-settings')
   }
 
+  const handleAddScheduleMenuClick = (key: string) => {
+    switch (key) {
+      case 'addCourses':
+        navigate(APP_ROUTE_PATHS.coursesAddCoursesPage)
+        return
+      case 'viewAllCourses':
+        navigate(APP_ROUTE_PATHS.coursesAllCoursesPage)
+        return
+      case 'selectSchedule':
+        navigate(APP_ROUTE_PATHS.mineScheduleSettings)
+        return
+    }
+  }
+
   const handleCloseStartDateReminder = () => {
     setIsStartDateReminderOpen(false)
   }
@@ -1005,6 +1076,7 @@ function CoursesPage() {
   useBackDismiss(isStartDateReminderOpen, handleCloseStartDateReminder)
   useBackDismiss(isExitConfirmOpen, handleDiscardPreview)
   useBackDismiss(isSaveNameModalOpen, () => setIsSaveNameModalOpen(false))
+  useBackDismiss(isWeekPickerOpen, () => setIsWeekPickerOpen(false))
 
   if (shouldShowCoursesFirstUseGuide(savedScheduleCount, isIntersectionPreviewMode)) {
     return (
@@ -1020,24 +1092,49 @@ function CoursesPage() {
       {contextHolder}
       <header className='courses-header'>
         <div className='courses-date-panel'>
-          <p className='courses-date'>{dateText}</p>
-          <p className='courses-week'>第 {currentWeek} 周</p>
+          <button
+            type='button'
+            className={`courses-week ${isWeekPickerOpen ? 'is-open' : ''}`}
+            aria-haspopup='dialog'
+            aria-label={`选择周次，当前第 ${currentWeek} 周`}
+            onClick={handleOpenWeekPicker}
+          >
+            <span>第 {currentWeek} 周</span>
+            <CaretDownFilled aria-hidden='true' />
+          </button>
         </div>
 
         <div className='courses-actions'>
-          <RoundedSquareIconButton
+          <TransparentIconButton
             ariaLabel='上一周'
             icon={<LeftOutlined />}
             onClick={handleGoPrevWeek}
           />
-          <RoundedSquareIconButton
+          <TransparentIconButton
             ariaLabel='下一周'
             icon={<RightOutlined />}
             onClick={handleGoNextWeek}
           />
-          <RoundedSquareIconButton
+          <Dropdown
+            trigger={['click']}
+            placement='bottomRight'
+            menu={{
+              items: [
+                { key: 'addCourses', label: '添加课程' },
+                { key: 'viewAllCourses', label: '查看所有课程' },
+                { key: 'selectSchedule', label: '选择课程表' },
+              ],
+              onClick: ({ key }) => handleAddScheduleMenuClick(key),
+            }}
+          >
+            <TransparentIconButton
+              ariaLabel='添加课表'
+              icon={<PlusOutlined />}
+            />
+          </Dropdown>
+          <TransparentIconButton
             ariaLabel={isIntersectionPreviewMode ? '关闭临时课表' : '更多操作'}
-            icon={isIntersectionPreviewMode ? <CloseOutlined /> : <EllipsisOutlined />}
+            icon={isIntersectionPreviewMode ? <CloseOutlined /> : <SettingOutlined />}
             onClick={handleRequestExitPreview}
           />
         </div>
@@ -1061,6 +1158,7 @@ function CoursesPage() {
                 lessonIndexes,
                 lessonTimes,
                 prevWeekdayDateLabels,
+                getCurrentWeekdayIndex(semesterStartDate, swipeState.prevWeek, currentDate),
                 prevMonthLabel,
                 handleOpenCourseDetail,
               )}
@@ -1075,6 +1173,7 @@ function CoursesPage() {
                 lessonIndexes,
                 lessonTimes,
                 currentWeekdayDateLabels,
+                getCurrentWeekdayIndex(semesterStartDate, swipeState.currentWeek, currentDate),
                 currentMonthLabel,
                 handleOpenCourseDetail,
               )}
@@ -1089,6 +1188,7 @@ function CoursesPage() {
                 lessonIndexes,
                 lessonTimes,
                 nextWeekdayDateLabels,
+                getCurrentWeekdayIndex(semesterStartDate, swipeState.nextWeek, currentDate),
                 nextMonthLabel,
                 handleOpenCourseDetail,
               )}
@@ -1105,6 +1205,23 @@ function CoursesPage() {
       )}
 
       <Modal
+        title='选择周次'
+        open={isWeekPickerOpen}
+        onOk={handleConfirmWeekSelection}
+        onCancel={() => setIsWeekPickerOpen(false)}
+        okText='确定'
+        cancelText='取消'
+      >
+        <Select
+          aria-label='选择周次'
+          style={{ width: '100%' }}
+          value={selectedWeekForPicker}
+          onChange={setSelectedWeekForPicker}
+          options={weekOptions}
+        />
+      </Modal>
+
+      <Modal
         title={`课程详情 · 星期${selectedWeekday} 第${selectedNode}节`}
         open={isCourseDetailOpen}
         onCancel={handleCloseCourseDetail}
@@ -1116,7 +1233,22 @@ function CoursesPage() {
 
             return (
               <article key={course.lesson.instanceId} className='course-detail-item'>
-                <h3 className='course-detail-name'>{course.name}</h3>
+                <div className='course-detail-title-row'>
+                  <h3 className='course-detail-name'>{course.name}</h3>
+                  {activeScheduleEntry && !isIntersectionPreviewMode && (
+                    <TransparentIconButton
+                      ariaLabel={`修改 ${course.name}`}
+                      onClick={() => navigate(
+                        APP_ROUTE_PATHS.coursesEditCoursePage
+                          .replace(':scheduleId', encodeURIComponent(activeScheduleEntry.id))
+                          .replace(':courseId', String(course.courseId))
+                          .replace(':instanceId', encodeURIComponent(course.lesson.instanceId)),
+                      )}
+                      icon={<EditOutlined />}
+                    />
+                  )}
+                </div>
+
                 <p className='course-detail-line'>学分：{formatCourseCredit(course.credit)}</p>
                 <p className='course-detail-line'>教室：{course.room || '-'}</p>
                 <p className='course-detail-line'>教师：{course.teacher || '-'}</p>

@@ -46,6 +46,10 @@ describe('resolveBackPath', () => {
     expect(resolveBackPath('/courses/intersection-preview')).toBe('/mine/schedule-intersection')
   })
 
+  it('returns course editing pages to the all-courses page', () => {
+    expect(resolveBackPath('/courses/edit-course/schedule-1/2/lesson-1')).toBe('/courses/all-courses')
+  })
+
   it('falls back to the root page for unknown paths', () => {
     expect(resolveBackPath('/')).toBe(APP_ROOT_PATH)
     expect(resolveBackPath('/unknown-page')).toBe(APP_ROOT_PATH)

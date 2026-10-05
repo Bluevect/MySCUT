@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { NotFoundPage, RouteLoadingView } from '../components/AppRouteStates'
 import { getReloadManualEnabledStartup } from '../core/manual/manualSourceStorage'
 import { APP_ROUTE_PATHS } from './routePaths'
@@ -8,6 +8,21 @@ const isWebPlatform = import.meta.env.VITE_TARGET_PLATFORM === 'web'
 
 const CoursesPage = lazy(async () => {
   const module = await import('../features/courses/CoursesPage')
+  return { default: module.default }
+})
+
+const AddCoursesPage = lazy(async () => {
+  const module = await import('../features/courses/AddCoursesPage')
+  return { default: module.default }
+})
+
+const AllCoursesPage = lazy(async () => {
+  const module = await import('../features/courses/AllCoursesPage')
+  return { default: module.default }
+})
+
+const EditCoursePage = lazy(async () => {
+  const module = await import('../features/courses/EditCoursePage')
   return { default: module.default }
 })
 
@@ -60,12 +75,37 @@ const MineDetailPage = lazy(async () => {
   return { default: module.default }
 })
 
+function EditCourseRoute() {
+  const { scheduleId, courseId, instanceId } = useParams()
+  const parsedCourseId = Number(courseId)
+
+  if (
+    !scheduleId ||
+    !instanceId ||
+    !Number.isSafeInteger(parsedCourseId) ||
+    parsedCourseId < 0
+  ) {
+    return <Navigate to={APP_ROUTE_PATHS.coursesAllCoursesPage} replace />
+  }
+
+  return (
+    <EditCoursePage
+      scheduleId={scheduleId}
+      courseId={parsedCourseId}
+      instanceId={instanceId}
+    />
+  )
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoadingView />}>
       <Routes>
         <Route path={APP_ROUTE_PATHS.root} element={<Navigate to={APP_ROUTE_PATHS.courses} replace />} />
         <Route path={APP_ROUTE_PATHS.courses} element={<CoursesPage />} />
+        <Route path={APP_ROUTE_PATHS.coursesAddCoursesPage} element={<AddCoursesPage />} />
+        <Route path={APP_ROUTE_PATHS.coursesAllCoursesPage} element={<AllCoursesPage />} />
+        <Route path={APP_ROUTE_PATHS.coursesEditCoursePage} element={<EditCourseRoute />} />
         <Route path={APP_ROUTE_PATHS.coursesIntersectionPreview} element={<CoursesPage />} />
         <Route path={APP_ROUTE_PATHS.manual} element={getReloadManualEnabledStartup() ? <ManualPage /> : null} />
         <Route path={APP_ROUTE_PATHS.mine} element={<MinePage />} />

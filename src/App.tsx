@@ -9,6 +9,7 @@ import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
 import { RouteContentErrorBoundary } from './components/AppRouteStates'
 import { ManualPage } from './features/manual'
 import { getReloadManualEnabledStartup } from './core/manual/manualSourceStorage'
+import { shouldShowBottomNavigation } from './app/bottomNavigation'
 
 const TAB_ITEMS = [
   { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
@@ -26,6 +27,9 @@ function App() {
   const navigate = useNavigate()
   const isMineDetailPage = location.pathname.startsWith('/mine/')
   const isCoursesPage = location.pathname === '/courses'
+  const isAddCoursesPage = location.pathname === '/courses/add-courses'
+  const isAllCoursesPage = location.pathname === '/courses/all-courses'
+  const isEditCoursesPage = location.pathname.startsWith('/courses/edit-course/')
   const isManualPage = location.pathname === '/manual'
   const routeBoundaryKey = `${location.key}:${location.pathname}`
 
@@ -34,7 +38,15 @@ function App() {
       {contextHolder}
       <StorageStatusBanner />
       <main
-        className={`page-content ${isMineDetailPage ? 'page-content--fullscreen' : ''} ${isCoursesPage ? 'page-content--courses' : ''} ${isManualPage ? 'page-content--manual' : ''}`}
+        className={`
+          page-content 
+          ${isMineDetailPage ? 'page-content--fullscreen' : ''}
+          ${isCoursesPage ? 'page-content--courses' : ''}
+          ${isAddCoursesPage ? 'page-content--courses' : ''}
+          ${isAllCoursesPage ? 'page-content--courses' : ''}
+          ${isEditCoursesPage ? 'page-content--courses' : ''}
+          ${isManualPage ? 'page-content--manual' : ''}
+        `}
       >
         <RouteContentErrorBoundary
           key={routeBoundaryKey}
@@ -50,7 +62,7 @@ function App() {
         
       </main>
 
-      {!isMineDetailPage && (
+      {shouldShowBottomNavigation(location.pathname) && (
         <Tabbar
           component='nav'
           labels

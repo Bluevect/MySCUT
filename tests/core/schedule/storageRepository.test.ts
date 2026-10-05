@@ -240,6 +240,100 @@ describe('ScheduleRepository durable snapshots', () => {
     expect((await persistentStore.get(SCHEDULE_LIBRARY_KEY))?.schedules[1]?.themeId).toBe('autumnOsmanthus')
   })
 
+  it('updates the requested saved schedule data without changing its identity or active schedule', async () => {
+    const repository = new ScheduleRepository()
+    await repository.initialize({
+      store: new InMemoryPersistentStore(),
+      migrationJournal: new InMemoryMigrationJournal(),
+    }, new MemoryStorage())
+
+    const firstSave = await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+      setActive: true,
+    })
+    const secondSave = await repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
+      themeId: 'bambooGrove',
+      semesterStartDate: '2026-03-02',
+      setActive: true,
+    })
+    const updatedScheduleData = {
+      ...firstSave.schedule.scheduleData,
+      courses: [{
+        id: 2,
+        tableId: 1,
+        name: '更新后的课程名',
+        color: '#7db3ff',
+        credit: 0,
+        note: '',
+      }],
+    }
+
+    await expect(repository.updateSavedScheduleData(
+      firstSave.schedule.id,
+      updatedScheduleData,
+    )).resolves.toBe(true)
+
+    expect(repository.loadSavedScheduleById(firstSave.schedule.id)).toMatchObject({
+      name: '第一份',
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+      scheduleData: {
+        courses: [{ id: 2, name: '更新后的课程名' }],
+      },
+    })
+    expect(repository.loadActiveScheduleEntry()?.id).toBe(secondSave.schedule.id)
+    await expect(repository.updateSavedScheduleData('missing-schedule', updatedScheduleData))
+      .resolves.toBe(false)
+  })
+
+  it('updates the active schedule data in place without adding a schedule', async () => {
+    const repository = new ScheduleRepository()
+    const persistentStore = new InMemoryPersistentStore()
+    await repository.initialize({
+      store: persistentStore,
+      migrationJournal: new InMemoryMigrationJournal(),
+    }, new MemoryStorage())
+
+    const firstSave = await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+      timeSlotPresetId: 'wushan',
+      setActive: true,
+    })
+    const secondSave = await repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
+      themeId: 'bambooGrove',
+      semesterStartDate: '2026-03-02',
+      setActive: true,
+    })
+    const updatedData = {
+      ...secondSave.schedule.scheduleData,
+      courses: [{
+        id: 1,
+        tableId: 1,
+        name: '新增课程',
+        color: '',
+        credit: 0,
+        note: '',
+      }],
+    }
+
+    await expect(repository.updateActiveScheduleData(updatedData)).resolves.toBe(true)
+
+    const library = await persistentStore.get(SCHEDULE_LIBRARY_KEY)
+    expect(library?.schedules).toHaveLength(2)
+    expect(library?.activeScheduleId).toBe(secondSave.schedule.id)
+    expect(repository.loadSavedScheduleById(firstSave.schedule.id)?.scheduleData.courses).toEqual([])
+    expect(repository.loadActiveScheduleEntry()).toMatchObject({
+      id: secondSave.schedule.id,
+      themeId: 'bambooGrove',
+      semesterStartDate: '2026-03-02',
+      scheduleData: {
+        courses: [{ name: '新增课程' }],
+      },
+    })
+  })
+
   it('keeps the active schedule theme unchanged when the durable write fails', async () => {
     const targetStore = new InMemoryPersistentStore()
     const store = new FailingPersistentStore(targetStore)
