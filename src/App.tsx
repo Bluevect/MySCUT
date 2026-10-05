@@ -9,6 +9,7 @@ import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
 import { RouteContentErrorBoundary } from './components/AppRouteStates'
 import { ManualPage } from './features/manual'
 import { getReloadManualEnabledStartup } from './core/manual/manualSourceStorage'
+import { shouldShowBottomNavigation } from './app/bottomNavigation'
 
 const TAB_ITEMS = [
   { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
@@ -59,7 +60,7 @@ function App() {
         
       </main>
 
-      {!isMineDetailPage && (
+      {shouldShowBottomNavigation(location.pathname) && (
         <Tabbar
           component='nav'
           labels
