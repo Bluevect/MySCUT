@@ -1,4 +1,4 @@
-import { LeftOutlined, SearchOutlined } from '@ant-design/icons'
+import { EditOutlined, LeftOutlined, SearchOutlined } from '@ant-design/icons'
 import { Input } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -34,6 +34,7 @@ function AllCoursesPage() {
   const navigate = useNavigate()
   const [searchText, setSearchText] = useState('')
   const activeSchedule = useMemo(() => loadActiveScheduleEntry(), [])
+  const scheduleId = activeSchedule?.id
   const scheduleData = activeSchedule?.scheduleData ?? null
   const lessons = scheduleData?.lessons ?? []
   const courseNames = useMemo(
@@ -95,9 +96,26 @@ function AllCoursesPage() {
               <div className='all-courses-list'>
                 {filteredLessons.map((lesson, index) => (
                   <article className='all-courses-card' key={`${lesson.instanceId}-${index}`}>
-                    <h2 className='all-courses-card-title'>
-                      {`${index + 1} ${courseNames.get(lesson.courseId)}`}
-                    </h2>
+                    <div className='all-courses-card-title-row'>
+                      <h2 className='all-courses-card-title'>
+                        {`${index + 1} ${courseNames.get(lesson.courseId) ?? '未命名课程'}`}
+                      </h2>
+                      {scheduleId && (
+                        <button
+                          aria-label={`修改${courseNames.get(lesson.courseId) ?? '课程'}`}
+                          className='all-courses-edit-button'
+                          type='button'
+                          onClick={() => navigate(
+                            APP_ROUTE_PATHS.coursesEditCoursePage
+                              .replace(':scheduleId', encodeURIComponent(scheduleId))
+                              .replace(':courseId', String(lesson.courseId))
+                              .replace(':instanceId', encodeURIComponent(lesson.instanceId)),
+                          )}
+                        >
+                          <EditOutlined />
+                        </button>
+                      )}
+                    </div>
 
                     <dl className='all-courses-fields'>
                       <div className='all-courses-field'>

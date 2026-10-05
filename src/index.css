@@ -409,10 +409,32 @@ body {
 }
 
 .all-courses-card-title {
-  margin: 0 0 16px;
+  margin: 0;
   color: var(--text-strong);
   font-size: 16px;
   font-weight: 600;
+}
+
+.all-courses-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.all-courses-edit-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .all-courses-fields {

@@ -4,6 +4,7 @@ export const APP_ROUTE_PATHS = {
   coursesIntersectionPreview: '/courses/intersection-preview',
   coursesAddCoursesPage: '/courses/add-courses',
   coursesAllCoursesPage: '/courses/all-courses',
+  coursesEditCoursePage: '/courses/edit-course/:scheduleId/:courseId/:instanceId',
   manual: '/manual',
   mine: '/mine',
   mineScheduleSettings: '/mine/schedule-settings',

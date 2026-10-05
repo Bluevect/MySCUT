@@ -394,6 +394,38 @@ export class ScheduleRepository {
     })
   }
 
+  async updateSavedScheduleData(scheduleId: string, scheduleData: ScheduleData) {
+    return this.enqueueMutation(async () => {
+      const store = this.requireWritableStore()
+      if (this.snapshot === null) {
+        return false
+      }
+
+      const target = this.snapshot.schedules.find((schedule) => schedule.id === scheduleId)
+      if (!target) {
+        return false
+      }
+
+      if (target.source !== scheduleData.source) {
+        throw new Error('课表来源不匹配，无法更新课表')
+      }
+
+      const nextLibrary: ScheduleLibrary = {
+        ...this.snapshot,
+        schedules: this.snapshot.schedules.map((schedule) =>
+          schedule.id === scheduleId
+            ? { ...schedule, scheduleData }
+            : schedule,
+        ),
+      }
+
+      await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
+      this.snapshot = nextLibrary
+      this.notifyListeners()
+      return true
+    })
+  }
+
   async setActiveScheduleTimeSlotPreset(timeSlotPresetId: TimeSlotPresetId) {
     return this.enqueueMutation(async () => {
       const store = this.requireWritableStore()
@@ -714,6 +746,10 @@ export function setSavedSchedulePreferredName(scheduleId: string, preferredName:
 
 export function saveScheduleDataWithOptions(scheduleData: ScheduleData, options: SaveScheduleOptions) {
   return scheduleRepository.saveScheduleDataWithOptions(scheduleData, options)
+}
+
+export function updateSavedScheduleData(scheduleId: string, scheduleData: ScheduleData) {
+  return scheduleRepository.updateSavedScheduleData(scheduleId, scheduleData)
 }
 
 export function loadScheduleData() {

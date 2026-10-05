@@ -12,6 +12,7 @@ export function shouldShowBottomNavigation(pathname: string) {
   return !(
     normalized.startsWith('/mine/') ||
     normalized === APP_ROUTE_PATHS.coursesAddCoursesPage ||
-    normalized === APP_ROUTE_PATHS.coursesAllCoursesPage
+    normalized === APP_ROUTE_PATHS.coursesAllCoursesPage ||
+    normalized.startsWith('/courses/edit-course/')
   )
 }

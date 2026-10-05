@@ -29,6 +29,7 @@ function App() {
   const isCoursesPage = location.pathname === '/courses'
   const isAddCoursesPage = location.pathname === '/courses/add-courses'
   const isAllCoursesPage = location.pathname === '/courses/all-courses'
+  const isEditCoursesPage = location.pathname.startsWith('/courses/edit-course/')
   const isManualPage = location.pathname === '/manual'
   const routeBoundaryKey = `${location.key}:${location.pathname}`
 
@@ -43,6 +44,7 @@ function App() {
           ${isCoursesPage ? 'page-content--courses' : ''}
           ${isAddCoursesPage ? 'page-content--courses' : ''}
           ${isAllCoursesPage ? 'page-content--courses' : ''}
+          ${isEditCoursesPage ? 'page-content--courses' : ''}
           ${isManualPage ? 'page-content--manual' : ''}
         `}
       >
