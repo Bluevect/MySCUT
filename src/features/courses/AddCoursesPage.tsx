@@ -4,9 +4,8 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { APP_ROUTE_PATHS } from '../../app/routePaths'
 import { TransparentIconButton } from '../../components/buttons/TransparentIconButton'
-import { loadActiveScheduleEntry, saveScheduleDataWithOptions } from '../../core/schedule/storage'
+import { loadActiveScheduleEntry, updateActiveScheduleData } from '../../core/schedule/storage'
 import type { ScheduleCourse, ScheduleData, ScheduleLesson } from '../../core/schedule/types'
-import { getSemesterStartDate } from '../../core/scheduleSettings'
 
 const WEEKDAY_OPTIONS = [
   { label: '周一', value: 1 },
@@ -112,16 +111,9 @@ function AddCoursesPage() {
         lessons: [...scheduleData.lessons, nextLesson],
       }
 
-      const result = await saveScheduleDataWithOptions(nextScheduleData, {
-        themeId: activeSchedule?.themeId ?? 'skyBlue',
-        semesterStartDate: activeSchedule?.semesterStartDate ?? getSemesterStartDate(),
-        timeSlotPresetId: activeSchedule?.timeSlotPresetId ?? 'builtIn',
-        preferredName: activeSchedule?.name ?? scheduleData.table.name,
-        setActive: true,
-      })
-
-      if (!result.ok) {
-        throw new Error('课表保存失败')
+      const updated = await updateActiveScheduleData(nextScheduleData)
+      if (!updated) {
+        throw new Error('当前课表已不存在，请返回课程列表后重试')
       }
 
       navigate(APP_ROUTE_PATHS.courses, {
