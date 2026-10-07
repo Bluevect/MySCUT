@@ -41,8 +41,10 @@ import type { ScheduleThemePreset } from '../../core/schedule/themePresets'
 import type { ScheduleLesson, TimeSlotPresetId, WakeupTimeSlot, WeekCellCourse } from '../../core/schedule/types'
 import {
   clearRememberedScheduleWeek,
-  getScheduleCalendarWeekStartDate,
+  getScheduleLessonDayForColumn,
+  getScheduleWeekdayOffset,
   getScheduleWeekNumber,
+  getScheduleWeekStartDate,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
@@ -58,6 +60,7 @@ const MAX_LESSON_COUNT = 12
 const TIME_PLACEHOLDER = '--:--'
 const SCROLL_HINT_THRESHOLD = 2
 const PRELOAD_WEEK_RADIUS = 3
+const SWIPE_TRANSITION_FALLBACK_MS = 400
 const EMPTY_WEEK_RENDER_DATA = createEmptyWeekScheduleRenderData()
 const INTERSECTION_PREVIEW_PATH = '/courses/intersection-preview'
 const IMPORT_START_DATE_REMINDER_KEY = 'schedule-import-start-date-reminder'
@@ -201,7 +204,7 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
   return (
     <div className='schedule-scroll-pane'>
       {showTopHint && (
-        <div className='schedule-scroll-hint schedule-scroll-hint--top' style={{ top: `${topOcclusion + 8}px` }}>
+        <div className='schedule-scroll-hint schedule-scroll-hint--top' style={{ top: `${topOcclusion + 54}px` }}>
           上方还有课程哦
         </div>
       )}
@@ -254,7 +257,7 @@ function formatCourseCredit(credit: number) {
 }
 
 function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return WEEKDAY_LABELS.map(() => '--/--')
   }
@@ -263,7 +266,7 @@ function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
 }
 
 function getCurrentWeekdayIndex(startDateText: string, weekNumber: number, currentDate: Date) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return -1
   }
@@ -279,7 +282,7 @@ function getCurrentWeekdayIndex(startDateText: string, weekNumber: number, curre
 }
 
 function getWeekMonthLabel(startDateText: string, weekNumber: number, fallbackDate: Date) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return formatMonthLabel(fallbackDate)
   }
@@ -419,6 +422,8 @@ function renderScheduleTable(
   weekRenderData: WeekScheduleRenderData,
   lessonIndexes: number[],
   lessonTimes: LessonTime[],
+  weekdayLabels: string[],
+  weekdayOffset: number,
   weekdayDateLabels: string[],
   currentWeekdayIndex: number,
   monthLabel: string,
@@ -431,7 +436,7 @@ function renderScheduleTable(
           <th scope='col' className='schedule-month-header'>
             {monthLabel}
           </th>
-          {WEEKDAY_LABELS.map((weekday, dayIndex) => (
+          {weekdayLabels.map((weekday, dayIndex) => (
             <th
               key={weekday}
               scope='col'
@@ -454,8 +459,8 @@ function renderScheduleTable(
               <span className='schedule-lesson-time'>{lessonTimes[lessonIndex]?.endTime ?? TIME_PLACEHOLDER}</span>
             </th>
 
-            {WEEKDAY_LABELS.map((weekday, dayIndex) => {
-              const day = dayIndex + 1
+            {weekdayLabels.map((weekday, dayIndex) => {
+              const day = getScheduleLessonDayForColumn(weekdayOffset, dayIndex)
               if (isCellCovered(weekRenderData, day, lessonNumber)) {
                 return null
               }
@@ -493,6 +498,7 @@ function CoursesPage() {
   const gestureAxisRef = useRef<'undecided' | 'horizontal' | 'vertical'>('undecided')
   const dragOffsetXRef = useRef(0)
   const trackRef = useRef<HTMLDivElement>(null)
+  const swipeTransitionTimeoutRef = useRef<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -527,6 +533,11 @@ function CoursesPage() {
 
   const currentDate = new Date()
   const semesterStartDate = getSemesterStartDate()
+  const scheduleWeekdayOffset = getScheduleWeekdayOffset(semesterStartDate)
+  const scheduleWeekdayLabels = useMemo(
+    () => [...WEEKDAY_LABELS.slice(scheduleWeekdayOffset), ...WEEKDAY_LABELS.slice(0, scheduleWeekdayOffset)],
+    [scheduleWeekdayOffset],
+  )
   const inferredCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
   const scheduleWeekViewId = activeScheduleEntry?.id ?? 'no-active-schedule'
   const [weekView, setWeekView] = useState(() =>
@@ -717,6 +728,40 @@ function CoursesPage() {
     })
   }
 
+  const finishSwipeTransition = (direction: 'prev' | 'next' | null, fromWeek: number) => {
+    if (swipeTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(swipeTransitionTimeoutRef.current)
+      swipeTransitionTimeoutRef.current = null
+    }
+
+    if (direction) {
+      const nextWeek = direction === 'prev' ? Math.max(1, fromWeek - 1) : fromWeek + 1
+      applyViewedWeek(nextWeek)
+      setSwipeDirection(null)
+      setIsAnimating(false)
+      return
+    }
+
+    setIsResetting(false)
+  }
+
+  const scheduleSwipeTransitionFallback = (direction: 'prev' | 'next' | 'reset') => {
+    if (swipeTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(swipeTransitionTimeoutRef.current)
+    }
+
+    const fromWeek = currentWeek
+    swipeTransitionTimeoutRef.current = window.setTimeout(() => {
+      finishSwipeTransition(direction === 'reset' ? null : direction, fromWeek)
+    }, SWIPE_TRANSITION_FALLBACK_MS)
+  }
+
+  useEffect(() => () => {
+    if (swipeTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(swipeTransitionTimeoutRef.current)
+    }
+  }, [])
+
   const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
     if (isAnimating) {
       return
@@ -729,6 +774,24 @@ function CoursesPage() {
     gestureAxisRef.current = 'undecided'
     touchStartXRef.current = event.touches[0]?.clientX ?? null
     touchStartYRef.current = event.touches[0]?.clientY ?? null
+  }
+
+  const synchronizeSwipePaneScrollPositions = () => {
+    const scrollAreas = trackRef.current?.querySelectorAll<HTMLDivElement>('.schedule-scroll-area')
+    if (!scrollAreas) {
+      return
+    }
+
+    const currentScrollTop = scrollAreas[1]?.scrollTop
+    if (typeof currentScrollTop !== 'number') {
+      return
+    }
+
+    scrollAreas.forEach((scrollArea) => {
+      if (scrollArea.scrollTop !== currentScrollTop) {
+        scrollArea.scrollTop = currentScrollTop
+      }
+    })
   }
 
   // 跟手位移直接写入 DOM，避免每个 touchmove 触发 setState 与整页 re-render；
@@ -764,6 +827,7 @@ function CoursesPage() {
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         gestureAxisRef.current = 'horizontal'
+        synchronizeSwipePaneScrollPositions()
       } else {
         gestureAxisRef.current = 'vertical'
         return
@@ -823,24 +887,29 @@ function CoursesPage() {
 
     if (Math.abs(deltaX) < 56) {
       setIsResetting(true)
+      scheduleSwipeTransitionFallback('reset')
       return
     }
 
     if (deltaX > 0) {
       if (currentWeek <= 1) {
         setIsResetting(true)
+        scheduleSwipeTransitionFallback('reset')
         return
       }
 
       setIsResetting(false)
       setIsAnimating(true)
       setSwipeDirection('prev')
+      scheduleSwipeTransitionFallback('prev')
       return
     }
 
     setIsResetting(false)
     setIsAnimating(true)
+    synchronizeSwipePaneScrollPositions()
     setSwipeDirection('next')
+    scheduleSwipeTransitionFallback('next')
   }
 
   const handleSwipeTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
@@ -848,17 +917,8 @@ function CoursesPage() {
       return
     }
 
-    if (swipeDirection) {
-      const nextWeek = swipeDirection === 'prev' ? Math.max(1, currentWeek - 1) : currentWeek + 1
-      applyViewedWeek(nextWeek)
-
-      setSwipeDirection(null)
-      setIsAnimating(false)
-      return
-    }
-
-    if (isResetting) {
-      setIsResetting(false)
+    if (swipeDirection || isResetting) {
+      finishSwipeTransition(swipeDirection, currentWeek)
     }
   }
 
@@ -887,7 +947,9 @@ function CoursesPage() {
 
     setIsResetting(false)
     setIsAnimating(true)
+    synchronizeSwipePaneScrollPositions()
     setSwipeDirection('prev')
+    scheduleSwipeTransitionFallback('prev')
   }
 
   const handleGoNextWeek = () => {
@@ -897,7 +959,9 @@ function CoursesPage() {
 
     setIsResetting(false)
     setIsAnimating(true)
+    synchronizeSwipePaneScrollPositions()
     setSwipeDirection('next')
+    scheduleSwipeTransitionFallback('next')
   }
 
   const handleReturnToCurrentWeek = () => {
@@ -1148,7 +1212,12 @@ function CoursesPage() {
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        <div ref={trackRef} className={trackClassName} style={trackStyle} onTransitionEnd={handleSwipeTransitionEnd}>
+        <div
+          ref={trackRef}
+          className={trackClassName}
+          style={trackStyle}
+          onTransitionEnd={handleSwipeTransitionEnd}
+        >
           <div className='schedule-swipe-page'>
             <ScheduleScrollPane>
               {renderScheduleTable(
@@ -1157,6 +1226,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.prevWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 prevWeekdayDateLabels,
                 getCurrentWeekdayIndex(semesterStartDate, swipeState.prevWeek, currentDate),
                 prevMonthLabel,
@@ -1172,6 +1243,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.currentWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 currentWeekdayDateLabels,
                 getCurrentWeekdayIndex(semesterStartDate, swipeState.currentWeek, currentDate),
                 currentMonthLabel,
@@ -1187,6 +1260,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.nextWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 nextWeekdayDateLabels,
                 getCurrentWeekdayIndex(semesterStartDate, swipeState.nextWeek, currentDate),
                 nextMonthLabel,
