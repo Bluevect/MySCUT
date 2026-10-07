@@ -41,8 +41,10 @@ import type { ScheduleThemePreset } from '../../core/schedule/themePresets'
 import type { ScheduleLesson, TimeSlotPresetId, WakeupTimeSlot, WeekCellCourse } from '../../core/schedule/types'
 import {
   clearRememberedScheduleWeek,
-  getScheduleCalendarWeekStartDate,
+  getScheduleLessonDayForColumn,
+  getScheduleWeekdayOffset,
   getScheduleWeekNumber,
+  getScheduleWeekStartDate,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
@@ -254,7 +256,7 @@ function formatCourseCredit(credit: number) {
 }
 
 function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return WEEKDAY_LABELS.map(() => '--/--')
   }
@@ -263,7 +265,7 @@ function getWeekdayDateLabels(startDateText: string, weekNumber: number) {
 }
 
 function getCurrentWeekdayIndex(startDateText: string, weekNumber: number, currentDate: Date) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return -1
   }
@@ -279,7 +281,7 @@ function getCurrentWeekdayIndex(startDateText: string, weekNumber: number, curre
 }
 
 function getWeekMonthLabel(startDateText: string, weekNumber: number, fallbackDate: Date) {
-  const weekStartDate = getScheduleCalendarWeekStartDate(startDateText, weekNumber)
+  const weekStartDate = getScheduleWeekStartDate(startDateText, weekNumber)
   if (!weekStartDate) {
     return formatMonthLabel(fallbackDate)
   }
@@ -419,6 +421,8 @@ function renderScheduleTable(
   weekRenderData: WeekScheduleRenderData,
   lessonIndexes: number[],
   lessonTimes: LessonTime[],
+  weekdayLabels: string[],
+  weekdayOffset: number,
   weekdayDateLabels: string[],
   currentWeekdayIndex: number,
   monthLabel: string,
@@ -431,7 +435,7 @@ function renderScheduleTable(
           <th scope='col' className='schedule-month-header'>
             {monthLabel}
           </th>
-          {WEEKDAY_LABELS.map((weekday, dayIndex) => (
+          {weekdayLabels.map((weekday, dayIndex) => (
             <th
               key={weekday}
               scope='col'
@@ -454,8 +458,8 @@ function renderScheduleTable(
               <span className='schedule-lesson-time'>{lessonTimes[lessonIndex]?.endTime ?? TIME_PLACEHOLDER}</span>
             </th>
 
-            {WEEKDAY_LABELS.map((weekday, dayIndex) => {
-              const day = dayIndex + 1
+            {weekdayLabels.map((weekday, dayIndex) => {
+              const day = getScheduleLessonDayForColumn(weekdayOffset, dayIndex)
               if (isCellCovered(weekRenderData, day, lessonNumber)) {
                 return null
               }
@@ -527,6 +531,11 @@ function CoursesPage() {
 
   const currentDate = new Date()
   const semesterStartDate = getSemesterStartDate()
+  const scheduleWeekdayOffset = getScheduleWeekdayOffset(semesterStartDate)
+  const scheduleWeekdayLabels = useMemo(
+    () => [...WEEKDAY_LABELS.slice(scheduleWeekdayOffset), ...WEEKDAY_LABELS.slice(0, scheduleWeekdayOffset)],
+    [scheduleWeekdayOffset],
+  )
   const inferredCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
   const scheduleWeekViewId = activeScheduleEntry?.id ?? 'no-active-schedule'
   const [weekView, setWeekView] = useState(() =>
@@ -1157,6 +1166,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.prevWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 prevWeekdayDateLabels,
                 getCurrentWeekdayIndex(semesterStartDate, swipeState.prevWeek, currentDate),
                 prevMonthLabel,
@@ -1172,6 +1183,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.currentWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 currentWeekdayDateLabels,
                 getCurrentWeekdayIndex(semesterStartDate, swipeState.currentWeek, currentDate),
                 currentMonthLabel,
@@ -1187,6 +1200,8 @@ function CoursesPage() {
                 getWeekRenderData(swipeState.nextWeek),
                 lessonIndexes,
                 lessonTimes,
+                scheduleWeekdayLabels,
+                scheduleWeekdayOffset,
                 nextWeekdayDateLabels,
                 getCurrentWeekdayIndex(semesterStartDate, swipeState.nextWeek, currentDate),
                 nextMonthLabel,
