@@ -60,6 +60,7 @@ const MAX_LESSON_COUNT = 12
 const TIME_PLACEHOLDER = '--:--'
 const SCROLL_HINT_THRESHOLD = 2
 const PRELOAD_WEEK_RADIUS = 3
+const SWIPE_TRANSITION_FALLBACK_MS = 400
 const EMPTY_WEEK_RENDER_DATA = createEmptyWeekScheduleRenderData()
 const INTERSECTION_PREVIEW_PATH = '/courses/intersection-preview'
 const IMPORT_START_DATE_REMINDER_KEY = 'schedule-import-start-date-reminder'
@@ -497,6 +498,7 @@ function CoursesPage() {
   const gestureAxisRef = useRef<'undecided' | 'horizontal' | 'vertical'>('undecided')
   const dragOffsetXRef = useRef(0)
   const trackRef = useRef<HTMLDivElement>(null)
+  const swipeTransitionTimeoutRef = useRef<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -726,6 +728,40 @@ function CoursesPage() {
     })
   }
 
+  const finishSwipeTransition = (direction: 'prev' | 'next' | null, fromWeek: number) => {
+    if (swipeTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(swipeTransitionTimeoutRef.current)
+      swipeTransitionTimeoutRef.current = null
+    }
+
+    if (direction) {
+      const nextWeek = direction === 'prev' ? Math.max(1, fromWeek - 1) : fromWeek + 1
+      applyViewedWeek(nextWeek)
+      setSwipeDirection(null)
+      setIsAnimating(false)
+      return
+    }
+
+    setIsResetting(false)
+  }
+
+  const scheduleSwipeTransitionFallback = (direction: 'prev' | 'next' | 'reset') => {
+    if (swipeTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(swipeTransitionTimeoutRef.current)
+    }
+
+    const fromWeek = currentWeek
+    swipeTransitionTimeoutRef.current = window.setTimeout(() => {
+      finishSwipeTransition(direction === 'reset' ? null : direction, fromWeek)
+    }, SWIPE_TRANSITION_FALLBACK_MS)
+  }
+
+  useEffect(() => () => {
+    if (swipeTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(swipeTransitionTimeoutRef.current)
+    }
+  }, [])
+
   const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
     if (isAnimating) {
       return
@@ -851,18 +887,21 @@ function CoursesPage() {
 
     if (Math.abs(deltaX) < 56) {
       setIsResetting(true)
+      scheduleSwipeTransitionFallback('reset')
       return
     }
 
     if (deltaX > 0) {
       if (currentWeek <= 1) {
         setIsResetting(true)
+        scheduleSwipeTransitionFallback('reset')
         return
       }
 
       setIsResetting(false)
       setIsAnimating(true)
       setSwipeDirection('prev')
+      scheduleSwipeTransitionFallback('prev')
       return
     }
 
@@ -870,6 +909,7 @@ function CoursesPage() {
     setIsAnimating(true)
     synchronizeSwipePaneScrollPositions()
     setSwipeDirection('next')
+    scheduleSwipeTransitionFallback('next')
   }
 
   const handleSwipeTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
@@ -877,17 +917,8 @@ function CoursesPage() {
       return
     }
 
-    if (swipeDirection) {
-      const nextWeek = swipeDirection === 'prev' ? Math.max(1, currentWeek - 1) : currentWeek + 1
-      applyViewedWeek(nextWeek)
-
-      setSwipeDirection(null)
-      setIsAnimating(false)
-      return
-    }
-
-    if (isResetting) {
-      setIsResetting(false)
+    if (swipeDirection || isResetting) {
+      finishSwipeTransition(swipeDirection, currentWeek)
     }
   }
 
@@ -918,6 +949,7 @@ function CoursesPage() {
     setIsAnimating(true)
     synchronizeSwipePaneScrollPositions()
     setSwipeDirection('prev')
+    scheduleSwipeTransitionFallback('prev')
   }
 
   const handleGoNextWeek = () => {
@@ -929,6 +961,7 @@ function CoursesPage() {
     setIsAnimating(true)
     synchronizeSwipePaneScrollPositions()
     setSwipeDirection('next')
+    scheduleSwipeTransitionFallback('next')
   }
 
   const handleReturnToCurrentWeek = () => {
@@ -1179,7 +1212,12 @@ function CoursesPage() {
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        <div ref={trackRef} className={trackClassName} style={trackStyle} onTransitionEnd={handleSwipeTransitionEnd}>
+        <div
+          ref={trackRef}
+          className={trackClassName}
+          style={trackStyle}
+          onTransitionEnd={handleSwipeTransitionEnd}
+        >
           <div className='schedule-swipe-page'>
             <ScheduleScrollPane>
               {renderScheduleTable(
