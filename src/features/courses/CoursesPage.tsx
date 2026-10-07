@@ -203,7 +203,7 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
   return (
     <div className='schedule-scroll-pane'>
       {showTopHint && (
-        <div className='schedule-scroll-hint schedule-scroll-hint--top' style={{ top: `${topOcclusion + 8}px` }}>
+        <div className='schedule-scroll-hint schedule-scroll-hint--top' style={{ top: `${topOcclusion + 54}px` }}>
           上方还有课程哦
         </div>
       )}
@@ -740,6 +740,24 @@ function CoursesPage() {
     touchStartYRef.current = event.touches[0]?.clientY ?? null
   }
 
+  const synchronizeSwipePaneScrollPositions = () => {
+    const scrollAreas = trackRef.current?.querySelectorAll<HTMLDivElement>('.schedule-scroll-area')
+    if (!scrollAreas) {
+      return
+    }
+
+    const currentScrollTop = scrollAreas[1]?.scrollTop
+    if (typeof currentScrollTop !== 'number') {
+      return
+    }
+
+    scrollAreas.forEach((scrollArea) => {
+      if (scrollArea.scrollTop !== currentScrollTop) {
+        scrollArea.scrollTop = currentScrollTop
+      }
+    })
+  }
+
   // 跟手位移直接写入 DOM，避免每个 touchmove 触发 setState 与整页 re-render；
   // trackStyle 仍由 React 托管，保证松手时 inline transform 的移除与释放动画 class 在同一次提交生效。
   const applyDragOffset = (offsetX: number) => {
@@ -773,6 +791,7 @@ function CoursesPage() {
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         gestureAxisRef.current = 'horizontal'
+        synchronizeSwipePaneScrollPositions()
       } else {
         gestureAxisRef.current = 'vertical'
         return
@@ -849,6 +868,7 @@ function CoursesPage() {
 
     setIsResetting(false)
     setIsAnimating(true)
+    synchronizeSwipePaneScrollPositions()
     setSwipeDirection('next')
   }
 
@@ -896,6 +916,7 @@ function CoursesPage() {
 
     setIsResetting(false)
     setIsAnimating(true)
+    synchronizeSwipePaneScrollPositions()
     setSwipeDirection('prev')
   }
 
@@ -906,6 +927,7 @@ function CoursesPage() {
 
     setIsResetting(false)
     setIsAnimating(true)
+    synchronizeSwipePaneScrollPositions()
     setSwipeDirection('next')
   }
 

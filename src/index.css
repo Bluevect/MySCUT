@@ -967,7 +967,17 @@ body {
   overscroll-behavior-x: none;
   touch-action: pan-y;
   background: var(--bg-surface);
-  padding: 8px 0 calc(var(--bottom-nav-height) + 12px);
+  padding: 0 0 calc(var(--bottom-nav-height) + 12px);
+}
+
+.schedule-scroll-area::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: block;
+  height: 8px;
+  background: var(--bg-surface);
 }
 
 .schedule-scroll-pane {
@@ -1049,6 +1059,13 @@ body {
   border-spacing: 0;
 }
 
+.schedule-table thead {
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  background: var(--bg-surface);
+}
+
 .schedule-month-header,
 .schedule-weekday-header,
 .schedule-lesson-header,
@@ -1062,6 +1079,7 @@ body {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
+  background: var(--bg-surface);
 }
 
 .schedule-month-header,
@@ -1075,9 +1093,19 @@ body {
 }
 
 .schedule-weekday-header.is-today {
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent-primary) 12%, var(--bg-surface));
+  position: relative;
+  background: var(--bg-surface);
   color: var(--accent-primary);
+  isolation: isolate;
+}
+
+.schedule-weekday-header.is-today::before {
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent-primary) 12%, var(--bg-surface));
+  content: '';
 }
 
 .schedule-weekday-label,
