@@ -59,7 +59,6 @@
     "@hpcc-js/wasm-zstd": "^1.7.0",
     "antd": "^5.27.0",
     "jeep-sqlite": "2.8.0",
-    "konsta": "^5.2.0",
     "pdfjs-dist": "^5.4.624",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

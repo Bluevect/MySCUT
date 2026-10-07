@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'konsta/react/theme.css';
 
 html,
 body,
@@ -44,13 +43,6 @@ body,
   --avatar-border: #d7e3ff;
   --avatar-text: #4a5f85;
   --switch-active-border: #7eaef6;
-  /* Konsta UI: 主色跟随全局主题预设（含明暗模式，由 GlobalThemeProvider 内联写入 --accent-primary） */
-  --k-color-primary: var(--accent-primary);
-}
-
-/* Konsta UI: safe-area 底部与项目的 Android 手势条 inset 补偿统一 */
-.safe-areas {
-  --k-safe-area-bottom: var(--safe-bottom-inset);
 }
 
 * {
@@ -1288,10 +1280,6 @@ body {
   background: #fff1bf;
 }
 
-.app-tabbar .app-tabbar-icon {
-  font-size: 26px;
-}
-
 .manual-page {
   height: calc(100% - var(--bottom-nav-height));
   min-height: 0;
@@ -1623,8 +1611,10 @@ body {
 .theme-transitioning .app-state-secondary-button,
 .theme-transitioning .schedule-scroll-area,
 .theme-transitioning .schedule-scroll-hint,
-.theme-transitioning .app-tabbar,
-.theme-transitioning .app-tabbar a,
+.theme-transitioning .qm-tabbar,
+.theme-transitioning .qm-tabbar__pane,
+.theme-transitioning .qm-tabbar__link,
+.theme-transitioning .qm-tabbar__pill,
 .theme-transitioning .mine-avatar,
 .theme-transitioning .mine-avatar-text,
 .theme-transitioning .mine-button-group,
