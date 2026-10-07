@@ -1,9 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
-import { App as KonstaApp } from 'konsta/react'
 import 'antd/dist/reset.css'
 import './index.css'
+import './qmui/qmui.css'
 import App from './App'
 import { GlobalThemeProvider } from './platform/web/theme/GlobalThemeProvider'
 import { bootstrapApplicationStorage } from './platform/storage/bootstrapApplicationStorage'
@@ -18,11 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <GlobalThemeProvider>
       <Router>
-        <KonstaApp theme='ios' dark>
-          <StorageRuntimeProvider bootstrapRuntime={storageBootstrap}>
-            <App />
-          </StorageRuntimeProvider>
-        </KonstaApp>
+        <StorageRuntimeProvider bootstrapRuntime={storageBootstrap}>
+          <App />
+        </StorageRuntimeProvider>
       </Router>
     </GlobalThemeProvider>
   </React.StrictMode>,

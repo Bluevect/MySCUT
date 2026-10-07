@@ -1,0 +1,187 @@
+/*
+ * qmui —— 工程自有设计系统（iOS 26 Liquid Glass 风格）。
+ *
+ * 约定：
+ * - 纯 CSS 语义类（qm- 前缀，BEM），不依赖 Tailwind 编译管线，避免
+ *   LightningCSS 对 backdrop-filter 的 -webkit- 改写（Chromium 会丢弃值为
+ *   单个 var() 的 -webkit-backdrop-filter 声明，导致整条样式失效）。
+ * - 颜色一律消费工程全局主题变量（GlobalThemeProvider 注入），主题家族
+ *   与亮暗模式自动跟随；暗色差异用 .dark 前缀（html.dark 由主题层切换）。
+ * - backdrop-filter 必须走「@supports + var()」写法，勿直接写字面量。
+ * - qmui 私有变量以 --qm- 前缀定义默认值，主题或使用方可覆盖。
+ */
+
+.qm-tabbar {
+  /* 组件写入：--qm-tabbar-count 为 items 数量，--qm-tabbar-active-index 为激活下标（-1 表示无激活） */
+  --qm-tabbar-count: 3;
+  --qm-tabbar-active-index: 0;
+  /* 可覆盖的视觉参数 */
+  --qm-tabbar-height: 64px;
+  --qm-tabbar-pane-backdrop: blur(24px) saturate(180%);
+  --qm-tabbar-pill-inset: 4px;
+  --qm-tabbar-pill-duration: 220ms;
+
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  padding-bottom: calc(16px + var(--safe-bottom-inset));
+}
+
+.qm-tabbar__pane {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--qm-tabbar-height);
+  width: 100%;
+  max-width: 560px;
+  border-radius: 9999px;
+  overflow: hidden;
+  /* 创建 stacking context，让镜面高光的 z-index:-1 只沉到玻璃底板之下 */
+  isolation: isolate;
+  background: var(--overlay-glass);
+  box-shadow:
+    inset 0 0 0 0.5px var(--overlay-border-top),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 1px rgba(15, 23, 42, 0.05),
+    0 10px 36px var(--shadow-nav);
+}
+
+/* 顶部镜面高光：只作用于底板本身，不压内容与胶囊 */
+.qm-tabbar__pane::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.04) 36%,
+    rgba(255, 255, 255, 0) 52%
+  );
+}
+
+/* 滑动胶囊：宽度 = 单项宽 - 两侧 inset，位移 = 下标 × (自身宽 + 两侧 inset)，恰好在激活项内居中 */
+.qm-tabbar__pill {
+  position: absolute;
+  top: var(--qm-tabbar-pill-inset);
+  bottom: var(--qm-tabbar-pill-inset);
+  left: var(--qm-tabbar-pill-inset);
+  width: calc(100% / var(--qm-tabbar-count) - 2 * var(--qm-tabbar-pill-inset));
+  border-radius: 9999px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.84));
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 1),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 2px rgba(15, 23, 42, 0.07),
+    0 1px 2px rgba(31, 35, 46, 0.16),
+    0 4px 12px rgba(31, 35, 46, 0.14);
+  transform: translateX(
+    calc(var(--qm-tabbar-active-index) * (100% + 2 * var(--qm-tabbar-pill-inset)))
+  );
+  transition: transform var(--qm-tabbar-pill-duration) ease-out;
+}
+
+.qm-tabbar__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 16px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: color 200ms ease;
+}
+
+.qm-tabbar__link--active {
+  color: var(--text-accent);
+}
+
+.qm-tabbar__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 100%;
+  min-width: 0;
+  padding: 4px 0;
+  transition: transform 80ms ease;
+}
+
+.qm-tabbar__link:active .qm-tabbar__content {
+  transform: scale(0.92);
+}
+
+.qm-tabbar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.qm-tabbar__label {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 桌面端：胶囊条限宽居中，项保持等分（pill 的等分数学依赖 link 等宽） */
+@media (min-width: 768px) {
+  .qm-tabbar__link {
+    min-width: 96px;
+  }
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .qm-tabbar__pane {
+    backdrop-filter: var(--qm-tabbar-pane-backdrop);
+  }
+}
+
+/* 暗色模式：依赖 html.dark（GlobalThemeProvider 切换） */
+.dark .qm-tabbar__pane {
+  box-shadow:
+    inset 0 0 0 0.5px var(--overlay-border-top),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.24),
+    0 10px 36px var(--shadow-nav);
+}
+
+.dark .qm-tabbar__pane::after {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.02) 36%,
+    rgba(255, 255, 255, 0) 52%
+  );
+}
+
+.dark .qm-tabbar__pill {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.18));
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.22),
+    0 1px 2px rgba(0, 0, 0, 0.42),
+    0 4px 12px rgba(0, 0, 0, 0.34);
+}

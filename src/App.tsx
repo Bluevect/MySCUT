@@ -1,5 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Tabbar, TabbarLink, ToolbarPane } from 'konsta/react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BookOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
 import { message } from 'antd'
 import AppRoutes from './app/routes'
@@ -10,11 +9,12 @@ import { RouteContentErrorBoundary } from './components/AppRouteStates'
 import { ManualPage } from './features/manual'
 import { getReloadManualEnabledStartup } from './core/manual/manualSourceStorage'
 import { shouldShowBottomNavigation } from './app/bottomNavigation'
+import { QmuiTabbar, type QmuiTabbarItem } from './qmui'
 
-const TAB_ITEMS = [
-  { to: '/courses', label: '课程', icon: <CalendarOutlined className='app-tabbar-icon' /> },
-  { to: '/manual', label: '手册', icon: <BookOutlined className='app-tabbar-icon' /> },
-  { to: '/mine', label: '我的', icon: <UserOutlined className='app-tabbar-icon' /> },
+const TAB_ITEMS: QmuiTabbarItem[] = [
+  { to: '/courses', label: '课程', icon: <CalendarOutlined /> },
+  { to: '/manual', label: '手册', icon: <BookOutlined /> },
+  { to: '/mine', label: '我的', icon: <UserOutlined /> },
 ]
 
 function App() {
@@ -63,26 +63,7 @@ function App() {
       </main>
 
       {shouldShowBottomNavigation(location.pathname) && (
-        <Tabbar
-          component='nav'
-          labels
-          icons
-          className='app-tabbar fixed bottom-0 left-0'
-          aria-label='底部导航'
-        >
-          <ToolbarPane>
-            {TAB_ITEMS.map((tab) => (
-              <TabbarLink
-                key={tab.to}
-                component={Link}
-                linkProps={{ to: tab.to }}
-                active={location.pathname.startsWith(tab.to)}
-                icon={tab.icon}
-                label={tab.label}
-              />
-            ))}
-          </ToolbarPane>
-        </Tabbar>
+        <QmuiTabbar items={TAB_ITEMS} ariaLabel='底部导航' />
       )}
     </div>
   )
