@@ -967,7 +967,7 @@ function ScheduleSettingsPage() {
       <input
         ref={qmsFileInputRef}
         type='file'
-        accept='.qms,.json,.txt'
+        accept='.qms,.json,.txt,.bin'
         className='schedule-settings-file-input'
         disabled={isImportPending}
         onChange={handleImportQms}
