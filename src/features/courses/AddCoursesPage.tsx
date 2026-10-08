@@ -82,11 +82,13 @@ function AddCoursesPage() {
     try {
       setIsSaving(true)
 
+      const existingCourse = scheduleData.courses.find((course) => course.name === normalizedName)
       const nextCourseId =
         scheduleData.courses.reduce((maxId, course) => Math.max(maxId, course.id), 0) + 1
+      const courseId = existingCourse?.id ?? nextCourseId
 
       const nextCourse: ScheduleCourse = {
-        id: nextCourseId,
+        id: courseId,
         tableId: scheduleData.table.id,
         name: normalizedName,
         color: '',
@@ -101,8 +103,8 @@ function AddCoursesPage() {
       const endTimeSlot = timeSlotMap.get(safeEndNode)
 
       const nextLesson: ScheduleLesson = {
-        instanceId: `custom-${day}-${safeStartNode}-${safeEndNode}-${safeStartWeek}-${safeEndWeek}-${nextCourseId}`,
-        courseId: nextCourseId,
+        instanceId: `custom-${day}-${safeStartNode}-${safeEndNode}-${safeStartWeek}-${safeEndWeek}-${courseId}`,
+        courseId,
         tableId: scheduleData.table.id,
         day,
         startNode: safeStartNode,
@@ -123,9 +125,7 @@ function AddCoursesPage() {
       const nextScheduleData: ScheduleData = {
         ...scheduleData,
         importedAt: Date.now(),
-        courses: scheduleData.courses.some(c => c.name === nextCourse.name)
-          ? scheduleData.courses
-          : [...scheduleData.courses, nextCourse],
+        courses: existingCourse ? scheduleData.courses : [...scheduleData.courses, nextCourse],
         lessons: [...scheduleData.lessons, nextLesson],
       }
 

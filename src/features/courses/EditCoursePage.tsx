@@ -164,10 +164,16 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       return
     }
 
+    const lessonIndex = scheduleData.lessons.indexOf(lesson)
+    const remainingLessons = scheduleData.lessons.filter((_, index) => index !== lessonIndex)
+    const hasRemainingLessons = remainingLessons.some((item) => item.courseId === courseId)
+
     const updatedScheduleData = {
       ...scheduleData,
-      courses: scheduleData.courses.filter((item) => item.id !== courseId),
-      lessons: scheduleData.lessons.filter((item) => item.courseId !== courseId),
+      courses: hasRemainingLessons
+        ? scheduleData.courses
+        : scheduleData.courses.filter((item) => item.id !== courseId),
+      lessons: remainingLessons,
     }
 
     try {
@@ -385,7 +391,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       </div>
 
       <Modal
-        title='删除课程确认'
+        title='删除上课安排确认'
         open={isDeleteModalOpen}
         confirmLoading={isDeleting}
         okText='确认删除'
@@ -395,7 +401,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
         onCancel={() => setIsDeleteModalOpen(false)}
       >
         <p>
-          确定删除“{course?.name ?? '该课程'}”吗？该课程的所有上课安排都会从此课表中删除，且无法撤销。
+          确定删除“{course?.name ?? '该课程'}”的这条上课安排吗？仅删除当前安排，不影响该课程的其他安排。
         </p>
       </Modal>
     </div>
