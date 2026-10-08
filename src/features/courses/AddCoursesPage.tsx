@@ -33,8 +33,9 @@ function AddCoursesPage() {
   const [endNode, setEndNode] = useState<number | null>(2)
   const [startWeek, setStartWeek] = useState<number | null>(1)
   const [endWeek, setEndWeek] = useState<number | null>(maxWeek)
+  const [weekStep, setWeekStep] = useState<number | null>(1)
   const [classroom, setClassroom] = useState('待定教室')
-  const [teacher, setTeacher] = useState('待定老师')
+  const [teacher, setTeacher] = useState('待定教师')
   const [detailText, setDetailText] = useState('')
   const [credit, setCredit] = useState<number | null>(0)
   const [isSaving, setIsSaving] = useState(false)
@@ -65,6 +66,11 @@ function AddCoursesPage() {
 
     if (safeEndWeek < safeStartWeek) {
       messageApi.error('结束周数不能小于起始周数')
+      return
+    }
+
+    if (weekStep === null || !Number.isInteger(weekStep) || weekStep < 1) {
+      messageApi.error('周数间隔必须是大于或等于 1 的整数')
       return
     }
 
@@ -103,7 +109,7 @@ function AddCoursesPage() {
         endNode: safeEndNode,
         startWeek: safeStartWeek,
         endWeek: safeEndWeek,
-        weekStep: 1,
+        weekStep,
         ownTime: false,
         startTime: startTimeSlot?.startTime ?? '',
         endTime: endTimeSlot?.endTime ?? '',
@@ -232,6 +238,20 @@ function AddCoursesPage() {
                   />
                 </label>
               </div>
+            </div>
+
+            <div className='add-courses-field'>
+              <span className='add-courses-label'>周数间隔</span>
+              <InputNumber
+                min={1}
+                step={1}
+                precision={0}
+                size='large'
+                placeholder='每隔几周上课'
+                value={weekStep}
+                onChange={setWeekStep}
+                style={{ width: '100%' }}
+              />
             </div>
 
             <div className='add-courses-field'>

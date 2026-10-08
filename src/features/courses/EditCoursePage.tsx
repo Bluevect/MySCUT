@@ -46,6 +46,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const [endNode, setEndNode] = useState<number | null>(lesson?.endNode ?? 2)
   const [startWeek, setStartWeek] = useState<number | null>(lesson?.startWeek ?? 1)
   const [endWeek, setEndWeek] = useState<number | null>(lesson?.endWeek ?? maxWeek)
+  const [weekStep, setWeekStep] = useState<number | null>(lesson?.weekStep ?? 1)
   const [classroom, setClassroom] = useState(lesson?.room ?? '')
   const [teacher, setTeacher] = useState(lesson?.teacher ?? '')
   const [detailText, setDetailText] = useState(lesson?.detailText ?? '')
@@ -79,18 +80,21 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       endNode === null ||
       startWeek === null ||
       endWeek === null ||
+      weekStep === null ||
       !Number.isInteger(startNode) ||
       !Number.isInteger(endNode) ||
       !Number.isInteger(startWeek) ||
       !Number.isInteger(endWeek) ||
+      !Number.isInteger(weekStep) ||
       startNode < 1 ||
       endNode > maxNode ||
       startNode > endNode ||
       startWeek < 1 ||
       endWeek > maxWeek ||
-      startWeek > endWeek
+      startWeek > endWeek ||
+      weekStep < 1
     ) {
-      messageApi.error('请检查节数和周数范围')
+      messageApi.error('请检查节数、周数和周数间隔')
       return
     }
 
@@ -107,6 +111,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       endNode,
       startWeek,
       endWeek,
+      weekStep,
       room: classroom.trim(),
       teacher: teacher.trim(),
       detailText: detailText.trim(),
@@ -295,6 +300,20 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
                     />
                   </label>
                 </div>
+              </div>
+
+              <div className='add-courses-field'>
+                <span className='add-courses-label'>周数间隔</span>
+                <InputNumber
+                  min={1}
+                  step={1}
+                  precision={0}
+                  size='large'
+                  placeholder='每隔几周上课'
+                  value={weekStep}
+                  onChange={setWeekStep}
+                  style={{ width: '100%' }}
+                />
               </div>
 
               <div className='add-courses-field'>
