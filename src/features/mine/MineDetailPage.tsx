@@ -406,8 +406,8 @@ function MineDetailPage({ title }: MineDetailPageProps) {
             <div className='mine-button-group'>
               <div className='mine-group-button mine-setting-row'>
                 <div className='mine-setting-copy'>
-                  <p className='mine-detail-card-title'>启用本地手册</p>
-                  <p className='mine-detail-card-description'>开启后优先加载应用内置手册资源</p>
+                  <p className='mine-detail-card-title'>启用本地手册（需重启应用）</p>
+                  <p className='mine-detail-card-description'>开启后优先加载应用内置手册资源 <br /> 修改后需重启应用才能生效</p>
                 </div>
                 <Switch checked={isLocalManualEnabled} onChange={handleLocalManualSwitchChange} />
               </div>
