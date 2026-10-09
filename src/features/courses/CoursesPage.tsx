@@ -3,6 +3,7 @@ import {
   type ReactNode,
   type TouchEvent,
   type TransitionEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -108,7 +109,7 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
     return Math.max(0, overlap)
   }
 
-  const updateHintVisibility = () => {
+  const updateHintVisibility = useCallback(() => {
     const element = scrollRef.current
     if (!element) {
       return
@@ -154,11 +155,11 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
 
     setShowTopHint(hasTopCourse)
     setShowBottomHint(hasBottomCourse)
-  }
+  }, [])
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     updateHintVisibility()
-  }
+  }, [updateHintVisibility])
 
   useEffect(() => {
     updateHintVisibility()
@@ -199,7 +200,7 @@ function ScheduleScrollPane({ children }: ScheduleScrollPaneProps) {
       window.removeEventListener('resize', handleResize)
       resizeObserver.disconnect()
     }
-  }, [children])
+  }, [children, updateHintVisibility])
 
   return (
     <div className='schedule-scroll-pane'>
@@ -502,6 +503,7 @@ function CoursesPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isStartDateReminderOpen, setIsStartDateReminderOpen] = useState(false)
   const [isCourseDetailOpen, setIsCourseDetailOpen] = useState(false)
   const [selectedCourses, setSelectedCourses] = useState<WeekCellCourse[]>([])
   const [selectedDay, setSelectedDay] = useState(1)
@@ -521,6 +523,7 @@ function CoursesPage() {
           themeId: persistedActiveScheduleEntry?.themeId ?? 'skyBlue',
           timeSlotPresetId: 'union' as const,
           semesterStartDate: persistedActiveScheduleEntry?.semesterStartDate ?? getSemesterStartDate(),
+          // Preview timestamps intentionally update on each render before the preview is saved.
           createdAt: Date.now(),
           scheduleData: intersectionPreviewPayload.scheduleData,
         }
@@ -580,22 +583,28 @@ function CoursesPage() {
   }, [location.state?.message, messageApi, navigate, location.pathname])
 
   useEffect(() => {
-    let shouldOpenReminder = false
-    let popupMessage = null
+    const shouldOpenReminder = (() => {
+      try {
+        return sessionStorage.getItem(IMPORT_START_DATE_REMINDER_KEY) === '1'
+      } catch {
+        return false
+      }
+    })()
 
-    try {
-      shouldOpenReminder = sessionStorage.getItem(IMPORT_START_DATE_REMINDER_KEY) === '1'
-      popupMessage = sessionStorage.getItem(SUCCESSFUL_IMPORT_MESSAGE_KEY)
-    } catch {
-      shouldOpenReminder = false
-      popupMessage = null
-    }
+    const popupMessage = (() => {
+      try {
+        return sessionStorage.getItem(SUCCESSFUL_IMPORT_MESSAGE_KEY)
+      } catch {
+        return null
+      }
+    })()
 
     if (!shouldOpenReminder || !popupMessage) {
       return
     }
 
     messageApi.success(popupMessage)
+    // This effect consumes a one-shot import flag from sessionStorage.
     setIsStartDateReminderOpen(true)
 
     try {
@@ -604,7 +613,7 @@ function CoursesPage() {
     } catch {
       // no-op: keep the flow resilient if storage is unavailable
     }
-  }, [])
+  }, [messageApi])
 
   useEffect(() => {
     const nextWeekViewContext = `${scheduleWeekViewId}:${semesterStartDate}`
@@ -684,18 +693,9 @@ function CoursesPage() {
     [semesterStartDate, swipeState.nextWeek],
   )
 
-  const prevMonthLabel = useMemo(
-    () => getWeekMonthLabel(semesterStartDate, swipeState.prevWeek, currentDate),
-    [currentDate, semesterStartDate, swipeState.prevWeek],
-  )
-  const currentMonthLabel = useMemo(
-    () => getWeekMonthLabel(semesterStartDate, swipeState.currentWeek, currentDate),
-    [currentDate, semesterStartDate, swipeState.currentWeek],
-  )
-  const nextMonthLabel = useMemo(
-    () => getWeekMonthLabel(semesterStartDate, swipeState.nextWeek, currentDate),
-    [currentDate, semesterStartDate, swipeState.nextWeek],
-  )
+  const prevMonthLabel = getWeekMonthLabel(semesterStartDate, swipeState.prevWeek, currentDate)
+  const currentMonthLabel = getWeekMonthLabel(semesterStartDate, swipeState.currentWeek, currentDate)
+  const nextMonthLabel = getWeekMonthLabel(semesterStartDate, swipeState.nextWeek, currentDate)
 
   const weekRenderDataCache = useMemo(() => {
     const cache = new Map<number, WeekScheduleRenderData>()
@@ -1028,7 +1028,6 @@ function CoursesPage() {
   const selectedWeekday = WEEKDAY_LABELS[selectedDay - 1] ?? ''
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false)
   const [isSaveNameModalOpen, setIsSaveNameModalOpen] = useState(false)
-  const [isStartDateReminderOpen, setIsStartDateReminderOpen] = useState(false)
   const [saveNameInput, setSaveNameInput] = useState('')
   const [isSavingIntersection, setIsSavingIntersection] = useState(false)
   const saveIntersectionOperationRef = useRef(new SinglePendingOperation())

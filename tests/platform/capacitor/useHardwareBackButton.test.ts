@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement, useState } from 'react'
+import { act, createElement, useEffect, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -34,8 +34,12 @@ import {
 
 const roots: Root[] = []
 const cleanups: Array<() => void> = []
-let overlayController: { setOpen: (open: boolean) => void } | null = null
-let navigateController: ((to: string, options?: { replace?: boolean }) => void) | null = null
+const overlayControllerRef = {
+  current: null as { setOpen: (open: boolean) => void } | null,
+}
+const navigateControllerRef = {
+  current: null as ((to: string, options?: { replace?: boolean }) => void) | null,
+}
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
 
@@ -45,8 +49,17 @@ function LocationProbe() {
 
 function BackHarness({ onDismiss, onExitHint }: { onDismiss: () => void; onExitHint: () => void }) {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false)
-  overlayController = { setOpen: setIsOverlayOpen }
-  navigateController = useNavigate()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    overlayControllerRef.current = { setOpen: setIsOverlayOpen }
+    navigateControllerRef.current = navigate
+
+    return () => {
+      overlayControllerRef.current = null
+      navigateControllerRef.current = null
+    }
+  }, [navigate])
 
   useBackDismiss(isOverlayOpen, onDismiss)
   useHardwareBackButton({ onExitHint })
@@ -125,8 +138,8 @@ afterEach(async () => {
     cleanups.pop()?.()
   }
 
-  overlayController = null
-  navigateController = null
+  overlayControllerRef.current = null
+  navigateControllerRef.current = null
   document.body.innerHTML = ''
 })
 
@@ -177,7 +190,7 @@ describe('useHardwareBackButton', () => {
     const container = await renderApp('/mine/faq', onDismiss)
 
     await act(async () => {
-      overlayController?.setOpen(true)
+      overlayControllerRef.current?.setOpen(true)
     })
 
     await pressBackButton()
@@ -230,13 +243,13 @@ describe('useHardwareBackButton', () => {
 
     let press: Promise<void> = Promise.resolve()
     await act(async () => {
-      press = listener()
+      press = Promise.resolve(listener())
       await Promise.resolve()
     })
 
     // The route moves while the page handler is still awaiting
     await act(async () => {
-      navigateController?.('/courses', { replace: true })
+      navigateControllerRef.current?.('/courses', { replace: true })
     })
     expect(readPath(container)).toBe('/courses')
 

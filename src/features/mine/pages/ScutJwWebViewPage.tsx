@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { TouchEvent } from 'react'
 import { message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -55,7 +55,7 @@ function ScutJwWebViewPage() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const backHandlerRef = useRef<() => Promise<boolean>>(() => Promise.resolve(false))
 
-  const importScheduleFromHtml = async (htmlText: string) => {
+  const importScheduleFromHtml = useCallback(async (htmlText: string) => {
     const result = await importOperationRef.current.run(async () => {
       try {
         logScutJwImportDiagnostic({
@@ -142,7 +142,7 @@ function ScutJwWebViewPage() {
         targetUrl,
       })
     }
-  }
+  }, [importOperationRef, messageApi, navigate, targetUrl])
 
   const handleTouch = async (event: TouchEvent<HTMLElement>) => {
     const touch = event.type === 'touchend' || event.type === 'touchcancel'
@@ -339,14 +339,14 @@ function ScutJwWebViewPage() {
 
       void closeActiveWebView()
     }
-  }, [isAndroidNative, messageApi, navigate, targetUrl])
+  }, [importScheduleFromHtml, isAndroidNative, messageApi, navigate, targetUrl])
 
-  const handleClose = async () => {
+  const handleClose = useCallback(async () => {
     await closeActiveWebView()
     navigate(resolveBackPath(location.pathname), { replace: true })
-  }
+  }, [location.pathname, navigate])
 
-  const handleBack = async (): Promise<boolean> => {
+  const handleBack = useCallback(async (): Promise<boolean> => {
     if (isGoingBack || isReloading) {
       return true
     }
@@ -357,11 +357,13 @@ function ScutJwWebViewPage() {
         setIsGoingBack(true)
         return true
       }
-    } catch {}
+    } catch {
+      // Fall back to closing the screen if the WebView cannot answer the back request.
+    }
 
     await handleClose()
     return true
-  }
+  }, [handleClose, isGoingBack, isReloading])
 
   const handleReload = async () => {
     if (isReloading || isGoingBack) {

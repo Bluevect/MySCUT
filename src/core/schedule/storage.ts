@@ -689,8 +689,9 @@ export function initializeScheduleStorageReadOnly(
 
 export async function saveScheduleData(scheduleData: ScheduleData) {
   const legacyStorage = getGlobalLegacyStorage()
-  let storedThemeId: string | null = null
-  let storedSemesterStartDate: string | null = null
+  let storedThemeId: string | null
+  let storedSemesterStartDate: string | null
+
   try {
     storedThemeId = legacyStorage?.getItem(LEGACY_THEME_STORAGE_KEY) ?? null
     storedSemesterStartDate = legacyStorage?.getItem(LEGACY_SEMESTER_START_DATE_STORAGE_KEY) ?? null

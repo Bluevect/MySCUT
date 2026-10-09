@@ -7,7 +7,6 @@ import { buildQmsExportText, buildWakeupExportText } from '../../../src/core/sch
 import {
   extractScutSchedulePdf,
   parseScutSchedulePdfContract,
-  type ScutSchedulePdfContract,
 } from '../../../src/core/schedule/importScutPdf'
 import { parseQmsScheduleText } from '../../../src/core/schedule/importQms'
 import { parseWakeupScheduleText } from '../../../src/core/schedule/importWakeup'

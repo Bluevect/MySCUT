@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Modal, Progress, Switch, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -106,11 +106,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const enterTimerRef = useRef<number | null>(null)
   const isClosingRef = useRef(false)
 
-  const navigateBack = () => {
-    navigate(resolveBackPath(location.pathname), { replace: true })
-  }
-
-  const startClosingTransition = () => {
+  const startClosingTransition = useCallback(() => {
     if (isClosingRef.current) {
       return false
     }
@@ -119,11 +115,11 @@ function MineDetailPage({ title }: MineDetailPageProps) {
     setTransitionStage('closing')
 
     closeTimerRef.current = window.setTimeout(() => {
-      navigateBack()
+      navigate(resolveBackPath(location.pathname), { replace: true })
     }, CLOSE_TRANSITION_MS)
 
     return true
-  }
+  }, [location.pathname, navigate])
 
   useEffect(() => {
     enterTimerRef.current = window.setTimeout(() => {
@@ -154,7 +150,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
         window.clearTimeout(closeTimerRef.current)
       }
     }
-  }, [])
+  }, [startClosingTransition])
 
   const handleClose = () => {
     startClosingTransition()

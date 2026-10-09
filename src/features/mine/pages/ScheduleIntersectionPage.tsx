@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useRef, useState } from 'react'
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Input, Modal, Select, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -73,11 +73,7 @@ function ScheduleIntersectionPage() {
   const isClosingRef = useRef(false)
   const calculateOperationRef = useRef(new SinglePendingOperation())
 
-  const navigateBack = () => {
-    navigate(resolveBackPath(location.pathname), { replace: true })
-  }
-
-  const startClosingTransition = () => {
+  const startClosingTransition = useCallback(() => {
     if (isClosingRef.current) {
       return false
     }
@@ -86,11 +82,11 @@ function ScheduleIntersectionPage() {
     setTransitionStage('closing')
 
     closeTimerRef.current = window.setTimeout(() => {
-      navigateBack()
+      navigate(resolveBackPath(location.pathname), { replace: true })
     }, CLOSE_TRANSITION_MS)
 
     return true
-  }
+  }, [location.pathname, navigate])
 
   useEffect(() => {
     enterTimerRef.current = window.setTimeout(() => {
@@ -121,7 +117,7 @@ function ScheduleIntersectionPage() {
         window.clearTimeout(closeTimerRef.current)
       }
     }
-  }, [])
+  }, [startClosingTransition])
 
   const handleImportWakeupEntry = () => {
     setIsImportModalOpen(false)
