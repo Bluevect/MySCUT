@@ -27,10 +27,7 @@ export type OpenAiCompatibleSettings = {
 }
 
 export type AiClientErrorCode =
-  | 'INVALID_CONFIG'
-  | 'NETWORK_ERROR'
-  | 'UPSTREAM_ERROR'
-  | 'NOT_IMPLEMENTED'
+  'INVALID_CONFIG' | 'NETWORK_ERROR' | 'UPSTREAM_ERROR' | 'NOT_IMPLEMENTED'
 
 export class AiClientError extends Error {
   readonly code: AiClientErrorCode

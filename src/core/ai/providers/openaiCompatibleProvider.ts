@@ -1,4 +1,9 @@
-import { AiClientError, type ChatCompletionRequest, type ChatCompletionResponse, type OpenAiCompatibleSettings } from '../types'
+import {
+  AiClientError,
+  type ChatCompletionRequest,
+  type ChatCompletionResponse,
+  type OpenAiCompatibleSettings,
+} from '../types'
 
 type OpenAiChatResponse = {
   model?: unknown
@@ -62,7 +67,10 @@ export async function requestOpenAiCompatibleChatCompletion(
   settings: OpenAiCompatibleSettings,
 ): Promise<ChatCompletionResponse> {
   if (!settings.baseUrl || !settings.apiKey) {
-    throw new AiClientError('INVALID_CONFIG', 'OpenAI 兼容服务配置不完整，请先设置 Base URL 和 API Key')
+    throw new AiClientError(
+      'INVALID_CONFIG',
+      'OpenAI 兼容服务配置不完整，请先设置 Base URL 和 API Key',
+    )
   }
 
   const model = request.model ?? settings.defaultModel
@@ -95,7 +103,11 @@ export async function requestOpenAiCompatibleChatCompletion(
   }
 
   if (!response.ok) {
-    throw new AiClientError('UPSTREAM_ERROR', `OpenAI 兼容服务请求失败 (${response.status})`, responseJson)
+    throw new AiClientError(
+      'UPSTREAM_ERROR',
+      `OpenAI 兼容服务请求失败 (${response.status})`,
+      responseJson,
+    )
   }
 
   const typedResponse = responseJson as OpenAiChatResponse

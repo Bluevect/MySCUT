@@ -1,5 +1,8 @@
 import { toStorageError, type PersistentStorageRuntime, type StorageLike } from '../../core/storage'
-import { LocalStorageMigrationJournal, LocalStoragePersistentStore } from './LocalStoragePersistentStore'
+import {
+  LocalStorageMigrationJournal,
+  LocalStoragePersistentStore,
+} from './LocalStoragePersistentStore'
 import { SqliteMigrationJournal, SqlitePersistentStore } from './SqlitePersistentStore'
 
 const DATABASE_NAME = 'myscut'
@@ -24,10 +27,12 @@ async function createSqliteRuntime(): Promise<PersistentStorageRuntime> {
     const { defineCustomElements } = await import('jeep-sqlite/loader')
     defineCustomElements(window)
 
-    let sqliteElement = document.querySelector('jeep-sqlite') as (HTMLElement & {
-      autoSave: boolean
-      wasmPath: string
-    }) | null
+    let sqliteElement = document.querySelector('jeep-sqlite') as
+      | (HTMLElement & {
+          autoSave: boolean
+          wasmPath: string
+        })
+      | null
 
     if (!sqliteElement) {
       sqliteElement = document.createElement('jeep-sqlite') as HTMLElement & {

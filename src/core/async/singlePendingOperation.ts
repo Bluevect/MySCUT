@@ -1,8 +1,6 @@
 export type PendingStateListener = (isPending: boolean) => void
 
-export type PendingOperationResult<T> =
-  | { started: false }
-  | { started: true; value: T }
+export type PendingOperationResult<T> = { started: false } | { started: true; value: T }
 
 export class SinglePendingOperation {
   private pending = false

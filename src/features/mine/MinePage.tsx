@@ -101,47 +101,47 @@ function MinePage() {
   }
 
   return (
-    <div className='mine-page'>
+    <div className="mine-page">
       {contextHolder}
 
-      <button type='button' className='mine-avatar mine-avatar-button' onClick={handleAvatarClick}>
+      <button type="button" className="mine-avatar mine-avatar-button" onClick={handleAvatarClick}>
         {avatar ? (
-          <img src={avatar} alt='头像' className='mine-avatar-image' draggable={false} />
+          <img src={avatar} alt="头像" className="mine-avatar-image" draggable={false} />
         ) : (
-          <span className='mine-avatar-text'>头像</span>
+          <span className="mine-avatar-text">头像</span>
         )}
       </button>
       <input
         ref={fileInputRef}
-        type='file'
-        accept='image/png,image/jpeg'
-        className='mine-avatar-input'
+        type="file"
+        accept="image/png,image/jpeg"
+        className="mine-avatar-input"
         onChange={handleFileChange}
       />
 
-      <div className='mine-button-group'>
-        <Link to='/mine/schedule-settings' className='mine-group-button'>
+      <div className="mine-button-group">
+        <Link to="/mine/schedule-settings" className="mine-group-button">
           课表设置
         </Link>
-        <Link to='/mine/global-settings' className='mine-group-button'>
+        <Link to="/mine/global-settings" className="mine-group-button">
           全局设置
         </Link>
-        <Link to='/mine/ai-settings' className='mine-group-button'>
+        <Link to="/mine/ai-settings" className="mine-group-button">
           AI设置
         </Link>
       </div>
 
-      <div className='mine-button-group'>
-        <Link to='/mine/schedule-intersection' className='mine-group-button'>
+      <div className="mine-button-group">
+        <Link to="/mine/schedule-intersection" className="mine-group-button">
           课表取交集
         </Link>
       </div>
 
-      <div className='mine-button-group'>
-        <Link to='/mine/faq' className='mine-group-button'>
+      <div className="mine-button-group">
+        <Link to="/mine/faq" className="mine-group-button">
           常见问答
         </Link>
-        <Link to='/mine/more' className='mine-group-button'>
+        <Link to="/mine/more" className="mine-group-button">
           更多
         </Link>
       </div>

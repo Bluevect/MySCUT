@@ -9,7 +9,11 @@ import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
 import { getScheduleThemeId } from '../../../core/schedule/themeStorage'
-import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import {
+  DEFAULT_TIME_SLOT,
+  getSemesterStartDate,
+  saveSemesterStartDate,
+} from '../../../core/scheduleSettings'
 import {
   closeActiveWebView,
   dispatchTouchEvent,
@@ -24,7 +28,10 @@ import { logScutJwImportDiagnostic } from '../../../platform/capacitor/scutJwImp
 import { getStatusBarHeight } from '../../../platform/capacitor/getStatusBarHeight'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { CloseOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons'
-import { getPreferredGlobalThemeMode, resolveGlobalThemeMode } from '../../../core/theme/globalThemeStorage'
+import {
+  getPreferredGlobalThemeMode,
+  resolveGlobalThemeMode,
+} from '../../../core/theme/globalThemeStorage'
 import { registerHardwareBackButtonHandler } from '../../../platform/capacitor/useHardwareBackButton'
 
 type WebViewLocationState = {
@@ -55,99 +62,106 @@ function ScutJwWebViewPage() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const backHandlerRef = useRef<() => Promise<boolean>>(() => Promise.resolve(false))
 
-  const importScheduleFromHtml = useCallback(async (htmlText: string) => {
-    const result = await importOperationRef.current.run(async () => {
-      try {
-        logScutJwImportDiagnostic({
-          stage: 'parse-started',
-          targetUrl,
-          responseLength: htmlText.length,
-        })
-        const fallbackSemesterStartDate = getSemesterStartDate()
-        const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
-        const courseCount = scheduleData.courses.length
-        const lessonCount = scheduleData.lessons.length
-        logScutJwImportDiagnostic({
-          stage: 'parse-completed',
-          targetUrl,
-          responseLength: htmlText.length,
-          courseCount,
-          lessonCount,
-        })
-        const themePreset = resolveScheduleImportThemePreset(getScheduleThemeId())
-        const nextSemesterStartDate = scheduleData.table.startDate || fallbackSemesterStartDate
-        logScutJwImportDiagnostic({
-          stage: 'save-started',
-          targetUrl,
-          courseCount,
-          lessonCount,
-        })
-        const saveResult = await saveScheduleDataWithOptions(scheduleData, {
-          themeId: themePreset.id,
-          timeSlotPresetId: DEFAULT_TIME_SLOT,
-          semesterStartDate: nextSemesterStartDate,
-          preferredName: scheduleData.table.name,
-          setActive: true,
-        })
-
-        if (!saveResult.ok) {
-          throw new Error('课表保存失败，请稍后重试')
-        }
-
-        logScutJwImportDiagnostic({
-          stage: 'save-completed',
-          targetUrl,
-          courseCount,
-          lessonCount,
-        })
-        saveSemesterStartDate(nextSemesterStartDate)
-
-        const activeSession = webViewSessionRef.current
-        webViewSessionRef.current = null
-        if (activeSession) {
-          try {
-            await activeSession.close()
-          } catch {
-            logScutJwImportDiagnostic({
-              stage: 'session-close-failed',
-              targetUrl,
-            })
-          }
-        }
-
-        // Necessary to hide WebView, or navigation won't work!
-        void hideActiveWebView()
-
+  const importScheduleFromHtml = useCallback(
+    async (htmlText: string) => {
+      const result = await importOperationRef.current.run(async () => {
         try {
-          sessionStorage.setItem(IMPORT_START_DATE_REMINDER_KEY, '1')
-          sessionStorage.setItem(SUCCESSFUL_IMPORT_MESSAGE_KEY, `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`)
-        } catch {
-          // no-op: storage may be unavailable in some environments
-        }
+          logScutJwImportDiagnostic({
+            stage: 'parse-started',
+            targetUrl,
+            responseLength: htmlText.length,
+          })
+          const fallbackSemesterStartDate = getSemesterStartDate()
+          const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
+          const courseCount = scheduleData.courses.length
+          const lessonCount = scheduleData.lessons.length
+          logScutJwImportDiagnostic({
+            stage: 'parse-completed',
+            targetUrl,
+            responseLength: htmlText.length,
+            courseCount,
+            lessonCount,
+          })
+          const themePreset = resolveScheduleImportThemePreset(getScheduleThemeId())
+          const nextSemesterStartDate = scheduleData.table.startDate || fallbackSemesterStartDate
+          logScutJwImportDiagnostic({
+            stage: 'save-started',
+            targetUrl,
+            courseCount,
+            lessonCount,
+          })
+          const saveResult = await saveScheduleDataWithOptions(scheduleData, {
+            themeId: themePreset.id,
+            timeSlotPresetId: DEFAULT_TIME_SLOT,
+            semesterStartDate: nextSemesterStartDate,
+            preferredName: scheduleData.table.name,
+            setActive: true,
+          })
 
-        navigate('/courses', { replace: true })
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
+          if (!saveResult.ok) {
+            throw new Error('课表保存失败，请稍后重试')
+          }
+
+          logScutJwImportDiagnostic({
+            stage: 'save-completed',
+            targetUrl,
+            courseCount,
+            lessonCount,
+          })
+          saveSemesterStartDate(nextSemesterStartDate)
+
+          const activeSession = webViewSessionRef.current
+          webViewSessionRef.current = null
+          if (activeSession) {
+            try {
+              await activeSession.close()
+            } catch {
+              logScutJwImportDiagnostic({
+                stage: 'session-close-failed',
+                targetUrl,
+              })
+            }
+          }
+
+          // Necessary to hide WebView, or navigation won't work!
+          void hideActiveWebView()
+
+          try {
+            sessionStorage.setItem(IMPORT_START_DATE_REMINDER_KEY, '1')
+            sessionStorage.setItem(
+              SUCCESSFUL_IMPORT_MESSAGE_KEY,
+              `华工教务课表导入成功，已按当前主题“${themePreset.name}”上色`,
+            )
+          } catch {
+            // no-op: storage may be unavailable in some environments
+          }
+
+          navigate('/courses', { replace: true })
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : '华工教务课表导入失败'
+          logScutJwImportDiagnostic({
+            stage: 'import-failed',
+            targetUrl,
+          })
+          messageApi.error(errorMessage)
+        }
+      })
+
+      if (!result.started) {
         logScutJwImportDiagnostic({
-          stage: 'import-failed',
+          stage: 'duplicate-import-ignored',
           targetUrl,
         })
-        messageApi.error(errorMessage)
       }
-    })
-
-    if (!result.started) {
-      logScutJwImportDiagnostic({
-        stage: 'duplicate-import-ignored',
-        targetUrl,
-      })
-    }
-  }, [importOperationRef, messageApi, navigate, targetUrl])
+    },
+    [importOperationRef, messageApi, navigate, targetUrl],
+  )
 
   const handleTouch = async (event: TouchEvent<HTMLElement>) => {
-    const touch = event.type === 'touchend' || event.type === 'touchcancel'
-      ? event.changedTouches[0]
-      : event.touches[0]
+    const touch =
+      event.type === 'touchend' || event.type === 'touchcancel'
+        ? event.changedTouches[0]
+        : event.touches[0]
 
     if (!touch || !statusBarHeightRef.current) {
       return
@@ -212,7 +226,7 @@ function ScutJwWebViewPage() {
       } else {
         document.documentElement.style.colorScheme = ''
       }
-      
+
       document.body.style.backgroundColor = ''
     }
 
@@ -259,69 +273,73 @@ function ScutJwWebViewPage() {
 
     let isCancelled = false
 
-    getStatusBarHeight().then((value) => {
-      statusBarHeightRef.current = value
-    }).then(() => {
-      openScutJwWebView({
-        url: targetUrl,
-        onClose: () => {
-          if (isCancelled) {
-            return
-          }
-
-          webViewSessionRef.current = null
-          navigate('/mine/import-scut-jw', { replace: true })
-        },
-        onError: (error) => {
-          if (isCancelled) {
-            return
-          }
-
-          messageApi.error(error.message)
-        },
-        onHtmlCaptured: importScheduleFromHtml,
-        onBrowserPageLoadStart: () => {
-          setLoadingProgress(0)
-          setIsReloading(true)
-          setIsGoingBack(true)
-        },
-        onBrowserPageLoadProgress: (event) => {
-          setLoadingProgress(Math.min(Math.max(event.progress ?? 0, 0), 1))
-        },
-        onBrowserPageLoaded: () => {
-          setLoadingProgress(1)
-          setIsReloading(false)
-          setIsGoingBack(false)
-          window.setTimeout(() => {
-            setLoadingProgress(0)
-          }, PROGRESS_BAR_FADE_OUT_DELAY)
-        },
-        top: Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
-      }).then((session) => {
-        if (isCancelled) {
-          void session.close().catch(() => {
-            logScutJwImportDiagnostic({
-              stage: 'cancelled-session-close-failed',
-              targetUrl,
-            })
-          })
-          return
-        }
-
-        webViewSessionRef.current = session
-
-        void updateActiveWebViewDimensions(
-          Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
-        ).catch(() => undefined)
-      }).catch(() => {
-        if (isCancelled) {
-          return
-        }
-
-        messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
-        navigate('/mine/import-scut-jw', { replace: true })
+    getStatusBarHeight()
+      .then((value) => {
+        statusBarHeightRef.current = value
       })
-    })
+      .then(() => {
+        openScutJwWebView({
+          url: targetUrl,
+          onClose: () => {
+            if (isCancelled) {
+              return
+            }
+
+            webViewSessionRef.current = null
+            navigate('/mine/import-scut-jw', { replace: true })
+          },
+          onError: (error) => {
+            if (isCancelled) {
+              return
+            }
+
+            messageApi.error(error.message)
+          },
+          onHtmlCaptured: importScheduleFromHtml,
+          onBrowserPageLoadStart: () => {
+            setLoadingProgress(0)
+            setIsReloading(true)
+            setIsGoingBack(true)
+          },
+          onBrowserPageLoadProgress: (event) => {
+            setLoadingProgress(Math.min(Math.max(event.progress ?? 0, 0), 1))
+          },
+          onBrowserPageLoaded: () => {
+            setLoadingProgress(1)
+            setIsReloading(false)
+            setIsGoingBack(false)
+            window.setTimeout(() => {
+              setLoadingProgress(0)
+            }, PROGRESS_BAR_FADE_OUT_DELAY)
+          },
+          top: Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
+        })
+          .then((session) => {
+            if (isCancelled) {
+              void session.close().catch(() => {
+                logScutJwImportDiagnostic({
+                  stage: 'cancelled-session-close-failed',
+                  targetUrl,
+                })
+              })
+              return
+            }
+
+            webViewSessionRef.current = session
+
+            void updateActiveWebViewDimensions(
+              Math.floor(navbarHeightRef.current) - statusBarHeightRef.current,
+            ).catch(() => undefined)
+          })
+          .catch(() => {
+            if (isCancelled) {
+              return
+            }
+
+            messageApi.error('无法打开教务系统页面，请检查网络和访问地址后重试')
+            navigate('/mine/import-scut-jw', { replace: true })
+          })
+      })
 
     return () => {
       isCancelled = true
@@ -386,7 +404,7 @@ function ScutJwWebViewPage() {
 
   return (
     <section
-      className='scut-jw-webview-page'
+      className="scut-jw-webview-page"
       onTouchCancel={handleTouch}
       onTouchEnd={handleTouch}
       onTouchMove={handleTouch}
@@ -394,31 +412,31 @@ function ScutJwWebViewPage() {
     >
       {contextHolder}
 
-      <header ref={navbarRef} className='scut-jw-webview-navbar'>
-        <div className='scut-jw-webview-nav-group scut-jw-webview-nav-left'>
-          <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={handleClose} />
+      <header ref={navbarRef} className="scut-jw-webview-navbar">
+        <div className="scut-jw-webview-nav-group scut-jw-webview-nav-left">
+          <CircleIconButton ariaLabel="关闭页面" icon={<CloseOutlined />} onClick={handleClose} />
         </div>
 
-        <p className='scut-jw-webview-nav-title'>从教务系统导入课表</p>
+        <p className="scut-jw-webview-nav-title">从教务系统导入课表</p>
 
-        <div className='scut-jw-webview-nav-group scut-jw-webview-nav-right'>
+        <div className="scut-jw-webview-nav-group scut-jw-webview-nav-right">
           <CircleIconButton
-            ariaLabel='返回上一页'
+            ariaLabel="返回上一页"
             icon={<LeftOutlined />}
             disabled={isGoingBack || isReloading}
             onClick={handleBack}
           />
           <CircleIconButton
-            ariaLabel='刷新页面'
+            ariaLabel="刷新页面"
             icon={<ReloadOutlined />}
             disabled={isReloading || isGoingBack}
             onClick={handleReload}
           />
         </div>
 
-        <div className='scut-jw-webview-progress-track' aria-hidden='true'>
+        <div className="scut-jw-webview-progress-track" aria-hidden="true">
           <div
-            className='scut-jw-webview-progress-bar'
+            className="scut-jw-webview-progress-bar"
             style={{ width: `${Math.max(0, Math.min(100, loadingProgress * 100))}%` }}
           />
         </div>

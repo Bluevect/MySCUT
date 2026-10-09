@@ -12,7 +12,10 @@ import {
   setStoredAiProvider,
   type AiProviderId,
 } from '../../../core/ai'
-import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import {
+  ANIMATED_BACK_EVENT,
+  type AnimatedBackRequestDetail,
+} from '../../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../../core/navigation/appBack'
 
 type TransitionStage = 'entering' | 'entered' | 'closing'
@@ -140,30 +143,34 @@ function AiSettingsPage() {
   }
 
   return (
-    <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>
+    <section
+      className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}
+    >
       {contextHolder}
 
-      <header className='schedule-settings-header'>
+      <header className="schedule-settings-header">
         <div>
-          <p className='schedule-settings-title'>AI设置</p>
-          <p className='schedule-settings-subtitle'>AI Settings</p>
+          <p className="schedule-settings-title">AI设置</p>
+          <p className="schedule-settings-subtitle">AI Settings</p>
         </div>
 
         <CircleIconButton
-          ariaLabel='关闭 AI 设置页面'
+          ariaLabel="关闭 AI 设置页面"
           icon={<CloseOutlined />}
           disabled={transitionStage === 'closing'}
           onClick={startClosingTransition}
         />
       </header>
 
-      <div className='schedule-settings-content'>
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-detail-card-item ai-provider-guide-card'>
-            <p className='mine-detail-card-title'>{providerGuide.title}</p>
-            <p className='mine-detail-card-description'>{providerGuide.overview}</p>
-            <p className='mine-detail-card-description'>配置要求：{providerGuide.needConfig ? '需要配置' : '无需额外配置'}</p>
-            <ol className='ai-provider-guide-list'>
+      <div className="schedule-settings-content">
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-detail-card-item ai-provider-guide-card">
+            <p className="mine-detail-card-title">{providerGuide.title}</p>
+            <p className="mine-detail-card-description">{providerGuide.overview}</p>
+            <p className="mine-detail-card-description">
+              配置要求：{providerGuide.needConfig ? '需要配置' : '无需额外配置'}
+            </p>
+            <ol className="ai-provider-guide-list">
               {providerGuide.steps.map((step) => (
                 <li key={step}>{step}</li>
               ))}
@@ -172,38 +179,46 @@ function AiSettingsPage() {
         </div>
 
         {providerId === 'openaiCompatible' ? (
-          <div className='mine-button-group'>
-            <div className='mine-group-button ai-settings-form-panel'>
-              <p className='mine-detail-card-title'>OpenAI 兼容配置</p>
+          <div className="mine-button-group">
+            <div className="mine-group-button ai-settings-form-panel">
+              <p className="mine-detail-card-title">OpenAI 兼容配置</p>
 
-              <div className='ai-settings-field'>
-                <span className='ai-settings-label'>Base URL</span>
+              <div className="ai-settings-field">
+                <span className="ai-settings-label">Base URL</span>
                 <Input
                   value={baseUrl}
                   onChange={(event) => setBaseUrl(event.target.value)}
-                  placeholder='例如 https://api.openai.com/v1'
+                  placeholder="例如 https://api.openai.com/v1"
                 />
               </div>
 
-              <div className='ai-settings-field'>
-                <span className='ai-settings-label'>API Key</span>
+              <div className="ai-settings-field">
+                <span className="ai-settings-label">API Key</span>
                 <Input.Password
                   value={apiKey}
                   onChange={(event) => setApiKey(event.target.value)}
-                  placeholder='请输入 API Key'
+                  placeholder="请输入 API Key"
                 />
               </div>
 
-              <p className='ai-settings-notice'>{OPENAI_API_KEY_LOCAL_ONLY_NOTICE}</p>
+              <p className="ai-settings-notice">{OPENAI_API_KEY_LOCAL_ONLY_NOTICE}</p>
             </div>
           </div>
         ) : null}
 
-        <div className='mine-button-group ai-settings-action-group'>
-          <button type='button' className='mine-group-button schedule-settings-action' onClick={handleSaveSettings}>
+        <div className="mine-button-group ai-settings-action-group">
+          <button
+            type="button"
+            className="mine-group-button schedule-settings-action"
+            onClick={handleSaveSettings}
+          >
             保存设置
           </button>
-          <button type='button' className='mine-group-button schedule-settings-action' onClick={handleResetDefault}>
+          <button
+            type="button"
+            className="mine-group-button schedule-settings-action"
+            onClick={handleResetDefault}
+          >
             恢复默认
           </button>
         </div>

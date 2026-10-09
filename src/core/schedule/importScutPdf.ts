@@ -1,7 +1,4 @@
-import {
-  assertScutPdfFileSize,
-  assertScutPdfPageCount,
-} from './importLimits'
+import { assertScutPdfFileSize, assertScutPdfPageCount } from './importLimits'
 
 type PdfjsRuntime = {
   getDocument: (typeof import('pdfjs-dist'))['getDocument']
@@ -132,7 +129,15 @@ type PositionedTextLine = {
   text: string
 }
 
-const weekdayLabels = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'] as const
+const weekdayLabels = [
+  '星期一',
+  '星期二',
+  '星期三',
+  '星期四',
+  '星期五',
+  '星期六',
+  '星期日',
+] as const
 const weekdayAliases = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
 
 function createFormatError(detail: string) {
@@ -140,9 +145,10 @@ function createFormatError(detail: string) {
 }
 
 function decodeUtf16BeFallback(text: string) {
-  const shouldTryDecode = text.length % 2 === 0
-    && Array.from(text).every((character) => character.charCodeAt(0) <= 0xff)
-    && Array.from(text).some((character) => {
+  const shouldTryDecode =
+    text.length % 2 === 0 &&
+    Array.from(text).every((character) => character.charCodeAt(0) <= 0xff) &&
+    Array.from(text).some((character) => {
       const code = character.charCodeAt(0)
       return code < 0x20 || code >= 0x7f
     })
@@ -198,23 +204,30 @@ function groupPositionedLines(items: ExtractedPdfTextItem[]) {
 }
 
 function parseMetadataLine(page: ExtractedPdfPage) {
-  const metadataText = groupPositionedLines(page.items.filter((item) => item.top < SCUT_PDF_FIXED_LAYOUT.table.top))
+  const metadataText = groupPositionedLines(
+    page.items.filter((item) => item.top < SCUT_PDF_FIXED_LAYOUT.table.top),
+  )
     .map((line) => line.text)
     .join(' ')
   const combinedTerm = metadataText.match(/(\d{4}-\d{4})学年第(\d+)学期/)
 
-  const academicYear = combinedTerm?.[1]
-    ?? metadataText.match(/学年学期\s*[:：]\s*(\d{4}-\d{4})/)?.[1]
-    ?? metadataText.match(/ACADEMIC-YEAR\s*:\s*(\d{4}-\d{4})/i)?.[1]
-  const semesterText = combinedTerm?.[2]
-    ?? metadataText.match(/(?:^|\s)学期\s*[:：]\s*(\d+)/)?.[1]
-    ?? metadataText.match(/SEMESTER\s*:\s*(\d+)/i)?.[1]
-  const studentIdentifier = metadataText.match(/学号\s*[:：]\s*([^\s]+)/)?.[1]
-    ?? metadataText.match(/STUDENT-ID\s*:\s*([^\s]+)/i)?.[1]
-  const campus = metadataText.match(/校区\s*[:：]\s*([^\s]+)/)?.[1]
-    ?? metadataText.match(/CAMPUS\s*:\s*([^\s]+)/i)?.[1]
-  const scheduleIdentifier = metadataText.match(/课表编号\s*[:：]\s*([^\s]+)/)?.[1]
-    ?? metadataText.match(/SCHEDULE-ID\s*:\s*([^\s]+)/i)?.[1]
+  const academicYear =
+    combinedTerm?.[1] ??
+    metadataText.match(/学年学期\s*[:：]\s*(\d{4}-\d{4})/)?.[1] ??
+    metadataText.match(/ACADEMIC-YEAR\s*:\s*(\d{4}-\d{4})/i)?.[1]
+  const semesterText =
+    combinedTerm?.[2] ??
+    metadataText.match(/(?:^|\s)学期\s*[:：]\s*(\d+)/)?.[1] ??
+    metadataText.match(/SEMESTER\s*:\s*(\d+)/i)?.[1]
+  const studentIdentifier =
+    metadataText.match(/学号\s*[:：]\s*([^\s]+)/)?.[1] ??
+    metadataText.match(/STUDENT-ID\s*:\s*([^\s]+)/i)?.[1]
+  const campus =
+    metadataText.match(/校区\s*[:：]\s*([^\s]+)/)?.[1] ??
+    metadataText.match(/CAMPUS\s*:\s*([^\s]+)/i)?.[1]
+  const scheduleIdentifier =
+    metadataText.match(/课表编号\s*[:：]\s*([^\s]+)/)?.[1] ??
+    metadataText.match(/SCHEDULE-ID\s*:\s*([^\s]+)/i)?.[1]
 
   if (!academicYear || !semesterText || !studentIdentifier || !campus || !scheduleIdentifier) {
     throw createFormatError('缺少学年学期、学号、校区或课表编号等固定页眉字段')
@@ -296,11 +309,11 @@ function parseDayLessons(page: ExtractedPdfPage, day: ScutPdfLessonContract['day
   const columnLeft = table.left + table.nodeColumnWidth + (day - 1) * table.dayColumnWidth
   const columnRight = columnLeft + table.dayColumnWidth
   const bodyTop = table.top + table.headerHeight
-  const columnLines = groupPositionedLines(page.items.filter((item) => (
-    item.x >= columnLeft
-    && item.x < columnRight
-    && item.top >= bodyTop
-  )))
+  const columnLines = groupPositionedLines(
+    page.items.filter(
+      (item) => item.x >= columnLeft && item.x < columnRight && item.top >= bodyTop,
+    ),
+  )
   const lessons: ScutPdfLessonContract[] = []
 
   for (let index = 0; index < columnLines.length; index += 1) {
@@ -317,7 +330,9 @@ function parseDayLessons(page: ExtractedPdfPage, day: ScutPdfLessonContract['day
     const creditText = readField(lessonLines[5]?.text ?? '', ['学分', 'CREDIT'])
 
     if (!weekExpression || !nodeExpression || !teacher || !room || !creditText) {
-      throw createFormatError(`${weekdayLabels[day - 1]}的课程“${courseName}”缺少周次、节次、教师、地点或学分`)
+      throw createFormatError(
+        `${weekdayLabels[day - 1]}的课程“${courseName}”缺少周次、节次、教师、地点或学分`,
+      )
     }
 
     const nodeMatch = nodeExpression.match(/^(\d+)(?:-(\d+))?$/)
@@ -332,7 +347,10 @@ function parseDayLessons(page: ExtractedPdfPage, day: ScutPdfLessonContract['day
     }
 
     const expectedCellTop = bodyTop + (startNode - 1) * table.nodeHeight
-    if (columnLines[index].top < expectedCellTop || columnLines[index].top > expectedCellTop + table.nodeHeight) {
+    if (
+      columnLines[index].top < expectedCellTop ||
+      columnLines[index].top > expectedCellTop + table.nodeHeight
+    ) {
       throw createFormatError(`课程“${courseName}”的单元格位置与节次不一致`)
     }
 
@@ -358,7 +376,9 @@ function parseDayLessons(page: ExtractedPdfPage, day: ScutPdfLessonContract['day
   return lessons
 }
 
-export function parseScutSchedulePdfContract(extractedPdf: ExtractedSchedulePdf): ScutSchedulePdfContract {
+export function parseScutSchedulePdfContract(
+  extractedPdf: ExtractedSchedulePdf,
+): ScutSchedulePdfContract {
   if (extractedPdf.pages.length !== 1 || extractedPdf.meta.pageCount !== 1) {
     throw createFormatError('当前仅支持单页华工学生个人课表')
   }
@@ -366,9 +386,9 @@ export function parseScutSchedulePdfContract(extractedPdf: ExtractedSchedulePdf)
   const page = extractedPdf.pages[0]
   const { page: expectedPage, table } = SCUT_PDF_FIXED_LAYOUT
   if (
-    page.rotation !== 0
-    || Math.abs(page.width - expectedPage.width) > expectedPage.tolerance
-    || Math.abs(page.height - expectedPage.height) > expectedPage.tolerance
+    page.rotation !== 0 ||
+    Math.abs(page.width - expectedPage.width) > expectedPage.tolerance ||
+    Math.abs(page.height - expectedPage.height) > expectedPage.tolerance
   ) {
     throw createFormatError('页面尺寸、方向或旋转角度不符合固定横向 A4 布局')
   }
@@ -384,19 +404,23 @@ export function parseScutSchedulePdfContract(extractedPdf: ExtractedSchedulePdf)
     .replace(/\s+/g, ' ')
     .trim()
   const compactTitle = title.replace(/\s+/g, '')
-  if (!compactTitle.includes('华南理工大学学生个人课表') && !title.includes('SCUT STUDENT TIMETABLE V1')) {
+  if (
+    !compactTitle.includes('华南理工大学学生个人课表') &&
+    !title.includes('SCUT STUDENT TIMETABLE V1')
+  ) {
     throw createFormatError('未找到“华南理工大学学生个人课表”固定标题')
   }
 
   weekdayLabels.forEach((label, index) => {
     const expectedLeft = table.left + table.nodeColumnWidth + index * table.dayColumnWidth
-    const found = normalizedItems.some((item) => (
-      (item.text === label || item.text === weekdayAliases[index])
-      && item.x >= expectedLeft
-      && item.x < expectedLeft + table.dayColumnWidth
-      && item.top >= table.top
-      && item.top <= table.top + table.headerHeight + 15
-    ))
+    const found = normalizedItems.some(
+      (item) =>
+        (item.text === label || item.text === weekdayAliases[index]) &&
+        item.x >= expectedLeft &&
+        item.x < expectedLeft + table.dayColumnWidth &&
+        item.top >= table.top &&
+        item.top <= table.top + table.headerHeight + 15,
+    )
     if (!found) {
       throw createFormatError(`缺少${label}列或列位置不符合固定布局`)
     }
@@ -404,22 +428,26 @@ export function parseScutSchedulePdfContract(extractedPdf: ExtractedSchedulePdf)
 
   for (let node = 1; node <= table.nodeCount; node += 1) {
     const expectedTop = table.top + table.headerHeight + (node - 1) * table.nodeHeight
-    const found = normalizedItems.some((item) => (
-      item.text === String(node)
-      && item.x >= table.left
-      && item.x < table.left + table.nodeColumnWidth
-      && item.top >= expectedTop
-      && item.top <= expectedTop + table.nodeHeight
-    ))
+    const found = normalizedItems.some(
+      (item) =>
+        item.text === String(node) &&
+        item.x >= table.left &&
+        item.x < table.left + table.nodeColumnWidth &&
+        item.top >= expectedTop &&
+        item.top <= expectedTop + table.nodeHeight,
+    )
     if (!found) {
       throw createFormatError(`缺少第 ${node} 节行标或行位置不符合固定布局`)
     }
   }
 
   const metadata = parseMetadataLine({ ...page, items: normalizedItems })
-  const lessons = weekdayLabels.flatMap((_, index) => (
-    parseDayLessons({ ...page, items: normalizedItems }, (index + 1) as ScutPdfLessonContract['day'])
-  ))
+  const lessons = weekdayLabels.flatMap((_, index) =>
+    parseDayLessons(
+      { ...page, items: normalizedItems },
+      (index + 1) as ScutPdfLessonContract['day'],
+    ),
+  )
   if (lessons.length === 0) {
     throw createFormatError('固定课表网格中没有可识别的课程')
   }
@@ -460,10 +488,11 @@ export async function extractScutSchedulePdf(
   options: ExtractScutSchedulePdfOptions = {},
 ): Promise<ExtractedSchedulePdf> {
   assertScutPdfFileSize(file)
-  const pdfjsRuntime = options.runtime ?? await getPdfjsRuntime()
-  const pdfAssetBaseUrl = options.pdfAssetBaseUrl === undefined
-    ? resolvePdfAssetBaseUrl(pdfjsRuntime.version)
-    : options.pdfAssetBaseUrl
+  const pdfjsRuntime = options.runtime ?? (await getPdfjsRuntime())
+  const pdfAssetBaseUrl =
+    options.pdfAssetBaseUrl === undefined
+      ? resolvePdfAssetBaseUrl(pdfjsRuntime.version)
+      : options.pdfAssetBaseUrl
   const buffer = await file.arrayBuffer()
   const bytes = new Uint8Array(buffer)
   const sourceByteLength = bytes.byteLength

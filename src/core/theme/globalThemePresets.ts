@@ -522,6 +522,9 @@ const PRESET_MAP: Record<GlobalThemeFamily, Record<ResolvedGlobalThemeMode, Glob
   },
 }
 
-export function getGlobalThemePreset(mode: ResolvedGlobalThemeMode, family: GlobalThemeFamily = 'default') {
+export function getGlobalThemePreset(
+  mode: ResolvedGlobalThemeMode,
+  family: GlobalThemeFamily = 'default',
+) {
   return PRESET_MAP[family][mode]
 }

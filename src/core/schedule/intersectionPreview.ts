@@ -24,7 +24,12 @@ export function loadIntersectionPreviewPayload() {
     }
 
     const parsed = JSON.parse(raw) as IntersectionPreviewPayload
-    if (!parsed || typeof parsed !== 'object' || !parsed.scheduleData || typeof parsed.defaultSaveName !== 'string') {
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !parsed.scheduleData ||
+      typeof parsed.defaultSaveName !== 'string'
+    ) {
       return null
     }
 

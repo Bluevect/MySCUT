@@ -33,9 +33,10 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const savedSchedule = useMemo(() => loadSavedScheduleById(scheduleId), [scheduleId])
   const scheduleData = savedSchedule?.scheduleData ?? null
   const course = scheduleData?.courses.find((item) => item.id === courseId) ?? null
-  const lesson = scheduleData?.lessons.find(
-    (item) => item.courseId === courseId && item.instanceId === instanceId,
-  ) ?? null
+  const lesson =
+    scheduleData?.lessons.find(
+      (item) => item.courseId === courseId && item.instanceId === instanceId,
+    ) ?? null
   const maxNode = scheduleData?.table.nodes ?? 12
   const maxWeek = scheduleData?.table.maxWeek ?? 20
 
@@ -117,12 +118,12 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       detailText: detailText.trim(),
       startTime: lesson.ownTime
         ? lesson.startTime
-        : startTimeSlot?.startTime ?? (startNode === lesson.startNode ? lesson.startTime : ''),
+        : (startTimeSlot?.startTime ?? (startNode === lesson.startNode ? lesson.startTime : '')),
       endTime: lesson.ownTime
         ? lesson.endTime
-        : endTimeSlot?.endTime ?? (endNode === lesson.endNode ? lesson.endTime : ''),
+        : (endTimeSlot?.endTime ?? (endNode === lesson.endNode ? lesson.endTime : '')),
     }
-    
+
     const updatedScheduleData = {
       ...scheduleData,
       table: {
@@ -134,9 +135,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
         item.id === courseId ? { ...item, name: normalizedName, credit } : item,
       ),
       lessons: scheduleData.lessons.map((item) =>
-        item.courseId === courseId && item.instanceId === instanceId
-          ? updatedLesson
-          : item,
+        item.courseId === courseId && item.instanceId === instanceId ? updatedLesson : item,
       ),
     }
 
@@ -197,50 +196,46 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const hasCourseTarget = Boolean(scheduleData && course && lesson)
 
   return (
-    <div className='add-courses-page edit-course-page'>
+    <div className="add-courses-page edit-course-page">
       {contextHolder}
-      <header className='add-courses-header'>
-        <div className='add-courses-left-panel'>
-          <TransparentIconButton
-            ariaLabel='返回'
-            icon={<LeftOutlined />}
-            onClick={handleReturn}
-          />
+      <header className="add-courses-header">
+        <div className="add-courses-left-panel">
+          <TransparentIconButton ariaLabel="返回" icon={<LeftOutlined />} onClick={handleReturn} />
         </div>
-        <div className='add-courses-title'>修改课程</div>
+        <div className="add-courses-title">修改课程</div>
       </header>
 
-      <div className='add-courses-content'>
+      <div className="add-courses-content">
         {hasCourseTarget ? (
-          <div className='add-courses-form-card'>
-            <div className='add-courses-form-grid'>
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>课程名称</span>
+          <div className="add-courses-form-card">
+            <div className="add-courses-form-grid">
+              <div className="add-courses-field">
+                <span className="add-courses-label">课程名称</span>
                 <Input
-                  size='large'
-                  placeholder='课程名称'
+                  size="large"
+                  placeholder="课程名称"
                   value={courseName}
                   onChange={(event) => setCourseName(event.target.value)}
                 />
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>学分</span>
+              <div className="add-courses-field">
+                <span className="add-courses-label">学分</span>
                 <InputNumber
                   min={0}
                   step={0.5}
-                  size='large'
-                  placeholder='学分'
+                  size="large"
+                  placeholder="学分"
                   value={credit}
                   onChange={setCredit}
                   style={{ width: '100%' }}
                 />
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>上课时间（星期）</span>
+              <div className="add-courses-field">
+                <span className="add-courses-label">上课时间（星期）</span>
                 <Select
-                  size='large'
+                  size="large"
                   style={{ width: '100%' }}
                   options={WEEKDAY_OPTIONS}
                   value={day}
@@ -252,26 +247,26 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
                 />
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>节数</span>
-                <div className='add-courses-range'>
-                  <label className='add-courses-range-field'>
+              <div className="add-courses-field">
+                <span className="add-courses-label">节数</span>
+                <div className="add-courses-range">
+                  <label className="add-courses-range-field">
                     <span>从</span>
                     <InputNumber
                       min={1}
                       max={maxNode}
-                      size='large'
+                      size="large"
                       style={{ width: '100%' }}
                       value={startNode}
                       onChange={setStartNode}
                     />
                   </label>
-                  <label className='add-courses-range-field'>
+                  <label className="add-courses-range-field">
                     <span>到</span>
                     <InputNumber
                       min={1}
                       max={maxNode}
-                      size='large'
+                      size="large"
                       style={{ width: '100%' }}
                       value={endNode}
                       onChange={setEndNode}
@@ -280,26 +275,26 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
                 </div>
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>周数</span>
-                <div className='add-courses-range'>
-                  <label className='add-courses-range-field'>
+              <div className="add-courses-field">
+                <span className="add-courses-label">周数</span>
+                <div className="add-courses-range">
+                  <label className="add-courses-range-field">
                     <span>从</span>
                     <InputNumber
                       min={1}
                       max={maxWeek}
-                      size='large'
+                      size="large"
                       style={{ width: '100%' }}
                       value={startWeek}
                       onChange={setStartWeek}
                     />
                   </label>
-                  <label className='add-courses-range-field'>
+                  <label className="add-courses-range-field">
                     <span>到</span>
                     <InputNumber
                       min={1}
                       max={maxWeek}
-                      size='large'
+                      size="large"
                       style={{ width: '100%' }}
                       value={endWeek}
                       onChange={setEndWeek}
@@ -308,45 +303,45 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
                 </div>
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>周数间隔</span>
+              <div className="add-courses-field">
+                <span className="add-courses-label">周数间隔</span>
                 <InputNumber
                   min={1}
                   step={1}
                   precision={0}
-                  size='large'
-                  placeholder='每隔几周上课'
+                  size="large"
+                  placeholder="每隔几周上课"
                   value={weekStep}
                   onChange={setWeekStep}
                   style={{ width: '100%' }}
                 />
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>上课地点</span>
+              <div className="add-courses-field">
+                <span className="add-courses-label">上课地点</span>
                 <Input
-                  size='large'
-                  placeholder='上课地点'
+                  size="large"
+                  placeholder="上课地点"
                   value={classroom}
                   onChange={(event) => setClassroom(event.target.value)}
                 />
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>教师（选填）</span>
+              <div className="add-courses-field">
+                <span className="add-courses-label">教师（选填）</span>
                 <Input
-                  size='large'
-                  placeholder='教师'
+                  size="large"
+                  placeholder="教师"
                   value={teacher}
                   onChange={(event) => setTeacher(event.target.value)}
                 />
               </div>
 
-              <div className='add-courses-field'>
-                <span className='add-courses-label'>详细信息（选填）</span>
+              <div className="add-courses-field">
+                <span className="add-courses-label">详细信息（选填）</span>
                 <Input.TextArea
                   rows={4}
-                  placeholder='课程详细信息'
+                  placeholder="课程详细信息"
                   value={detailText}
                   onChange={(event) => setDetailText(event.target.value)}
                 />
@@ -354,9 +349,9 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
             </div>
 
             <Button
-              className='add-courses-save-button'
-              type='primary'
-              size='large'
+              className="add-courses-save-button"
+              type="primary"
+              size="large"
               loading={isSaving || isDeleting}
               disabled={isDeleting}
               onClick={handleSave}
@@ -365,21 +360,23 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
             </Button>
           </div>
         ) : (
-          <div className='all-courses-empty'>
+          <div className="all-courses-empty">
             找不到要修改的课表或课程
-            <Button type='link' onClick={handleReturn}>返回课程列表</Button>
+            <Button type="link" onClick={handleReturn}>
+              返回课程列表
+            </Button>
           </div>
         )}
 
         {hasCourseTarget && (
-          <div className='add-courses-form-card edit-course-danger-card'>
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>危险区域</span>
+          <div className="add-courses-form-card edit-course-danger-card">
+            <div className="add-courses-field">
+              <span className="add-courses-label">危险区域</span>
               <Button
-                className='edit-course-delete-button'
+                className="edit-course-delete-button"
                 danger
-                type='primary'
-                size='large'
+                type="primary"
+                size="large"
                 disabled={isSaving || isDeleting}
                 onClick={() => setIsDeleteModalOpen(true)}
               >
@@ -391,17 +388,18 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       </div>
 
       <Modal
-        title='删除上课安排确认'
+        title="删除上课安排确认"
         open={isDeleteModalOpen}
         confirmLoading={isDeleting}
-        okText='确认删除'
-        cancelText='取消'
+        okText="确认删除"
+        cancelText="取消"
         okButtonProps={{ danger: true }}
         onOk={handleConfirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
       >
         <p>
-          确定删除“{course?.name ?? '该课程'}”的这条上课安排吗？仅删除当前安排，不影响该课程的其他安排。
+          确定删除“{course?.name ?? '该课程'}
+          ”的这条上课安排吗？仅删除当前安排，不影响该课程的其他安排。
         </p>
       </Modal>
     </div>

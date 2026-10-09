@@ -205,12 +205,15 @@ function resolveDefaultManifestUrls() {
   if (UPDATE_CHANNEL === 'nightly') {
     // nightly 清单不进仓库，无 jsDelivr 回退源，为 R2 单源；R2 不可达时直接报错，
     // 测试者可到 GitHub Releases 页人工下载。
-    const nightlyUrl = import.meta.env.VITE_UPDATE_MANIFEST_URL?.trim() || DEFAULT_NIGHTLY_MANIFEST_URL
+    const nightlyUrl =
+      import.meta.env.VITE_UPDATE_MANIFEST_URL?.trim() || DEFAULT_NIGHTLY_MANIFEST_URL
     return nightlyUrl ? [nightlyUrl] : []
   }
 
-  const primaryUrl = import.meta.env.VITE_UPDATE_MANIFEST_URL?.trim() || DEFAULT_PRIMARY_MANIFEST_URL
-  const fallbackUrl = import.meta.env.VITE_UPDATE_MANIFEST_FALLBACK_URL?.trim() || DEFAULT_FALLBACK_MANIFEST_URL
+  const primaryUrl =
+    import.meta.env.VITE_UPDATE_MANIFEST_URL?.trim() || DEFAULT_PRIMARY_MANIFEST_URL
+  const fallbackUrl =
+    import.meta.env.VITE_UPDATE_MANIFEST_FALLBACK_URL?.trim() || DEFAULT_FALLBACK_MANIFEST_URL
   return [...new Set([primaryUrl, fallbackUrl].filter(Boolean))]
 }
 
@@ -260,7 +263,10 @@ function resolveApkAssetDescriptor(
   }
 }
 
-function resolveAssetUrl(assetField: string | RemoteAssetLink[] | undefined, providerOrder: UpdateLinkProviderId[]) {
+function resolveAssetUrl(
+  assetField: string | RemoteAssetLink[] | undefined,
+  providerOrder: UpdateLinkProviderId[],
+) {
   const links = normalizeAssetLinks(assetField)
   const preferredR2Link = links.find((link) => link.source === 'r2')
   if (preferredR2Link) {
@@ -311,12 +317,16 @@ async function loadVersionManifest(
         providerId: 'raw',
         providerName: sourceName,
         latestVersion: responseJson.latest.version,
-        minVersion: typeof responseJson.latest.minVersion === 'string' && responseJson.latest.minVersion.trim()
-          ? responseJson.latest.minVersion.trim()
-          : null,
-        releaseUrl: typeof responseJson.latest.releaseUrl === 'string' && responseJson.latest.releaseUrl.trim()
-          ? responseJson.latest.releaseUrl.trim()
-          : null,
+        minVersion:
+          typeof responseJson.latest.minVersion === 'string' &&
+          responseJson.latest.minVersion.trim()
+            ? responseJson.latest.minVersion.trim()
+            : null,
+        releaseUrl:
+          typeof responseJson.latest.releaseUrl === 'string' &&
+          responseJson.latest.releaseUrl.trim()
+            ? responseJson.latest.releaseUrl.trim()
+            : null,
         downloadUrl: resolveDownloadUrl(responseJson.latest, providerOrder),
         apkAsset: resolveApkAssetDescriptor(responseJson.latest.assets?.apk, providerOrder),
       }

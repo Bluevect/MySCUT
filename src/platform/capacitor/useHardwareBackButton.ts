@@ -94,9 +94,7 @@ export function useHardwareBackButton({ onExitHint }: HardwareBackButtonOptions)
     })
 
     return () => {
-      listenerPromise
-        .then((listener) => listener.remove())
-        .catch(() => undefined)
+      listenerPromise.then((listener) => listener.remove()).catch(() => undefined)
     }
   }, [navigate])
 }

@@ -32,7 +32,11 @@ export function createEmptyWeekScheduleRenderData(): WeekScheduleRenderData {
   }
 }
 
-export function buildWeekScheduleRenderData(scheduleData: ScheduleData, currentWeek: number, maxNode = 12) {
+export function buildWeekScheduleRenderData(
+  scheduleData: ScheduleData,
+  currentWeek: number,
+  maxNode = 12,
+) {
   const courseMap = new Map<number, { name: string; color: string; credit: number }>()
   scheduleData.courses.forEach((course) => {
     courseMap.set(course.id, {

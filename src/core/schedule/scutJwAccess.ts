@@ -3,9 +3,7 @@ export const SCUT_JW_WEBVPN_URL = 'https://xsjw2018-jw.webvpn.scut.edu.cn/'
 
 export type ScutJwAccessMode = 'campus' | 'webvpn' | 'custom'
 
-export type ScutJwEntryUrlResult =
-  | { ok: true; url: string }
-  | { ok: false; error: string }
+export type ScutJwEntryUrlResult = { ok: true; url: string } | { ok: false; error: string }
 
 const URL_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+.-]*:/
 
@@ -15,9 +13,7 @@ function resolveCustomUrl(customUrl: string): ScutJwEntryUrlResult {
     return { ok: false, error: '请输入自定义教务系统网址' }
   }
 
-  const candidateUrl = URL_SCHEME_PATTERN.test(trimmedUrl)
-    ? trimmedUrl
-    : `https://${trimmedUrl}`
+  const candidateUrl = URL_SCHEME_PATTERN.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`
 
   try {
     const parsedUrl = new URL(candidateUrl)

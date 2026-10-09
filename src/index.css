@@ -116,7 +116,11 @@ body {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--accent-primary) 14%, transparent), transparent 34%),
+    radial-gradient(
+      circle at 50% 32%,
+      color-mix(in srgb, var(--accent-primary) 14%, transparent),
+      transparent 34%
+    ),
     var(--bg-page);
 }
 
@@ -552,7 +556,11 @@ body {
 
 .courses-page--first-use {
   background:
-    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 34%),
+    radial-gradient(
+      circle at 84% 8%,
+      color-mix(in srgb, var(--accent-primary) 12%, transparent),
+      transparent 34%
+    ),
     var(--bg-page);
 }
 
@@ -678,7 +686,9 @@ body {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .courses-first-use-import-button:active {
@@ -753,7 +763,9 @@ body {
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  transition: color 160ms ease, transform 160ms ease;
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
 }
 
 @media (hover: hover) {
@@ -864,7 +876,10 @@ body {
   user-select: none;
   -webkit-user-select: none;
   animation: return-current-week-fab-enter 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms ease, background-color 150ms ease;
+  transition:
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 150ms ease,
+    background-color 150ms ease;
 }
 
 .return-current-week-fab .anticon {
@@ -1500,12 +1515,18 @@ body {
   top: 4px;
   bottom: 4px;
   left: 4px;
-  width: calc((100% - 8px - (var(--slide-gap) * (var(--horizontal-slide-count, 1) - 1))) / var(--horizontal-slide-count, 1));
+  width: calc(
+    (100% - 8px - (var(--slide-gap) * (var(--horizontal-slide-count, 1) - 1))) /
+      var(--horizontal-slide-count, 1)
+  );
   border-radius: 8px;
   background: var(--bg-surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   transform: translateX(calc(var(--horizontal-slide-index, 0) * (100% + var(--slide-gap))));
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 240ms ease, box-shadow 240ms ease;
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 240ms ease,
+    box-shadow 240ms ease;
   pointer-events: none;
 }
 
@@ -1522,7 +1543,9 @@ body {
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: color 180ms ease, font-weight 180ms ease;
+  transition:
+    color 180ms ease,
+    font-weight 180ms ease;
 }
 
 .horizontal-slide-selector-button.is-active {
@@ -1565,8 +1588,13 @@ body {
   border-radius: 8px;
   background: var(--bg-surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  transform: translateY(calc(var(--vertical-slide-index, 0) * (var(--slide-item-height) + var(--slide-gap))));
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 240ms ease, box-shadow 240ms ease;
+  transform: translateY(
+    calc(var(--vertical-slide-index, 0) * (var(--slide-item-height) + var(--slide-gap)))
+  );
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 240ms ease,
+    box-shadow 240ms ease;
   pointer-events: none;
 }
 
@@ -1582,7 +1610,9 @@ body {
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: color 180ms ease, font-weight 180ms ease;
+  transition:
+    color 180ms ease,
+    font-weight 180ms ease;
 }
 
 .vertical-slide-selector-button.is-active {
@@ -1647,7 +1677,11 @@ body {
 .theme-transitioning .course-detail-item,
 .theme-transitioning .course-detail-name,
 .theme-transitioning .course-detail-line {
-  transition: background-color 240ms ease, color 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+  transition:
+    background-color 240ms ease,
+    color 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1689,14 +1723,18 @@ body {
 .settings-view-transition--entered {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .settings-view-transition--closing {
   opacity: 0;
   transform: translate3d(-20px, 0, 0);
   pointer-events: none;
-  transition: transform 220ms cubic-bezier(0.4, 0, 1, 1), opacity 220ms cubic-bezier(0.4, 0, 1, 1);
+  transition:
+    transform 220ms cubic-bezier(0.4, 0, 1, 1),
+    opacity 220ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 .mine-detail-content {
@@ -2466,7 +2504,9 @@ body {
   border-radius: 10px;
   background: var(--bg-surface);
   cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
 }
 
 .scut-jw-access-option:active {
@@ -2496,7 +2536,10 @@ body {
   border: 2px solid var(--border-strong);
   border-radius: 50%;
   background: var(--bg-surface);
-  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .scut-jw-access-radio::after {
@@ -2507,7 +2550,9 @@ body {
   background: var(--text-on-accent);
   opacity: 0;
   transform: scale(0.5);
-  transition: opacity 150ms ease, transform 150ms ease;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
 }
 
 .scut-jw-access-option input:checked + .scut-jw-access-radio {

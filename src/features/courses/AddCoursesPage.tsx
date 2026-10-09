@@ -146,37 +146,33 @@ function AddCoursesPage() {
   }
 
   return (
-    <div className='add-courses-page'>
+    <div className="add-courses-page">
       {contextHolder}
-      <header className='add-courses-header'>
-        <div className='add-courses-left-panel'>
-          <TransparentIconButton
-            ariaLabel='返回'
-            icon={<LeftOutlined />}
-            onClick={handleReturn}
-          />
+      <header className="add-courses-header">
+        <div className="add-courses-left-panel">
+          <TransparentIconButton ariaLabel="返回" icon={<LeftOutlined />} onClick={handleReturn} />
         </div>
 
-        <div className='add-courses-title'>添加课程</div>
+        <div className="add-courses-title">添加课程</div>
       </header>
 
-      <div className='add-courses-content'>
-        <div className='add-courses-form-card'>
-          <div className='add-courses-form-grid'>
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>课程名称</span>
+      <div className="add-courses-content">
+        <div className="add-courses-form-card">
+          <div className="add-courses-form-grid">
+            <div className="add-courses-field">
+              <span className="add-courses-label">课程名称</span>
               <Input
-                size='large'
-                placeholder='课程名称'
+                size="large"
+                placeholder="课程名称"
                 value={courseName}
                 onChange={(event) => setCourseName(event.target.value)}
               />
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>上课时间（星期）</span>
+            <div className="add-courses-field">
+              <span className="add-courses-label">上课时间（星期）</span>
               <Select
-                size='large'
+                size="large"
                 style={{ width: '100%' }}
                 options={WEEKDAY_OPTIONS}
                 value={day}
@@ -184,26 +180,26 @@ function AddCoursesPage() {
               />
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>节数</span>
-              <div className='add-courses-range'>
-                <label className='add-courses-range-field'>
+            <div className="add-courses-field">
+              <span className="add-courses-label">节数</span>
+              <div className="add-courses-range">
+                <label className="add-courses-range-field">
                   <span>从</span>
                   <InputNumber
                     min={1}
                     max={maxNode}
-                    size='large'
+                    size="large"
                     style={{ width: '100%' }}
                     value={startNode}
                     onChange={setStartNode}
                   />
                 </label>
-                <label className='add-courses-range-field'>
+                <label className="add-courses-range-field">
                   <span>到</span>
                   <InputNumber
                     min={1}
                     max={maxNode}
-                    size='large'
+                    size="large"
                     style={{ width: '100%' }}
                     value={endNode}
                     onChange={setEndNode}
@@ -212,26 +208,26 @@ function AddCoursesPage() {
               </div>
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>周数</span>
-              <div className='add-courses-range'>
-                <label className='add-courses-range-field'>
+            <div className="add-courses-field">
+              <span className="add-courses-label">周数</span>
+              <div className="add-courses-range">
+                <label className="add-courses-range-field">
                   <span>从</span>
                   <InputNumber
                     min={1}
                     max={maxWeek}
-                    size='large'
+                    size="large"
                     style={{ width: '100%' }}
                     value={startWeek}
                     onChange={setStartWeek}
                   />
                 </label>
-                <label className='add-courses-range-field'>
+                <label className="add-courses-range-field">
                   <span>到</span>
                   <InputNumber
                     min={1}
                     max={maxWeek}
-                    size='large'
+                    size="large"
                     style={{ width: '100%' }}
                     value={endWeek}
                     onChange={setEndWeek}
@@ -240,58 +236,58 @@ function AddCoursesPage() {
               </div>
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>周数间隔</span>
+            <div className="add-courses-field">
+              <span className="add-courses-label">周数间隔</span>
               <InputNumber
                 min={1}
                 step={1}
                 precision={0}
-                size='large'
-                placeholder='每隔几周上课'
+                size="large"
+                placeholder="每隔几周上课"
                 value={weekStep}
                 onChange={setWeekStep}
                 style={{ width: '100%' }}
               />
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>上课地点</span>
+            <div className="add-courses-field">
+              <span className="add-courses-label">上课地点</span>
               <Input
-                size='large'
-                placeholder='上课地点'
+                size="large"
+                placeholder="上课地点"
                 value={classroom}
                 onChange={(event) => setClassroom(event.target.value)}
               />
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>教师（选填）</span>
+            <div className="add-courses-field">
+              <span className="add-courses-label">教师（选填）</span>
               <Input
-                size='large'
-                placeholder='教师'
+                size="large"
+                placeholder="教师"
                 value={teacher}
                 onChange={(event) => setTeacher(event.target.value)}
               />
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>学分（选填）</span>
+            <div className="add-courses-field">
+              <span className="add-courses-label">学分（选填）</span>
               <InputNumber
                 min={0}
                 step={0.5}
-                size='large'
-                placeholder='学分'
+                size="large"
+                placeholder="学分"
                 value={credit}
                 onChange={setCredit}
                 style={{ width: '100%' }}
               />
             </div>
 
-            <div className='add-courses-field'>
-              <span className='add-courses-label'>详细信息（选填）</span>
+            <div className="add-courses-field">
+              <span className="add-courses-label">详细信息（选填）</span>
               <Input.TextArea
                 rows={4}
-                placeholder='课程详细信息'
+                placeholder="课程详细信息"
                 value={detailText}
                 onChange={(event) => setDetailText(event.target.value)}
               />
@@ -299,9 +295,9 @@ function AddCoursesPage() {
           </div>
 
           <Button
-            className='add-courses-save-button'
-            type='primary'
-            size='large'
+            className="add-courses-save-button"
+            type="primary"
+            size="large"
             loading={isSaving}
             onClick={handleSave}
           >

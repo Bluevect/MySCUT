@@ -53,7 +53,10 @@ export function startAndroidCourseWidgetScheduleSync() {
   return unsubscribe
 }
 
-export function syncAndroidCourseWidgetAppearance(mode: GlobalThemeMode, family: GlobalThemeFamily) {
+export function syncAndroidCourseWidgetAppearance(
+  mode: GlobalThemeMode,
+  family: GlobalThemeFamily,
+) {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
     return
   }

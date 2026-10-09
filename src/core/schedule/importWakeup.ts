@@ -52,7 +52,14 @@ function parseWakeupTimeToMinutes(timeText: string) {
   const hour = Number.parseInt(matched[1], 10)
   const minute = Number.parseInt(matched[2], 10)
 
-  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
     return null
   }
 
@@ -105,7 +112,11 @@ function getWakeupSpanFromStep(step: number) {
   return Math.max(1, Math.floor(step))
 }
 
-function resolveWakeupLessonRange(lesson: WakeupLesson, timeSlots: WakeupTimeSlot[], tableMaxNode: number) {
+function resolveWakeupLessonRange(
+  lesson: WakeupLesson,
+  timeSlots: WakeupTimeSlot[],
+  tableMaxNode: number,
+) {
   const maxNodeFromSlots = timeSlots.reduce((max, slot) => Math.max(max, slot.node), 1)
   const maxNode = Math.max(1, tableMaxNode, maxNodeFromSlots)
   const span = getWakeupSpanFromStep(lesson.step)
@@ -116,7 +127,8 @@ function resolveWakeupLessonRange(lesson: WakeupLesson, timeSlots: WakeupTimeSlo
   const hasStartTime = isWakeupTimeTextPresent(lesson.startTime)
   const hasEndTime = isWakeupTimeTextPresent(lesson.endTime)
 
-  let startNode = Number.isInteger(lesson.startNode) && lesson.startNode > 0 ? lesson.startNode : null
+  let startNode =
+    Number.isInteger(lesson.startNode) && lesson.startNode > 0 ? lesson.startNode : null
   let startTime = hasStartTime ? normalizeWakeupTimeText(lesson.startTime) : ''
   let endTime = hasEndTime ? normalizeWakeupTimeText(lesson.endTime) : ''
 

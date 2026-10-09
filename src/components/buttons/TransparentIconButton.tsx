@@ -18,7 +18,7 @@ export function TransparentIconButton({
 }: TransparentIconButtonProps) {
   return (
     <Button
-      type='text'
+      type="text"
       icon={icon}
       aria-label={ariaLabel}
       className={`app-icon-button-transparent${className ? ` ${className}` : ''}`}

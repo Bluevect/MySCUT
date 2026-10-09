@@ -47,7 +47,9 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isScheduleSource(value: unknown): value is ScheduleData['source'] {
-  return value === 'wakeup' || value === 'scutHtml' || value === 'scutPdf' || value === 'intersection'
+  return (
+    value === 'wakeup' || value === 'scutHtml' || value === 'scutPdf' || value === 'intersection'
+  )
 }
 
 function isScutPdfRaw(value: unknown) {
@@ -67,7 +69,13 @@ function isScutPdfRaw(value: unknown) {
 }
 
 function normalizeTimeSlotPresetId(value: unknown): TimeSlotPresetId {
-  if (value === 'universityTown' || value === 'wushan' || value === 'international' || value === 'builtIn' || value === 'union') {
+  if (
+    value === 'universityTown' ||
+    value === 'wushan' ||
+    value === 'international' ||
+    value === 'builtIn' ||
+    value === 'union'
+  ) {
     return value
   }
 
@@ -99,7 +107,11 @@ function isSavedSchedule(value: unknown): value is SavedSchedule {
     return false
   }
 
-  if (typeof value.id !== 'string' || typeof value.name !== 'string' || !isScheduleSource(value.source)) {
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.name !== 'string' ||
+    !isScheduleSource(value.source)
+  ) {
     return false
   }
 

@@ -44,9 +44,13 @@ export type ExportSanitizeOptions = {
   removeRoom: boolean
 }
 
-export function applyTimeSlotPresetForExport(savedSchedule: SavedSchedule, presetId: TimeSlotPresetId): SavedSchedule {
+export function applyTimeSlotPresetForExport(
+  savedSchedule: SavedSchedule,
+  presetId: TimeSlotPresetId,
+): SavedSchedule {
   const resolvedTimeSlots = resolveScheduleTimeSlotsByPreset(savedSchedule.scheduleData, presetId)
-  const resolvedTimeTable = resolvedTimeSlots[0]?.timeTable ?? savedSchedule.scheduleData.table.timeTable
+  const resolvedTimeTable =
+    resolvedTimeSlots[0]?.timeTable ?? savedSchedule.scheduleData.table.timeTable
 
   const scheduleData: ScheduleData = {
     ...savedSchedule.scheduleData,
@@ -189,7 +193,10 @@ function buildWakeupRawFromSchedule(scheduleData: ScheduleData) {
   }
 }
 
-export function sanitizeScheduleForExport(savedSchedule: SavedSchedule, options: ExportSanitizeOptions): SavedSchedule {
+export function sanitizeScheduleForExport(
+  savedSchedule: SavedSchedule,
+  options: ExportSanitizeOptions,
+): SavedSchedule {
   const scheduleData: ScheduleData = {
     ...savedSchedule.scheduleData,
     table: {
@@ -301,8 +308,8 @@ function textToBase64(content: string): string {
 }
 
 export interface DownloadedTextFileType {
-  type: string,
-  path?: string,
+  type: string
+  path?: string
 }
 
 export async function downloadTextFile(

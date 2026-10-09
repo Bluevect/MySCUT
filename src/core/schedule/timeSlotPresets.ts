@@ -48,9 +48,15 @@ function createPresetTimeSlots(ranges: TimeSlotRange[], timeTableId: number): Wa
   }))
 }
 
-const UNIVERSITY_TOWN_TIME_SLOTS = createPresetTimeSlots(INTERNATIONAL_AND_UNIVERSITY_TOWN_RANGES, 9001)
+const UNIVERSITY_TOWN_TIME_SLOTS = createPresetTimeSlots(
+  INTERNATIONAL_AND_UNIVERSITY_TOWN_RANGES,
+  9001,
+)
 const WUSHAN_TIME_SLOTS = createPresetTimeSlots(WUSHAN_RANGES, 9002)
-const INTERNATIONAL_TIME_SLOTS = createPresetTimeSlots(INTERNATIONAL_AND_UNIVERSITY_TOWN_RANGES, 9003)
+const INTERNATIONAL_TIME_SLOTS = createPresetTimeSlots(
+  INTERNATIONAL_AND_UNIVERSITY_TOWN_RANGES,
+  9003,
+)
 
 function parseTimeToMinutes(timeText: string) {
   const match = timeText.match(/^(\d{1,2}):(\d{2})$/)
@@ -139,7 +145,9 @@ function computePresetDistance(source: WakeupTimeSlot[], target: WakeupTimeSlot[
   }, 0)
 }
 
-export function resolveNearestCampusTimeSlotPresetId(sourceTimeSlots: WakeupTimeSlot[]): CampusPresetId {
+export function resolveNearestCampusTimeSlotPresetId(
+  sourceTimeSlots: WakeupTimeSlot[],
+): CampusPresetId {
   const sourceSlots = sourceTimeSlots.filter((slot) => slot.node >= 1 && slot.node <= 11)
   const wushanScore = computePresetDistance(sourceSlots, WUSHAN_TIME_SLOTS)
   const universityTownScore = computePresetDistance(sourceSlots, UNIVERSITY_TOWN_TIME_SLOTS)
@@ -154,24 +162,33 @@ const INTERNAL_TIME_SLOT_PRESET_OPTIONS: TimeSlotPresetOption[] = [
   { id: 'builtIn', name: '课表自带预设' },
 ]
 
-export const TIME_SLOT_PRESET_OPTIONS: TimeSlotPresetOption[] = INTERNAL_TIME_SLOT_PRESET_OPTIONS.filter(
-  (option) => option.id !== 'union',
-)
+export const TIME_SLOT_PRESET_OPTIONS: TimeSlotPresetOption[] =
+  INTERNAL_TIME_SLOT_PRESET_OPTIONS.filter((option) => option.id !== 'union')
 
 export function getTimeSlotPresetName(presetId: TimeSlotPresetId) {
   if (presetId === 'international') {
     return '大学城 / 国际时间'
   }
 
-  return INTERNAL_TIME_SLOT_PRESET_OPTIONS.find((option) => option.id === presetId)?.name ?? '课表自带预设'
+  return (
+    INTERNAL_TIME_SLOT_PRESET_OPTIONS.find((option) => option.id === presetId)?.name ??
+    '课表自带预设'
+  )
 }
 
 function getBuiltInTimeSlots(scheduleData: ScheduleData) {
-  const matched = scheduleData.timeSlots.filter((slot) => slot.timeTable === scheduleData.table.timeTable)
-  return (matched.length > 0 ? matched : scheduleData.timeSlots).sort((left, right) => left.node - right.node)
+  const matched = scheduleData.timeSlots.filter(
+    (slot) => slot.timeTable === scheduleData.table.timeTable,
+  )
+  return (matched.length > 0 ? matched : scheduleData.timeSlots).sort(
+    (left, right) => left.node - right.node,
+  )
 }
 
-export function resolveScheduleTimeSlotsByPreset(scheduleData: ScheduleData, presetId: TimeSlotPresetId) {
+export function resolveScheduleTimeSlotsByPreset(
+  scheduleData: ScheduleData,
+  presetId: TimeSlotPresetId,
+) {
   switch (presetId) {
     case 'union':
       return UNION_TIME_SLOTS
