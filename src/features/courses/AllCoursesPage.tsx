@@ -72,7 +72,11 @@ function AllCoursesPage() {
     }
 
     messageApi.success(popupMessage).then(() => {
-      navigate(location.pathname, { replace: true, state: null })
+      window.history.replaceState(
+        { ...window.history.state, usr: null },
+        '',
+        location.pathname,
+      )
     })
   }, [location.pathname, location.state, messageApi, navigate])
 

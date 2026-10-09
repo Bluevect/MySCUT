@@ -15,6 +15,7 @@ import { useGlobalTheme } from '../../platform/web/theme/GlobalThemeProvider'
 import { ApkUpdater, supportsInAppApkUpdate } from '../../platform/capacitor/apkUpdater'
 import { confirmWithBackDismiss, useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import { checkForAppUpdate, IS_NIGHTLY_CHANNEL, type ApkAssetDescriptor } from '../../services/update'
+import { getScheduleWeekStorage, setScheduleWeekStorage } from '../../core/schedule/scheduleWeekStorage'
 
 type MineDetailPageProps = {
   title: string
@@ -90,6 +91,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const subtitle = DETAIL_SUBTITLE_MAP[title] ?? 'Details'
   const [isLocalManualEnabled, setIsLocalManualEnabled] = useState(() => getUseLocalManual())
   const [isReloadManualEnabled, setIsReloadManualEnabled] = useState(() => getReloadManualEnabled())
+  const [isScheduleWeekStorageEnabled, setIsScheduleWeekStorageEnabled] = useState(() => getScheduleWeekStorage())
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
@@ -166,6 +168,11 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const handleReloadManualSwitchChange = (checked: boolean) => {
     setIsReloadManualEnabled(checked)
     setReloadManualEnabled(checked)
+  }
+
+  const handleScheduleWeekStorageSwitchChange = (checked: boolean) => {
+    setIsScheduleWeekStorageEnabled(checked)
+    setScheduleWeekStorage(checked)
   }
 
   const handleCheckUpdate = async () => {
@@ -399,8 +406,8 @@ function MineDetailPage({ title }: MineDetailPageProps) {
             <div className='mine-button-group'>
               <div className='mine-group-button mine-setting-row'>
                 <div className='mine-setting-copy'>
-                  <p className='mine-detail-card-title'>启用本地手册</p>
-                  <p className='mine-detail-card-description'>开启后优先加载应用内置手册资源</p>
+                  <p className='mine-detail-card-title'>启用本地手册（需重启应用）</p>
+                  <p className='mine-detail-card-description'>开启后优先加载应用内置手册资源 <br /> 修改后需重启应用才能生效</p>
                 </div>
                 <Switch checked={isLocalManualEnabled} onChange={handleLocalManualSwitchChange} />
               </div>
@@ -413,6 +420,16 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                   <p className='mine-detail-card-description'>关闭后手册内容保留上次浏览位置，开启后每次进入都会重新加载 <br /> 修改后需重启应用才能生效</p>
                 </div>
                 <Switch checked={isReloadManualEnabled} onChange={handleReloadManualSwitchChange} />
+              </div>
+            </div>
+
+            <div className='mine-button-group'>
+              <div className='mine-group-button mine-setting-row'>
+                <div className='mine-setting-copy'>
+                  <p className='mine-detail-card-title'>保留上次查看的周数</p>
+                  <p className='mine-detail-card-description'>开启后再次打开 App 将恢复至上次查看的周数，关闭后每次打开都会自动切换至当前周</p>
+                </div>
+                <Switch checked={isScheduleWeekStorageEnabled} onChange={handleScheduleWeekStorageSwitchChange} />
               </div>
             </div>
           </>

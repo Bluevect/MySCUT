@@ -33,8 +33,9 @@ function AddCoursesPage() {
   const [endNode, setEndNode] = useState<number | null>(2)
   const [startWeek, setStartWeek] = useState<number | null>(1)
   const [endWeek, setEndWeek] = useState<number | null>(maxWeek)
+  const [weekStep, setWeekStep] = useState<number | null>(1)
   const [classroom, setClassroom] = useState('待定教室')
-  const [teacher, setTeacher] = useState('待定老师')
+  const [teacher, setTeacher] = useState('待定教师')
   const [detailText, setDetailText] = useState('')
   const [credit, setCredit] = useState<number | null>(0)
   const [isSaving, setIsSaving] = useState(false)
@@ -68,6 +69,11 @@ function AddCoursesPage() {
       return
     }
 
+    if (weekStep === null || !Number.isInteger(weekStep) || weekStep < 1) {
+      messageApi.error('周数间隔必须是大于或等于 1 的整数')
+      return
+    }
+
     if (credit === null || !Number.isFinite(credit) || credit < 0) {
       messageApi.error('学分必须是大于或等于 0 的数字')
       return
@@ -76,11 +82,13 @@ function AddCoursesPage() {
     try {
       setIsSaving(true)
 
+      const existingCourse = scheduleData.courses.find((course) => course.name === normalizedName)
       const nextCourseId =
         scheduleData.courses.reduce((maxId, course) => Math.max(maxId, course.id), 0) + 1
+      const courseId = existingCourse?.id ?? nextCourseId
 
       const nextCourse: ScheduleCourse = {
-        id: nextCourseId,
+        id: courseId,
         tableId: scheduleData.table.id,
         name: normalizedName,
         color: '',
@@ -95,15 +103,15 @@ function AddCoursesPage() {
       const endTimeSlot = timeSlotMap.get(safeEndNode)
 
       const nextLesson: ScheduleLesson = {
-        instanceId: `custom-${day}-${safeStartNode}-${safeEndNode}-${safeStartWeek}-${safeEndWeek}-${nextCourseId}`,
-        courseId: nextCourseId,
+        instanceId: `custom-${day}-${safeStartNode}-${safeEndNode}-${safeStartWeek}-${safeEndWeek}-${courseId}`,
+        courseId,
         tableId: scheduleData.table.id,
         day,
         startNode: safeStartNode,
         endNode: safeEndNode,
         startWeek: safeStartWeek,
         endWeek: safeEndWeek,
-        weekStep: 1,
+        weekStep,
         ownTime: false,
         startTime: startTimeSlot?.startTime ?? '',
         endTime: endTimeSlot?.endTime ?? '',
@@ -117,9 +125,7 @@ function AddCoursesPage() {
       const nextScheduleData: ScheduleData = {
         ...scheduleData,
         importedAt: Date.now(),
-        courses: scheduleData.courses.some(c => c.name === nextCourse.name)
-          ? scheduleData.courses
-          : [...scheduleData.courses, nextCourse],
+        courses: existingCourse ? scheduleData.courses : [...scheduleData.courses, nextCourse],
         lessons: [...scheduleData.lessons, nextLesson],
       }
 
@@ -232,6 +238,20 @@ function AddCoursesPage() {
                   />
                 </label>
               </div>
+            </div>
+
+            <div className='add-courses-field'>
+              <span className='add-courses-label'>周数间隔</span>
+              <InputNumber
+                min={1}
+                step={1}
+                precision={0}
+                size='large'
+                placeholder='每隔几周上课'
+                value={weekStep}
+                onChange={setWeekStep}
+                style={{ width: '100%' }}
+              />
             </div>
 
             <div className='add-courses-field'>

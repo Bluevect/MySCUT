@@ -1,3 +1,5 @@
+import { getScheduleWeekStorage } from "./scheduleWeekStorage"
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 const SCHEDULE_WEEK_VIEW_STORAGE_PREFIX = 'scheduleWeekView:'
 
@@ -119,7 +121,8 @@ export function resolveInitialScheduleWeekView(
   inferredCurrentWeek: number,
 ): ScheduleWeekView {
   const rememberedWeek = readRememberedScheduleWeek(scheduleId, semesterStartDate)
-  if (rememberedWeek === null || rememberedWeek === inferredCurrentWeek) {
+
+  if (rememberedWeek === null || rememberedWeek === inferredCurrentWeek || !getScheduleWeekStorage()) {
     clearRememberedScheduleWeek(scheduleId)
     return {
       week: inferredCurrentWeek,

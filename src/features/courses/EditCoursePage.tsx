@@ -46,6 +46,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
   const [endNode, setEndNode] = useState<number | null>(lesson?.endNode ?? 2)
   const [startWeek, setStartWeek] = useState<number | null>(lesson?.startWeek ?? 1)
   const [endWeek, setEndWeek] = useState<number | null>(lesson?.endWeek ?? maxWeek)
+  const [weekStep, setWeekStep] = useState<number | null>(lesson?.weekStep ?? 1)
   const [classroom, setClassroom] = useState(lesson?.room ?? '')
   const [teacher, setTeacher] = useState(lesson?.teacher ?? '')
   const [detailText, setDetailText] = useState(lesson?.detailText ?? '')
@@ -79,18 +80,21 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       endNode === null ||
       startWeek === null ||
       endWeek === null ||
+      weekStep === null ||
       !Number.isInteger(startNode) ||
       !Number.isInteger(endNode) ||
       !Number.isInteger(startWeek) ||
       !Number.isInteger(endWeek) ||
+      !Number.isInteger(weekStep) ||
       startNode < 1 ||
       endNode > maxNode ||
       startNode > endNode ||
       startWeek < 1 ||
       endWeek > maxWeek ||
-      startWeek > endWeek
+      startWeek > endWeek ||
+      weekStep < 1
     ) {
-      messageApi.error('请检查节数和周数范围')
+      messageApi.error('请检查节数、周数和周数间隔')
       return
     }
 
@@ -107,6 +111,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       endNode,
       startWeek,
       endWeek,
+      weekStep,
       room: classroom.trim(),
       teacher: teacher.trim(),
       detailText: detailText.trim(),
@@ -159,10 +164,16 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       return
     }
 
+    const lessonIndex = scheduleData.lessons.indexOf(lesson)
+    const remainingLessons = scheduleData.lessons.filter((_, index) => index !== lessonIndex)
+    const hasRemainingLessons = remainingLessons.some((item) => item.courseId === courseId)
+
     const updatedScheduleData = {
       ...scheduleData,
-      courses: scheduleData.courses.filter((item) => item.id !== courseId),
-      lessons: scheduleData.lessons.filter((item) => item.courseId !== courseId),
+      courses: hasRemainingLessons
+        ? scheduleData.courses
+        : scheduleData.courses.filter((item) => item.id !== courseId),
+      lessons: remainingLessons,
     }
 
     try {
@@ -298,6 +309,20 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
               </div>
 
               <div className='add-courses-field'>
+                <span className='add-courses-label'>周数间隔</span>
+                <InputNumber
+                  min={1}
+                  step={1}
+                  precision={0}
+                  size='large'
+                  placeholder='每隔几周上课'
+                  value={weekStep}
+                  onChange={setWeekStep}
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div className='add-courses-field'>
                 <span className='add-courses-label'>上课地点</span>
                 <Input
                   size='large'
@@ -366,7 +391,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
       </div>
 
       <Modal
-        title='删除课程确认'
+        title='删除上课安排确认'
         open={isDeleteModalOpen}
         confirmLoading={isDeleting}
         okText='确认删除'
@@ -376,7 +401,7 @@ function EditCoursePage({ scheduleId, courseId, instanceId }: EditCoursePageProp
         onCancel={() => setIsDeleteModalOpen(false)}
       >
         <p>
-          确定删除“{course?.name ?? '该课程'}”吗？该课程的所有上课安排都会从此课表中删除，且无法撤销。
+          确定删除“{course?.name ?? '该课程'}”的这条上课安排吗？仅删除当前安排，不影响该课程的其他安排。
         </p>
       </Modal>
     </div>
