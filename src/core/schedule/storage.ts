@@ -6,10 +6,7 @@ import {
   type StorageLike,
 } from '../storage'
 import { getDefaultSemesterStartDate } from './semesterStartDateUtils'
-import {
-  resolveScheduleImportThemePreset,
-  type ScheduleThemeId,
-} from './themePresets'
+import { resolveScheduleImportThemePreset, type ScheduleThemeId } from './themePresets'
 import { DEFAULT_TIME_SLOT } from '../scheduleSettings'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from './types'
 
@@ -52,7 +49,9 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isScheduleSource(value: unknown): value is ScheduleData['source'] {
-  return value === 'wakeup' || value === 'scutHtml' || value === 'scutPdf' || value === 'intersection'
+  return (
+    value === 'wakeup' || value === 'scutHtml' || value === 'scutPdf' || value === 'intersection'
+  )
 }
 
 function isScutPdfRaw(value: unknown) {
@@ -168,7 +167,10 @@ function findActiveSchedule(library: ScheduleLibrary) {
   )
 }
 
-function buildSavedSchedule(scheduleData: ScheduleData, options: SaveScheduleOptions): SavedSchedule {
+function buildSavedSchedule(
+  scheduleData: ScheduleData,
+  options: SaveScheduleOptions,
+): SavedSchedule {
   return {
     id: createScheduleId(),
     name: options.preferredName || scheduleData.table.name || '未命名课表',
@@ -284,7 +286,9 @@ export class ScheduleRepository {
 
     const persistedLibrary = await runtime.store.get(SCHEDULE_LIBRARY_KEY)
     this.snapshot = persistedLibrary
-    const migrationCompleted = await runtime.migrationJournal.isCompleted(SCHEDULE_LIBRARY_MIGRATION_ID)
+    const migrationCompleted = await runtime.migrationJournal.isCompleted(
+      SCHEDULE_LIBRARY_MIGRATION_ID,
+    )
 
     if (persistedLibrary !== null && !migrationCompleted) {
       await runtime.migrationJournal.markCompleted(SCHEDULE_LIBRARY_MIGRATION_ID)
@@ -304,7 +308,8 @@ export class ScheduleRepository {
         const verifiedLibrary = await runtime.store.get(SCHEDULE_LIBRARY_KEY)
         if (
           verifiedLibrary === null ||
-          scheduleLibraryCodec.encode(verifiedLibrary) !== scheduleLibraryCodec.encode(legacyLibrary)
+          scheduleLibraryCodec.encode(verifiedLibrary) !==
+            scheduleLibraryCodec.encode(legacyLibrary)
         ) {
           throw new StorageError('corrupt-data', '课表迁移写入校验失败')
         }
@@ -375,7 +380,8 @@ export class ScheduleRepository {
       const nextLibrary: ScheduleLibrary = this.snapshot
         ? {
             ...this.snapshot,
-            activeScheduleId: options.setActive === false ? this.snapshot.activeScheduleId : nextSchedule.id,
+            activeScheduleId:
+              options.setActive === false ? this.snapshot.activeScheduleId : nextSchedule.id,
             schedules: [...this.snapshot.schedules, nextSchedule],
           }
         : {
@@ -452,9 +458,7 @@ export class ScheduleRepository {
       const nextLibrary: ScheduleLibrary = {
         ...this.snapshot,
         schedules: this.snapshot.schedules.map((schedule) =>
-          schedule.id === activeSchedule.id
-            ? { ...schedule, themeId }
-            : schedule,
+          schedule.id === activeSchedule.id ? { ...schedule, themeId } : schedule,
         ),
       }
 
@@ -482,14 +486,13 @@ export class ScheduleRepository {
       const nextLibrary: ScheduleLibrary = {
         ...this.snapshot,
         schedules: this.snapshot.schedules.map((schedule) =>
-          schedule.id === activeSchedule.id ? {
-            ...schedule,
-            name: preferredName,
-            scheduleData: applyScheduleNameToScheduleData(
-              schedule.scheduleData,
-              preferredName,
-            ),
-          } : schedule,
+          schedule.id === activeSchedule.id
+            ? {
+                ...schedule,
+                name: preferredName,
+                scheduleData: applyScheduleNameToScheduleData(schedule.scheduleData, preferredName),
+              }
+            : schedule,
         ),
       }
 
@@ -519,10 +522,7 @@ export class ScheduleRepository {
             ? {
                 ...schedule,
                 name: preferredName,
-                scheduleData: applyScheduleNameToScheduleData(
-                  schedule.scheduleData,
-                  preferredName,
-                ),
+                scheduleData: applyScheduleNameToScheduleData(schedule.scheduleData, preferredName),
               }
             : schedule,
         ),
@@ -643,9 +643,7 @@ export class ScheduleRepository {
     const nextLibrary: ScheduleLibrary = {
       ...this.snapshot,
       schedules: this.snapshot.schedules.map((schedule) =>
-        schedule.id === scheduleId
-          ? { ...schedule, scheduleData }
-          : schedule,
+        schedule.id === scheduleId ? { ...schedule, scheduleData } : schedule,
       ),
     }
 
@@ -761,7 +759,10 @@ export function setSavedSchedulePreferredName(scheduleId: string, preferredName:
   return scheduleRepository.setSavedSchedulePreferredName(scheduleId, preferredName)
 }
 
-export function saveScheduleDataWithOptions(scheduleData: ScheduleData, options: SaveScheduleOptions) {
+export function saveScheduleDataWithOptions(
+  scheduleData: ScheduleData,
+  options: SaveScheduleOptions,
+) {
   return scheduleRepository.saveScheduleDataWithOptions(scheduleData, options)
 }
 

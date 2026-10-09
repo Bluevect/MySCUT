@@ -1,5 +1,11 @@
 import { resolveScheduleTimeSlotsByPreset } from './timeSlotPresets'
-import type { ScheduleCourse, ScheduleData, ScheduleLesson, TimeSlotPresetId, WakeupTimeSlot } from './types'
+import type {
+  ScheduleCourse,
+  ScheduleData,
+  ScheduleLesson,
+  TimeSlotPresetId,
+  WakeupTimeSlot,
+} from './types'
 
 export type IntersectionDisplayMode = 'default' | 'availableOnly' | 'unavailableOnly'
 
@@ -88,7 +94,11 @@ function sortNames(names: string[]) {
   return [...names].sort((left, right) => left.localeCompare(right, 'zh-Hans-CN'))
 }
 
-function buildIntersectionCellLabel(mode: IntersectionDisplayMode, available: string[], unavailable: string[]) {
+function buildIntersectionCellLabel(
+  mode: IntersectionDisplayMode,
+  available: string[],
+  unavailable: string[],
+) {
   if (mode === 'availableOnly') {
     return available.length > 0 ? available.join(' ') : '无人有空'
   }
@@ -110,14 +120,23 @@ export function buildIntersectionSchedule(
   preferredTableName: string,
 ): ScheduleData {
   const unionTemplateParticipant = participants[0]
-  const unionTimeSlots = resolveScheduleTimeSlotsByPreset(unionTemplateParticipant.scheduleData, 'union')
+  const unionTimeSlots = resolveScheduleTimeSlotsByPreset(
+    unionTemplateParticipant.scheduleData,
+    'union',
+  )
   const unionIntervalByNode = buildTimeSlotIntervalMap(unionTimeSlots)
-  const maxWeek = Math.max(1, ...participants.map((participant) => participant.scheduleData.table.maxWeek || 1))
+  const maxWeek = Math.max(
+    1,
+    ...participants.map((participant) => participant.scheduleData.table.maxWeek || 1),
+  )
   const allNames = participants.map((participant) => participant.name)
   const occupiedByCell = new Map<string, Set<string>>()
 
   participants.forEach((participant) => {
-    const participantTimeSlots = resolveScheduleTimeSlotsByPreset(participant.scheduleData, participant.timeSlotPresetId)
+    const participantTimeSlots = resolveScheduleTimeSlotsByPreset(
+      participant.scheduleData,
+      participant.timeSlotPresetId,
+    )
     const participantIntervalByNode = buildTimeSlotIntervalMap(participantTimeSlots)
 
     participant.scheduleData.lessons.forEach((lesson) => {
@@ -153,7 +172,8 @@ export function buildIntersectionSchedule(
   for (let week = 1; week <= maxWeek; week += 1) {
     for (let day = 1; day <= 7; day += 1) {
       unionTimeSlots.forEach((slot) => {
-        const occupied = occupiedByCell.get(createCellKey(week, day, slot.node)) ?? new Set<string>()
+        const occupied =
+          occupiedByCell.get(createCellKey(week, day, slot.node)) ?? new Set<string>()
         const unavailable = sortNames(Array.from(occupied))
         const available = sortNames(allNames.filter((name) => !occupied.has(name)))
         const label = buildIntersectionCellLabel(mode, available, unavailable)

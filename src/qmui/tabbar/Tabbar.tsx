@@ -22,9 +22,13 @@ function QmuiTabbar({ items, ariaLabel, className }: QmuiTabbarProps) {
   } as CSSProperties
 
   return (
-    <nav className={className ? `qm-tabbar ${className}` : 'qm-tabbar'} style={style} aria-label={ariaLabel}>
-      <div className='qm-tabbar__pane'>
-        <span className='qm-tabbar__pill' aria-hidden='true' />
+    <nav
+      className={className ? `qm-tabbar ${className}` : 'qm-tabbar'}
+      style={style}
+      aria-label={ariaLabel}
+    >
+      <div className="qm-tabbar__pane">
+        <span className="qm-tabbar__pill" aria-hidden="true" />
         {items.map((item, index) => (
           <Link
             key={item.to}
@@ -34,9 +38,9 @@ function QmuiTabbar({ items, ariaLabel, className }: QmuiTabbarProps) {
             }
             aria-current={index === activeIndex ? 'page' : undefined}
           >
-            <span className='qm-tabbar__content'>
-              <span className='qm-tabbar__icon'>{item.icon}</span>
-              <span className='qm-tabbar__label'>{item.label}</span>
+            <span className="qm-tabbar__content">
+              <span className="qm-tabbar__icon">{item.icon}</span>
+              <span className="qm-tabbar__label">{item.label}</span>
             </span>
           </Link>
         ))}

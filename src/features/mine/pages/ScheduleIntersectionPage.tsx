@@ -4,16 +4,26 @@ import { Input, Modal, Select, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../../components/buttons/CircleIconButton'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
-import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import {
+  ANIMATED_BACK_EVENT,
+  type AnimatedBackRequestDetail,
+} from '../../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../../core/navigation/appBack'
 import { decodeCompressedQmsText } from '../../../core/schedule/compressedQms'
 import { assertScheduleTextFileSize } from '../../../core/schedule/importLimits'
-import { buildIntersectionSchedule, type IntersectionDisplayMode } from '../../../core/schedule/intersection'
+import {
+  buildIntersectionSchedule,
+  type IntersectionDisplayMode,
+} from '../../../core/schedule/intersection'
 import { saveIntersectionPreviewPayload } from '../../../core/schedule/intersectionPreview'
 import { parseQmsScheduleText } from '../../../core/schedule/importQms'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
-import { listSavedSchedules, loadActiveScheduleEntry, loadSavedScheduleById } from '../../../core/schedule/storage'
+import {
+  listSavedSchedules,
+  loadActiveScheduleEntry,
+  loadSavedScheduleById,
+} from '../../../core/schedule/storage'
 import type { ScheduleData } from '../../../core/schedule/types'
 import { getSemesterStartDate } from '../../../core/scheduleSettings'
 import { useBackDismiss } from '../../../platform/capacitor/useBackDismiss'
@@ -58,10 +68,13 @@ function ScheduleIntersectionPage() {
   const [htmlImportMethod, setHtmlImportMethod] = useState<HtmlImportMethod>('file')
   const [htmlInputText, setHtmlInputText] = useState('')
   const [isLocalScheduleModalOpen, setIsLocalScheduleModalOpen] = useState(false)
-  const [selectedLocalScheduleId, setSelectedLocalScheduleId] = useState(() => loadActiveScheduleEntry()?.id ?? '')
+  const [selectedLocalScheduleId, setSelectedLocalScheduleId] = useState(
+    () => loadActiveScheduleEntry()?.id ?? '',
+  )
   const [savedSchedules, setSavedSchedules] = useState(() => listSavedSchedules())
   const [externalSchedules, setExternalSchedules] = useState<ExternalScheduleItem[]>([])
-  const [pendingExternalSchedule, setPendingExternalSchedule] = useState<ExternalScheduleItem | null>(null)
+  const [pendingExternalSchedule, setPendingExternalSchedule] =
+    useState<ExternalScheduleItem | null>(null)
   const [pendingExternalName, setPendingExternalName] = useState('A')
   const [isExternalNameModalOpen, setIsExternalNameModalOpen] = useState(false)
   const [localUserName, setLocalUserName] = useState('')
@@ -328,8 +341,15 @@ function ScheduleIntersectionPage() {
           })),
         ]
 
-        const intersectionScheduleData = buildIntersectionSchedule(participants, displayMode, '课表取交集')
-        const defaultSaveName = [...externalSchedules.map((item) => item.name), normalizedLocalUserName].join('/')
+        const intersectionScheduleData = buildIntersectionSchedule(
+          participants,
+          displayMode,
+          '课表取交集',
+        )
+        const defaultSaveName = [
+          ...externalSchedules.map((item) => item.name),
+          normalizedLocalUserName,
+        ].join('/')
         const saved = saveIntersectionPreviewPayload({
           scheduleData: intersectionScheduleData,
           defaultSaveName,
@@ -358,55 +378,69 @@ function ScheduleIntersectionPage() {
   })
 
   return (
-    <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>
+    <section
+      className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}
+    >
       {contextHolder}
 
-      <header className='schedule-settings-header'>
+      <header className="schedule-settings-header">
         <div>
-          <p className='schedule-settings-title'>课表取交集</p>
-          <p className='schedule-settings-subtitle'>Schedule Intersection</p>
+          <p className="schedule-settings-title">课表取交集</p>
+          <p className="schedule-settings-subtitle">Schedule Intersection</p>
         </div>
 
-        <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={startClosingTransition} />
+        <CircleIconButton
+          ariaLabel="关闭页面"
+          icon={<CloseOutlined />}
+          onClick={startClosingTransition}
+        />
       </header>
 
-      <div className='schedule-settings-content'>
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-setting-row'>
-            <div className='mine-setting-copy'>
-              <p className='mine-detail-card-title'>我的名字</p>
-              <p className='mine-detail-card-description'>用于统计展示与保存默认名称</p>
+      <div className="schedule-settings-content">
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-setting-row">
+            <div className="mine-setting-copy">
+              <p className="mine-detail-card-title">我的名字</p>
+              <p className="mine-detail-card-description">用于统计展示与保存默认名称</p>
             </div>
             <Input
               value={localUserName}
               onChange={(event) => setLocalUserName(event.target.value)}
-              placeholder='Kozumi'
+              placeholder="Kozumi"
               style={{ width: 120 }}
             />
           </div>
         </div>
 
-        <div className='mine-button-group'>
-          <button type='button' className='mine-group-button schedule-settings-action' onClick={() => {
-            setSavedSchedules(listSavedSchedules())
-            setIsLocalScheduleModalOpen(true)
-          }}>
+        <div className="mine-button-group">
+          <button
+            type="button"
+            className="mine-group-button schedule-settings-action"
+            onClick={() => {
+              setSavedSchedules(listSavedSchedules())
+              setIsLocalScheduleModalOpen(true)
+            }}
+          >
             选择本地课表
           </button>
         </div>
-        <p className='schedule-settings-current-date'>
+        <p className="schedule-settings-current-date">
           当前选择：{selectedLocalSchedule?.name || '未选择'}
         </p>
 
-        <div className='mine-button-group'>
-          <button type='button' className='mine-group-button schedule-settings-action' onClick={() => setIsImportModalOpen(true)}>
+        <div className="mine-button-group">
+          <button
+            type="button"
+            className="mine-group-button schedule-settings-action"
+            onClick={() => setIsImportModalOpen(true)}
+          >
             添加外部课表
           </button>
         </div>
 
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-theme-family-panel'>
-            <div className='mine-theme-mode-header'>
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-theme-family-panel">
+            <div className="mine-theme-mode-header">
               <span>显示模式</span>
             </div>
             <Select
@@ -422,26 +456,30 @@ function ScheduleIntersectionPage() {
           </div>
         </div>
 
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-theme-family-panel'>
-            <div className='mine-theme-mode-header'>
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-theme-family-panel">
+            <div className="mine-theme-mode-header">
               <span>外部课表列表</span>
-              <span className='mine-theme-toggle-meta'>{externalSchedules.length} 个</span>
+              <span className="mine-theme-toggle-meta">{externalSchedules.length} 个</span>
             </div>
-            <div className='schedule-switch-list'>
+            <div className="schedule-switch-list">
               {externalSchedules.length === 0 ? (
-                <p className='schedule-switch-empty'>暂无外部课表</p>
+                <p className="schedule-switch-empty">暂无外部课表</p>
               ) : (
                 externalSchedules.map((item) => (
-                  <div key={item.id} className='schedule-switch-row'>
-                    <div className='schedule-switch-item'>
+                  <div key={item.id} className="schedule-switch-row">
+                    <div className="schedule-switch-item">
                       <span>{item.name}</span>
-                      <span className='schedule-switch-meta'>来源：{item.source}</span>
+                      <span className="schedule-switch-meta">来源：{item.source}</span>
                     </div>
                     <button
-                      type='button'
-                      className='schedule-switch-delete'
-                      onClick={() => setExternalSchedules((previous) => previous.filter((current) => current.id !== item.id))}
+                      type="button"
+                      className="schedule-switch-delete"
+                      onClick={() =>
+                        setExternalSchedules((previous) =>
+                          previous.filter((current) => current.id !== item.id),
+                        )
+                      }
                     >
                       ×
                     </button>
@@ -452,10 +490,10 @@ function ScheduleIntersectionPage() {
           </div>
         </div>
 
-        <div className='mine-button-group'>
+        <div className="mine-button-group">
           <button
-            type='button'
-            className='mine-group-button schedule-settings-action'
+            type="button"
+            className="mine-group-button schedule-settings-action"
             onClick={() => {
               void handleCalculate()
             }}
@@ -469,45 +507,64 @@ function ScheduleIntersectionPage() {
 
       <input
         ref={wakeupFileInputRef}
-        type='file'
-        accept='.wakeup_schedule,.json,.txt,.bin'
-        className='schedule-settings-file-input'
+        type="file"
+        accept=".wakeup_schedule,.json,.txt,.bin"
+        className="schedule-settings-file-input"
         onChange={handleImportWakeup}
       />
       <input
         ref={qmsFileInputRef}
-        type='file'
-        accept='.qms,.json,.txt,.bin'
-        className='schedule-settings-file-input'
+        type="file"
+        accept=".qms,.json,.txt,.bin"
+        className="schedule-settings-file-input"
         onChange={handleImportQms}
       />
       <input
         ref={htmlFileInputRef}
-        type='file'
-        accept='.html,.htm,.mht,.mhtml,.txt'
-        className='schedule-settings-file-input'
+        type="file"
+        accept=".html,.htm,.mht,.mhtml,.txt"
+        className="schedule-settings-file-input"
         onChange={handleImportHtmlFile}
       />
 
-      <Modal title='导入外部课表' open={isImportModalOpen} onCancel={() => setIsImportModalOpen(false)} footer={null}>
-        <div className='schedule-import-list'>
-          <button type='button' className='schedule-import-item' onClick={handleImportWakeupEntry}>从 WakeUp 导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportHtmlEntry}>从华工教务HTML导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportPdfEntry}>从华工教务PDF导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportQmsEntry}>从启梦文件QMS导入</button>
-          <button type='button' className='schedule-import-item' onClick={handleImportCompressedQmsFromClipboardEntry}>从剪贴板压缩QMS导入</button>
+      <Modal
+        title="导入外部课表"
+        open={isImportModalOpen}
+        onCancel={() => setIsImportModalOpen(false)}
+        footer={null}
+      >
+        <div className="schedule-import-list">
+          <button type="button" className="schedule-import-item" onClick={handleImportWakeupEntry}>
+            从 WakeUp 导入
+          </button>
+          <button type="button" className="schedule-import-item" onClick={handleImportHtmlEntry}>
+            从华工教务HTML导入
+          </button>
+          <button type="button" className="schedule-import-item" onClick={handleImportPdfEntry}>
+            从华工教务PDF导入
+          </button>
+          <button type="button" className="schedule-import-item" onClick={handleImportQmsEntry}>
+            从启梦文件QMS导入
+          </button>
+          <button
+            type="button"
+            className="schedule-import-item"
+            onClick={handleImportCompressedQmsFromClipboardEntry}
+          >
+            从剪贴板压缩QMS导入
+          </button>
         </div>
       </Modal>
 
       <Modal
-        title='从华工教务HTML导入'
+        title="从华工教务HTML导入"
         open={isHtmlImportMethodModalOpen}
         onOk={() => {
           void handleConfirmHtmlImportMethod()
         }}
         onCancel={() => setIsHtmlImportMethodModalOpen(false)}
-        okText='继续'
-        cancelText='取消'
+        okText="继续"
+        cancelText="取消"
       >
         <Select
           style={{ width: '100%' }}
@@ -522,37 +579,37 @@ function ScheduleIntersectionPage() {
       </Modal>
 
       <Modal
-        title='直接输入华工教务HTML'
+        title="直接输入华工教务HTML"
         open={isHtmlInputModalOpen}
         onOk={() => {
           void handleConfirmHtmlInput()
         }}
         onCancel={() => setIsHtmlInputModalOpen(false)}
-        okText='确定'
-        cancelText='取消'
+        okText="确定"
+        cancelText="取消"
       >
         <TextArea
           rows={10}
-          placeholder='请粘贴华工教务系统课表 HTML'
+          placeholder="请粘贴华工教务系统课表 HTML"
           value={htmlInputText}
           onChange={(event) => setHtmlInputText(event.target.value)}
         />
       </Modal>
 
       <Modal
-        title='选择本地课表'
+        title="选择本地课表"
         open={isLocalScheduleModalOpen}
         onCancel={() => setIsLocalScheduleModalOpen(false)}
         footer={null}
       >
-        <div className='schedule-switch-list'>
+        <div className="schedule-switch-list">
           {savedSchedules.length === 0 ? (
-            <p className='schedule-switch-empty'>暂无已保存课表</p>
+            <p className="schedule-switch-empty">暂无已保存课表</p>
           ) : (
             savedSchedules.map((schedule) => (
               <button
                 key={schedule.id}
-                type='button'
+                type="button"
                 className={`schedule-switch-item ${schedule.id === selectedLocalScheduleId ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedLocalScheduleId(schedule.id)
@@ -560,7 +617,7 @@ function ScheduleIntersectionPage() {
                 }}
               >
                 <span>{schedule.name}</span>
-                <span className='schedule-switch-meta'>来源：{schedule.source}</span>
+                <span className="schedule-switch-meta">来源：{schedule.source}</span>
               </button>
             ))
           )}
@@ -568,15 +625,15 @@ function ScheduleIntersectionPage() {
       </Modal>
 
       <Modal
-        title='设置课表使用者名称'
+        title="设置课表使用者名称"
         open={isExternalNameModalOpen}
         onOk={handleConfirmExternalName}
         onCancel={() => {
           setPendingExternalSchedule(null)
           setIsExternalNameModalOpen(false)
         }}
-        okText='确定'
-        cancelText='取消'
+        okText="确定"
+        cancelText="取消"
       >
         <Input
           value={pendingExternalName}

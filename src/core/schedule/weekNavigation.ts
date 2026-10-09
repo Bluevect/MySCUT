@@ -1,4 +1,4 @@
-import { getScheduleWeekStorage } from "./scheduleWeekStorage"
+import { getScheduleWeekStorage } from './scheduleWeekStorage'
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 const SCHEDULE_WEEK_VIEW_STORAGE_PREFIX = 'scheduleWeekView:'
@@ -112,7 +112,7 @@ export function getScheduleWeekdayOffset(semesterStartDateText: string) {
 }
 
 export function getScheduleLessonDayForColumn(weekdayOffset: number, columnIndex: number) {
-  return (weekdayOffset + columnIndex) % 7 + 1
+  return ((weekdayOffset + columnIndex) % 7) + 1
 }
 
 export function resolveInitialScheduleWeekView(
@@ -122,7 +122,11 @@ export function resolveInitialScheduleWeekView(
 ): ScheduleWeekView {
   const rememberedWeek = readRememberedScheduleWeek(scheduleId, semesterStartDate)
 
-  if (rememberedWeek === null || rememberedWeek === inferredCurrentWeek || !getScheduleWeekStorage()) {
+  if (
+    rememberedWeek === null ||
+    rememberedWeek === inferredCurrentWeek ||
+    !getScheduleWeekStorage()
+  ) {
     clearRememberedScheduleWeek(scheduleId)
     return {
       week: inferredCurrentWeek,

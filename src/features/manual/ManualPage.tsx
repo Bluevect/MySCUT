@@ -115,14 +115,14 @@ function ManualPage() {
 
   return (
     <section
-      className='manual-page'
+      className="manual-page"
       style={{ display: isActive || getReloadManualEnabledStartup() ? 'unset' : 'none' }}
     >
       {contextHolder}
       <iframe
-        className='manual-iframe'
+        className="manual-iframe"
         src={iframeSrc}
-        title='华工生存手册'
+        title="华工生存手册"
         onLoad={handleIframeLoad}
         onError={handleIframeError}
       />

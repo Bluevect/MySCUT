@@ -5,8 +5,16 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { CircleIconButton } from '../../components/buttons/CircleIconButton'
 import { HorizontalSlideSelector } from '../../components/HorizontalSlideSelector'
 import { VerticalSlideSelector } from '../../components/VerticalSlideSelector'
-import { getUseLocalManual, setUseLocalManual, setReloadManualEnabled, getReloadManualEnabled } from '../../core/manual/manualSourceStorage'
-import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../core/navigation/animatedBack'
+import {
+  getUseLocalManual,
+  setUseLocalManual,
+  setReloadManualEnabled,
+  getReloadManualEnabled,
+} from '../../core/manual/manualSourceStorage'
+import {
+  ANIMATED_BACK_EVENT,
+  type AnimatedBackRequestDetail,
+} from '../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../core/navigation/appBack'
 import { GLOBAL_THEME_FAMILY_OPTIONS } from '../../core/theme/globalThemePresets'
 import { APP_TODO_ITEMS, MANUAL_TODO_ITEMS } from '../../generated/todoSnapshot'
@@ -14,8 +22,15 @@ import { THIRD_PARTY_LICENSES } from '../../generated/thirdPartyLicenses'
 import { useGlobalTheme } from '../../platform/web/theme/GlobalThemeProvider'
 import { ApkUpdater, supportsInAppApkUpdate } from '../../platform/capacitor/apkUpdater'
 import { confirmWithBackDismiss, useBackDismiss } from '../../platform/capacitor/useBackDismiss'
-import { checkForAppUpdate, IS_NIGHTLY_CHANNEL, type ApkAssetDescriptor } from '../../services/update'
-import { getScheduleWeekStorage, setScheduleWeekStorage } from '../../core/schedule/scheduleWeekStorage'
+import {
+  checkForAppUpdate,
+  IS_NIGHTLY_CHANNEL,
+  type ApkAssetDescriptor,
+} from '../../services/update'
+import {
+  getScheduleWeekStorage,
+  setScheduleWeekStorage,
+} from '../../core/schedule/scheduleWeekStorage'
 
 type MineDetailPageProps = {
   title: string
@@ -44,8 +59,8 @@ const GLOBAL_THEME_MODE_OPTIONS = [
 ] as const
 
 const DETAIL_SUBTITLE_MAP: Record<string, string> = {
-  '全局设置': 'Global Settings',
-  '常见问答': 'FAQ',
+  全局设置: 'Global Settings',
+  常见问答: 'FAQ',
   更多: 'More',
 }
 
@@ -68,8 +83,7 @@ const FAQ_ITEMS: Array<{ question: string; answer: string }> = [
   },
   {
     question: '如何切换或删除课表？',
-    answer:
-      '在「课表设置」的课表库中点击即可切换当前课表；不再需要的课表也在课表库中删除。',
+    answer: '在「课表设置」的课表库中点击即可切换当前课表；不再需要的课表也在课表库中删除。',
   },
   {
     question: '如何导出课表？',
@@ -91,7 +105,9 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const subtitle = DETAIL_SUBTITLE_MAP[title] ?? 'Details'
   const [isLocalManualEnabled, setIsLocalManualEnabled] = useState(() => getUseLocalManual())
   const [isReloadManualEnabled, setIsReloadManualEnabled] = useState(() => getReloadManualEnabled())
-  const [isScheduleWeekStorageEnabled, setIsScheduleWeekStorageEnabled] = useState(() => getScheduleWeekStorage())
+  const [isScheduleWeekStorageEnabled, setIsScheduleWeekStorageEnabled] = useState(() =>
+    getScheduleWeekStorage(),
+  )
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
@@ -298,7 +314,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
     >
       {contextHolder}
       <Modal
-        title='正在更新'
+        title="正在更新"
         open={apkUpdateProgress !== null}
         keyboard={false}
         maskClosable={false}
@@ -306,7 +322,7 @@ function MineDetailPage({ title }: MineDetailPageProps) {
         onCancel={() => setApkUpdateProgress(null)}
       >
         {apkUpdateProgress?.stage === 'installing' ? (
-          <p className='mine-detail-card-description'>下载完成，正在启动安装…</p>
+          <p className="mine-detail-card-description">下载完成，正在启动安装…</p>
         ) : (
           <>
             <Progress
@@ -320,14 +336,14 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                     )
                   : 100
               }
-              status='active'
+              status="active"
               format={
                 apkUpdateProgress?.totalBytes
                   ? undefined
                   : () => `已下载 ${formatMegabytes(apkUpdateProgress?.receivedBytes ?? 0)}`
               }
             />
-            <p className='mine-detail-card-description'>
+            <p className="mine-detail-card-description">
               {apkUpdateProgress?.totalBytes
                 ? `${formatMegabytes(apkUpdateProgress.receivedBytes)} / ${formatMegabytes(apkUpdateProgress.totalBytes)}`
                 : '正在获取下载进度…'}
@@ -335,33 +351,34 @@ function MineDetailPage({ title }: MineDetailPageProps) {
           </>
         )}
       </Modal>
-      <header className='schedule-settings-header'>
+      <header className="schedule-settings-header">
         <div>
-          <p className='schedule-settings-title'>{title}</p>
-          <p className='schedule-settings-subtitle'>{subtitle}</p>
+          <p className="schedule-settings-title">{title}</p>
+          <p className="schedule-settings-subtitle">{subtitle}</p>
         </div>
 
         <CircleIconButton
-          ariaLabel='关闭详情页面'
+          ariaLabel="关闭详情页面"
           icon={<CloseOutlined />}
           disabled={transitionStage === 'closing'}
           onClick={handleClose}
         />
       </header>
 
-      <div className='schedule-settings-content mine-detail-content'>
+      <div className="schedule-settings-content mine-detail-content">
         {title === '全局设置' ? (
           <>
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-theme-family-panel'>
-                <div className='mine-theme-mode-header'>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-theme-family-panel">
+                <div className="mine-theme-mode-header">
                   <span>全局主题套装</span>
-                  <span className='mine-theme-toggle-meta'>
-                    {GLOBAL_THEME_FAMILY_OPTIONS.find((item) => item.id === themeFamily)?.name ?? '默认'}
+                  <span className="mine-theme-toggle-meta">
+                    {GLOBAL_THEME_FAMILY_OPTIONS.find((item) => item.id === themeFamily)?.name ??
+                      '默认'}
                   </span>
                 </div>
 
-                <div className='mine-theme-family-list'>
+                <div className="mine-theme-family-list">
                   <VerticalSlideSelector
                     value={themeFamily}
                     options={GLOBAL_THEME_FAMILY_OPTIONS.map((item) => ({
@@ -369,17 +386,17 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                       label: item.name,
                     }))}
                     onChange={setThemeFamily}
-                    ariaLabel='全局主题套装切换'
+                    ariaLabel="全局主题套装切换"
                   />
                 </div>
               </div>
             </div>
 
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-theme-mode-panel'>
-                <div className='mine-theme-mode-header'>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-theme-mode-panel">
+                <div className="mine-theme-mode-header">
                   <span>全局主题模式</span>
-                  <span className='mine-theme-toggle-meta'>{GLOBAL_THEME_MODE_LABELS[mode]}</span>
+                  <span className="mine-theme-toggle-meta">{GLOBAL_THEME_MODE_LABELS[mode]}</span>
                 </div>
 
                 <HorizontalSlideSelector
@@ -389,94 +406,112 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                     label: item.label,
                   }))}
                   onChange={setMode}
-                  ariaLabel='全局主题切换'
+                  ariaLabel="全局主题切换"
                 />
 
-                <div className='mine-theme-mode-footer'>
+                <div className="mine-theme-mode-footer">
                   <span>当前生效主题</span>
-                  <span className='mine-theme-toggle-meta'>{RESOLVED_THEME_MODE_LABELS[resolvedMode]}</span>
+                  <span className="mine-theme-toggle-meta">
+                    {RESOLVED_THEME_MODE_LABELS[resolvedMode]}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-setting-row'>
-                <div className='mine-setting-copy'>
-                  <p className='mine-detail-card-title'>启用本地手册（需重启应用）</p>
-                  <p className='mine-detail-card-description'>开启后优先加载应用内置手册资源 <br /> 修改后需重启应用才能生效</p>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-setting-row">
+                <div className="mine-setting-copy">
+                  <p className="mine-detail-card-title">启用本地手册（需重启应用）</p>
+                  <p className="mine-detail-card-description">
+                    开启后优先加载应用内置手册资源 <br /> 修改后需重启应用才能生效
+                  </p>
                 </div>
                 <Switch checked={isLocalManualEnabled} onChange={handleLocalManualSwitchChange} />
               </div>
             </div>
 
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-setting-row'>
-                <div className='mine-setting-copy'>
-                  <p className='mine-detail-card-title'>进入手册时重新加载（需重启应用）</p>
-                  <p className='mine-detail-card-description'>关闭后手册内容保留上次浏览位置，开启后每次进入都会重新加载 <br /> 修改后需重启应用才能生效</p>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-setting-row">
+                <div className="mine-setting-copy">
+                  <p className="mine-detail-card-title">进入手册时重新加载（需重启应用）</p>
+                  <p className="mine-detail-card-description">
+                    关闭后手册内容保留上次浏览位置，开启后每次进入都会重新加载 <br />{' '}
+                    修改后需重启应用才能生效
+                  </p>
                 </div>
                 <Switch checked={isReloadManualEnabled} onChange={handleReloadManualSwitchChange} />
               </div>
             </div>
 
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-setting-row'>
-                <div className='mine-setting-copy'>
-                  <p className='mine-detail-card-title'>保留上次查看的周数</p>
-                  <p className='mine-detail-card-description'>开启后再次打开 App 将恢复至上次查看的周数，关闭后每次打开都会自动切换至当前周</p>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-setting-row">
+                <div className="mine-setting-copy">
+                  <p className="mine-detail-card-title">保留上次查看的周数</p>
+                  <p className="mine-detail-card-description">
+                    开启后再次打开 App 将恢复至上次查看的周数，关闭后每次打开都会自动切换至当前周
+                  </p>
                 </div>
-                <Switch checked={isScheduleWeekStorageEnabled} onChange={handleScheduleWeekStorageSwitchChange} />
+                <Switch
+                  checked={isScheduleWeekStorageEnabled}
+                  onChange={handleScheduleWeekStorageSwitchChange}
+                />
               </div>
             </div>
           </>
         ) : title === '更多' ? (
           <>
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-setting-row'>
-                <div className='mine-setting-copy'>
-                  <p className='mine-detail-card-title'>当前版本</p>
-                  <p className='mine-detail-card-description'>{`v${__APP_VERSION__}${IS_NIGHTLY_CHANNEL ? '（Nightly 通道）' : ''}`}</p>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-setting-row">
+                <div className="mine-setting-copy">
+                  <p className="mine-detail-card-title">当前版本</p>
+                  <p className="mine-detail-card-description">{`v${__APP_VERSION__}${IS_NIGHTLY_CHANNEL ? '（Nightly 通道）' : ''}`}</p>
                 </div>
-                <Button className='mine-update-check-button' loading={isCheckingUpdate} onClick={handleCheckUpdate}>
+                <Button
+                  className="mine-update-check-button"
+                  loading={isCheckingUpdate}
+                  onClick={handleCheckUpdate}
+                >
                   检查更新
                 </Button>
               </div>
             </div>
 
-            <div className='mine-button-group'>
-              <div className='mine-group-button mine-detail-card-item'>
-                <p className='mine-detail-card-title'>关于</p>
-                <p className='mine-detail-card-description'>应用作者：@Kozumi</p>
-                <p className='mine-detail-card-description'>
+            <div className="mine-button-group">
+              <div className="mine-group-button mine-detail-card-item">
+                <p className="mine-detail-card-title">关于</p>
+                <p className="mine-detail-card-description">应用作者：@Kozumi</p>
+                <p className="mine-detail-card-description">
                   内容创作：启梦华工编辑部（成员：@Kozumi / @Rotioki）
                 </p>
-                <p className='mine-detail-card-description'>
+                <p className="mine-detail-card-description">
                   免责声明：一切信息仅供参考，不对信息来源与权威性负责，请结合官方渠道审慎甄别。
                 </p>
-                <div className='mine-detail-link-row'>
+                <div className="mine-detail-link-row">
                   <button
-                    type='button'
-                    className='mine-detail-link-button'
+                    type="button"
+                    className="mine-detail-link-button"
                     onClick={() => setIsTermsModalOpen(true)}
                   >
                     用户协议与隐私声明
                   </button>
                   <button
-                    type='button'
-                    className='mine-detail-link-button'
+                    type="button"
+                    className="mine-detail-link-button"
                     onClick={() => setIsLicenseModalOpen(true)}
                   >
                     开源许可证
                   </button>
                 </div>
-                <p className='mine-detail-card-description'>鸣谢支持：我不是卷神、华工转专业交流群</p>
+                <p className="mine-detail-card-description">
+                  鸣谢支持：我不是卷神、华工转专业交流群
+                </p>
               </div>
             </div>
 
-            <div className='mine-button-group'>
+            <div className="mine-button-group">
               <button
-                type='button'
-                className='mine-group-button schedule-settings-action'
+                type="button"
+                className="mine-group-button schedule-settings-action"
                 onClick={() => setIsTodoModalOpen(true)}
               >
                 查看TODO，参加贡献！
@@ -484,12 +519,12 @@ function MineDetailPage({ title }: MineDetailPageProps) {
             </div>
 
             <Modal
-              title='用户协议与隐私声明'
+              title="用户协议与隐私声明"
               open={isTermsModalOpen}
               onCancel={() => setIsTermsModalOpen(false)}
               footer={null}
             >
-              <div className='mine-legal-content'>
+              <div className="mine-legal-content">
                 <p>本应用为信息聚合与工具辅助产品，供校内学习与生活参考使用。</p>
                 <p>
                   你在使用过程中应遵守法律法规与平台规则，不得将本应用用于违法违规、侵权或破坏性用途。
@@ -504,24 +539,30 @@ function MineDetailPage({ title }: MineDetailPageProps) {
             </Modal>
 
             <Modal
-              title='开源许可证'
+              title="开源许可证"
               open={isLicenseModalOpen}
               onCancel={() => setIsLicenseModalOpen(false)}
               footer={null}
             >
-              <div className='mine-legal-content'>
+              <div className="mine-legal-content">
                 <p>本项目及所引用开源项目许可证如下（以官方仓库声明为准）：</p>
-                <ul className='mine-license-list'>
+                <ul className="mine-license-list">
                   {THIRD_PARTY_LICENSES.map((item) => (
                     <li key={`${item.name}@${item.version}`}>
-                      <span>{item.name}@{item.version}</span>
-                      <span className='mine-license-metadata'>
+                      <span>
+                        {item.name}@{item.version}
+                      </span>
+                      <span className="mine-license-metadata">
                         <span>{item.license}</span>
                         {item.sourceUrl ? (
-                          <a href={item.sourceUrl} target='_blank' rel='noreferrer'>源码</a>
+                          <a href={item.sourceUrl} target="_blank" rel="noreferrer">
+                            源码
+                          </a>
                         ) : null}
                         {item.licenseUrl ? (
-                          <a href={item.licenseUrl} target='_blank' rel='noreferrer'>许可证全文</a>
+                          <a href={item.licenseUrl} target="_blank" rel="noreferrer">
+                            许可证全文
+                          </a>
                         ) : null}
                       </span>
                     </li>
@@ -531,15 +572,15 @@ function MineDetailPage({ title }: MineDetailPageProps) {
             </Modal>
 
             <Modal
-              title='查看TODO，参加贡献！'
+              title="查看TODO，参加贡献！"
               open={isTodoModalOpen}
               onCancel={() => setIsTodoModalOpen(false)}
               footer={null}
             >
-              <section className='mine-todo-section'>
-                <p className='mine-todo-section-title'>APP</p>
+              <section className="mine-todo-section">
+                <p className="mine-todo-section-title">APP</p>
                 {APP_TODO_ITEMS.length > 0 ? (
-                  <ul className='mine-todo-list'>
+                  <ul className="mine-todo-list">
                     {APP_TODO_ITEMS.map((todo, index) => (
                       <li key={`app-${index}`}>
                         <label>
@@ -550,14 +591,14 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                     ))}
                   </ul>
                 ) : (
-                  <p className='mine-detail-card-description'>暂无 TODO</p>
+                  <p className="mine-detail-card-description">暂无 TODO</p>
                 )}
               </section>
 
-              <section className='mine-todo-section'>
-                <p className='mine-todo-section-title'>手册</p>
+              <section className="mine-todo-section">
+                <p className="mine-todo-section-title">手册</p>
                 {MANUAL_TODO_ITEMS.length > 0 ? (
-                  <ul className='mine-todo-list'>
+                  <ul className="mine-todo-list">
                     {MANUAL_TODO_ITEMS.map((todo, index) => (
                       <li key={`manual-${index}`}>
                         <label>
@@ -568,17 +609,17 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                     ))}
                   </ul>
                 ) : (
-                  <p className='mine-detail-card-description'>暂无 TODO</p>
+                  <p className="mine-detail-card-description">暂无 TODO</p>
                 )}
               </section>
             </Modal>
           </>
         ) : (
-          <div className='mine-faq-list'>
+          <div className="mine-faq-list">
             {FAQ_ITEMS.map((item) => (
-              <details className='mine-faq-item' key={item.question}>
-                <summary className='mine-faq-question'>{item.question}</summary>
-                <p className='mine-detail-card-description mine-faq-answer'>{item.answer}</p>
+              <details className="mine-faq-item" key={item.question}>
+                <summary className="mine-faq-question">{item.question}</summary>
+                <p className="mine-detail-card-description mine-faq-answer">{item.answer}</p>
               </details>
             ))}
           </div>

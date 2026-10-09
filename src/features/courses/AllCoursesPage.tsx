@@ -27,7 +27,7 @@ function formatLessonValue(lesson: ScheduleLesson, key: keyof ScheduleLesson) {
   if (value === undefined || value === null || value === '') {
     return '未填写'
   }
-  
+
   return String(value)
 }
 
@@ -47,22 +47,24 @@ function AllCoursesPage() {
   const normalizedSearchText = searchText.trim().toLocaleLowerCase()
   const filteredLessons = normalizedSearchText
     ? lessons.filter((lesson) => {
-      const searchableText = [
-        coursesById.get(lesson.courseId)?.name,
-        coursesById.get(lesson.courseId)?.credit,
-        WEEKDAY_LABELS[lesson.day],
-        lesson.startNode,
-        lesson.endNode,
-        lesson.startWeek,
-        lesson.endWeek,
-        lesson.weekStep,
-        lesson.room,
-        lesson.teacher,
-        lesson.detailText,
-      ].join(' ').toLocaleLowerCase()
+        const searchableText = [
+          coursesById.get(lesson.courseId)?.name,
+          coursesById.get(lesson.courseId)?.credit,
+          WEEKDAY_LABELS[lesson.day],
+          lesson.startNode,
+          lesson.endNode,
+          lesson.startWeek,
+          lesson.endWeek,
+          lesson.weekStep,
+          lesson.room,
+          lesson.teacher,
+          lesson.detailText,
+        ]
+          .join(' ')
+          .toLocaleLowerCase()
 
-      return searchableText.includes(normalizedSearchText)
-    })
+        return searchableText.includes(normalizedSearchText)
+      })
     : lessons
 
   useEffect(() => {
@@ -72,81 +74,83 @@ function AllCoursesPage() {
     }
 
     messageApi.success(popupMessage).then(() => {
-      window.history.replaceState(
-        { ...window.history.state, usr: null },
-        '',
-        location.pathname,
-      )
+      window.history.replaceState({ ...window.history.state, usr: null }, '', location.pathname)
     })
   }, [location.pathname, location.state, messageApi, navigate])
 
   return (
-    <div className='all-courses-page'>
+    <div className="all-courses-page">
       {contextHolder}
-      <header className='all-courses-header'>
-        <div className='all-courses-back'>
+      <header className="all-courses-header">
+        <div className="all-courses-back">
           <TransparentIconButton
-            ariaLabel='返回'
+            ariaLabel="返回"
             icon={<LeftOutlined />}
             onClick={() => navigate(APP_ROUTE_PATHS.courses)}
           />
         </div>
-        <div className='all-courses-title'>查看所有课程</div>
+        <div className="all-courses-title">查看所有课程</div>
       </header>
 
-      <div className='all-courses-content'>
+      <div className="all-courses-content">
         {lessons.length === 0 ? (
-          <div className='all-courses-empty'>
+          <div className="all-courses-empty">
             {scheduleData ? '当前课表没有课程' : '请先选择或导入课表'}
           </div>
         ) : (
           <>
             <Input
-              className='all-courses-search'
-              size='large'
+              className="all-courses-search"
+              size="large"
               allowClear
               prefix={<SearchOutlined />}
-              placeholder='搜索课程名称、星期、地点或教师'
+              placeholder="搜索课程名称、星期、地点或教师"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
             />
             {filteredLessons.length === 0 ? (
-              <div className='all-courses-empty'>没有找到匹配的课程</div>
+              <div className="all-courses-empty">没有找到匹配的课程</div>
             ) : (
-              <div className='all-courses-list'>
+              <div className="all-courses-list">
                 {filteredLessons.map((lesson, index) => (
-                  <article className='all-courses-card' key={`${lesson.instanceId}-${index}`}>
-                    <div className='all-courses-card-title-row'>
-                      <h2 className='all-courses-card-title'>
+                  <article className="all-courses-card" key={`${lesson.instanceId}-${index}`}>
+                    <div className="all-courses-card-title-row">
+                      <h2 className="all-courses-card-title">
                         {`${index + 1} ${coursesById.get(lesson.courseId)?.name ?? '未命名课程'}`}
                       </h2>
                       {scheduleId && (
                         <RoundedSquareIconButton
                           ariaLabel={`修改${coursesById.get(lesson.courseId)?.name ?? '课程'}`}
-                          className='all-courses-edit-button'
-                          onClick={() => navigate(
-                            APP_ROUTE_PATHS.coursesEditCoursePage
-                              .replace(':scheduleId', encodeURIComponent(scheduleId))
-                              .replace(':courseId', String(lesson.courseId))
-                              .replace(':instanceId', encodeURIComponent(lesson.instanceId)),
-                          )}
+                          className="all-courses-edit-button"
+                          onClick={() =>
+                            navigate(
+                              APP_ROUTE_PATHS.coursesEditCoursePage
+                                .replace(':scheduleId', encodeURIComponent(scheduleId))
+                                .replace(':courseId', String(lesson.courseId))
+                                .replace(':instanceId', encodeURIComponent(lesson.instanceId)),
+                            )
+                          }
                           icon={<EditOutlined />}
                         />
                       )}
                     </div>
 
-                    <dl className='all-courses-fields'>
-                      <div className='all-courses-field'>
+                    <dl className="all-courses-fields">
+                      <div className="all-courses-field">
                         <dt>课程时间</dt>
-                        <dd>{WEEKDAY_LABELS[lesson.day]} {lesson.startNode}-{lesson.endNode} 节</dd>
+                        <dd>
+                          {WEEKDAY_LABELS[lesson.day]} {lesson.startNode}-{lesson.endNode} 节
+                        </dd>
                       </div>
 
-                      <div className='all-courses-field'>
+                      <div className="all-courses-field">
                         <dt>周数</dt>
-                        <dd>{lesson.startWeek}-{lesson.endWeek}</dd>
+                        <dd>
+                          {lesson.startWeek}-{lesson.endWeek}
+                        </dd>
                       </div>
 
-                      <div className='all-courses-field'>
+                      <div className="all-courses-field">
                         <dt>学分</dt>
                         <dd>
                           {(coursesById.get(lesson.courseId)?.credit ?? 0) > 0
@@ -156,7 +160,7 @@ function AllCoursesPage() {
                       </div>
 
                       {LESSON_FIELDS.map(({ key, label }) => (
-                        <div className='all-courses-field' key={key}>
+                        <div className="all-courses-field" key={key}>
                           <dt>{label}</dt>
                           <dd>{formatLessonValue(lesson, key)}</dd>
                         </div>

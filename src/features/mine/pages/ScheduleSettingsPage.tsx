@@ -47,9 +47,16 @@ import {
   TIME_SLOT_PRESET_OPTIONS,
 } from '../../../core/schedule/timeSlotPresets'
 import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
-import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import {
+  DEFAULT_TIME_SLOT,
+  getSemesterStartDate,
+  saveSemesterStartDate,
+} from '../../../core/scheduleSettings'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
-import { ANIMATED_BACK_EVENT, type AnimatedBackRequestDetail } from '../../../core/navigation/animatedBack'
+import {
+  ANIMATED_BACK_EVENT,
+  type AnimatedBackRequestDetail,
+} from '../../../core/navigation/animatedBack'
 import { resolveBackPath } from '../../../core/navigation/appBack'
 import { clipboardReadText, clipboardWriteText } from '../../../platform/capacitor/clipboard'
 import { syncAndroidCourseWidgetSchedule } from '../../../platform/capacitor/courseWidgetSchedule'
@@ -143,11 +150,18 @@ function ScheduleSettingsPage() {
   const [exportTargetScheduleId, setExportTargetScheduleId] = useState('')
   const [exportFormat, setExportFormat] = useState<ScheduleExportFormat>('wakeup')
   const [isExportCustomTimeSlotEnabled, setIsExportCustomTimeSlotEnabled] = useState(false)
-  const [exportTimeSlotPresetId, setExportTimeSlotPresetId] = useState<TimeSlotPresetId>(DEFAULT_TIME_SLOT)
+  const [exportTimeSlotPresetId, setExportTimeSlotPresetId] =
+    useState<TimeSlotPresetId>(DEFAULT_TIME_SLOT)
   const [isExportSanitizeEnabled, setIsExportSanitizeEnabled] = useState(false)
-  const [exportSanitizeOptions, setExportSanitizeOptions] = useState<ExportSanitizeOptions>(DEFAULT_EXPORT_SANITIZE_OPTIONS)
-  const [savedSchedules, setSavedSchedules] = useState<SavedScheduleItem[]>(() => listSavedSchedules())
-  const [isAutoSimplifyHintEnabled, setIsAutoSimplifyHintEnabled] = useState(() => getAutoSimplifyScheduleHintEnabled())
+  const [exportSanitizeOptions, setExportSanitizeOptions] = useState<ExportSanitizeOptions>(
+    DEFAULT_EXPORT_SANITIZE_OPTIONS,
+  )
+  const [savedSchedules, setSavedSchedules] = useState<SavedScheduleItem[]>(() =>
+    listSavedSchedules(),
+  )
+  const [isAutoSimplifyHintEnabled, setIsAutoSimplifyHintEnabled] = useState(() =>
+    getAutoSimplifyScheduleHintEnabled(),
+  )
   const [semesterStartDate, setSemesterStartDate] = useState(() => getSemesterStartDate())
   const [pendingDate, setPendingDate] = useState(semesterStartDate)
   const [scheduleName, setScheduleName] = useState(() => loadActiveScheduleEntry()?.name ?? '')
@@ -219,9 +233,8 @@ function ScheduleSettingsPage() {
     setSavedSchedules(listSavedSchedules())
   }
 
-  const runImportOperation = (operation: () => Promise<void>) => (
+  const runImportOperation = (operation: () => Promise<void>) =>
     importOperationRef.current.run(operation, setIsImportPending)
-  )
 
   const handleClose = () => {
     startClosingTransition()
@@ -354,8 +367,10 @@ function ScheduleSettingsPage() {
         const qmsText = await decodeCompressedQmsText(compressedQmsText)
         await handleImportQmsText(qmsText)
       } catch (error) {
-        const errorMessage = error instanceof Error ?
-          `从剪切板导入压缩QMS失败，请再次输入。原因: ${error.message}` : '从剪切板导入压缩QMS失败'
+        const errorMessage =
+          error instanceof Error
+            ? `从剪切板导入压缩QMS失败，请再次输入。原因: ${error.message}`
+            : '从剪切板导入压缩QMS失败'
         messageApi.error(errorMessage)
         setIsImportCompressedQMSModalOpen(true)
         return
@@ -423,7 +438,10 @@ function ScheduleSettingsPage() {
     }
   }
 
-  const handleExportSanitizeOptionSwitchChange = (key: keyof ExportSanitizeOptions, checked: boolean) => {
+  const handleExportSanitizeOptionSwitchChange = (
+    key: keyof ExportSanitizeOptions,
+    checked: boolean,
+  ) => {
     setExportSanitizeOptions((previousOptions) => ({
       ...previousOptions,
       [key]: checked,
@@ -522,7 +540,12 @@ function ScheduleSettingsPage() {
           const nextThemeId = selectedThemePreset.id
           const nextTimeSlotPresetId = resolveNearestCampusTimeSlotPresetId(scheduleData.timeSlots)
           const nextSemesterStartDate = scheduleData.table.startDate || semesterStartDate
-          const isSaved = await persistImportedSchedule(scheduleData, nextSemesterStartDate, nextThemeId, nextTimeSlotPresetId)
+          const isSaved = await persistImportedSchedule(
+            scheduleData,
+            nextSemesterStartDate,
+            nextThemeId,
+            nextTimeSlotPresetId,
+          )
           if (!isSaved) {
             return
           }
@@ -535,7 +558,9 @@ function ScheduleSettingsPage() {
           setSemesterStartDate(nextSemesterStartDate)
           setPendingDate(nextSemesterStartDate)
           const matchedTimeSlotName = getTimeSlotPresetName(nextTimeSlotPresetId)
-          messageApi.success(`课表导入成功，已应用配色：${selectedThemePreset.name}，自动匹配时间表：${matchedTimeSlotName}`)
+          messageApi.success(
+            `课表导入成功，已应用配色：${selectedThemePreset.name}，自动匹配时间表：${matchedTimeSlotName}`,
+          )
           setIsImportDateReminderOpen(true)
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '课表导入失败'
@@ -594,7 +619,8 @@ function ScheduleSettingsPage() {
         await handleImportQmsText(content)
       })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'QMS 文件读取失败，请重新选择文件后重试'
+      const errorMessage =
+        error instanceof Error ? error.message : 'QMS 文件读取失败，请重新选择文件后重试'
       messageApi.error(errorMessage)
     } finally {
       event.target.value = ''
@@ -614,7 +640,8 @@ function ScheduleSettingsPage() {
         await handleImportScutHtml(html)
       })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'HTML 文件读取失败，请重新选择文件后重试'
+      const errorMessage =
+        error instanceof Error ? error.message : 'HTML 文件读取失败，请重新选择文件后重试'
       messageApi.error(errorMessage)
     } finally {
       event.target.value = ''
@@ -629,7 +656,11 @@ function ScheduleSettingsPage() {
 
       const selectedThemePreset = resolveScheduleImportThemePreset(scheduleThemeId)
       const nextSemesterStartDate = scheduleData.table.startDate || semesterStartDate
-      const isSaved = await persistImportedSchedule(scheduleData, nextSemesterStartDate, selectedThemePreset.id)
+      const isSaved = await persistImportedSchedule(
+        scheduleData,
+        nextSemesterStartDate,
+        selectedThemePreset.id,
+      )
       if (!isSaved) {
         return
       }
@@ -774,14 +805,19 @@ function ScheduleSettingsPage() {
 
     try {
       const baseFileName = `${sanitizeFileName(normalizedTargetSchedule.name)}_${formatExportTimestamp(new Date())}`
-      const effectiveTimeSlotPresetId = isExportCustomTimeSlotEnabled ? exportTimeSlotPresetId : normalizedTargetSchedule.timeSlotPresetId
-      const timeSlotBoundSchedule = applyTimeSlotPresetForExport(normalizedTargetSchedule, effectiveTimeSlotPresetId)
+      const effectiveTimeSlotPresetId = isExportCustomTimeSlotEnabled
+        ? exportTimeSlotPresetId
+        : normalizedTargetSchedule.timeSlotPresetId
+      const timeSlotBoundSchedule = applyTimeSlotPresetForExport(
+        normalizedTargetSchedule,
+        effectiveTimeSlotPresetId,
+      )
       const exportSchedule = isExportSanitizeEnabled
         ? sanitizeScheduleForExport(timeSlotBoundSchedule, exportSanitizeOptions)
         : timeSlotBoundSchedule
-      
+
       let filePath = null
-      
+
       if (exportFormat === 'wakeup') {
         const wakeupText = buildWakeupExportText(exportSchedule)
         const { path } = await downloadTextFile(`${baseFileName}.wakeup_schedule`, wakeupText)
@@ -789,7 +825,11 @@ function ScheduleSettingsPage() {
         filePath = `${path}/${baseFileName}.wakeup_schedule`
       } else if (exportFormat === 'qms') {
         const qmsText = buildQmsExportText(exportSchedule)
-        const { path } = await downloadTextFile(`${baseFileName}.qms`, qmsText, 'application/json;charset=utf-8')
+        const { path } = await downloadTextFile(
+          `${baseFileName}.qms`,
+          qmsText,
+          'application/json;charset=utf-8',
+        )
 
         filePath = `${path}/${baseFileName}.qms`
       } else {
@@ -814,7 +854,7 @@ function ScheduleSettingsPage() {
       } else {
         messageApi.success('课表导出成功')
       }
-      
+
       setIsExportFormatModalOpen(false)
       setExportTargetScheduleId('')
     } catch {
@@ -835,39 +875,41 @@ function ScheduleSettingsPage() {
   useBackDismiss(isExportFormatModalOpen, () => setIsExportFormatModalOpen(false))
 
   return (
-    <section className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}>
+    <section
+      className={`schedule-settings-page settings-view-transition settings-view-transition--${transitionStage}`}
+    >
       {contextHolder}
 
-      <header className='schedule-settings-header'>
+      <header className="schedule-settings-header">
         <div>
-          <p className='schedule-settings-title'>课表设置</p>
-          <p className='schedule-settings-subtitle'>Class Schedule Settings</p>
+          <p className="schedule-settings-title">课表设置</p>
+          <p className="schedule-settings-subtitle">Class Schedule Settings</p>
         </div>
 
         <CircleIconButton
-          ariaLabel='关闭课表设置'
+          ariaLabel="关闭课表设置"
           icon={<CloseOutlined />}
           disabled={transitionStage === 'closing'}
           onClick={handleClose}
         />
       </header>
 
-      <div className='schedule-settings-content'>
-        <div className='mine-button-group'>
+      <div className="schedule-settings-content">
+        <div className="mine-button-group">
           <button
-            type='button'
-            className='mine-group-button schedule-settings-action'
+            type="button"
+            className="mine-group-button schedule-settings-action"
             onClick={handleOpenDateModal}
           >
             设置学期起始时间
           </button>
         </div>
-        <p className='schedule-settings-current-date'>当前已设置：{semesterStartDate}</p>
+        <p className="schedule-settings-current-date">当前已设置：{semesterStartDate}</p>
 
-        <div className='mine-button-group'>
+        <div className="mine-button-group">
           <button
-            type='button'
-            className='mine-group-button schedule-settings-action'
+            type="button"
+            className="mine-group-button schedule-settings-action"
             onClick={handleOpenImport}
             disabled={isImportPending}
             aria-busy={isImportPending}
@@ -875,133 +917,138 @@ function ScheduleSettingsPage() {
             {isImportPending ? '正在导入课表...' : '导入课表'}
           </button>
           <button
-            type='button'
-            className='mine-group-button schedule-settings-action'
+            type="button"
+            className="mine-group-button schedule-settings-action"
             onClick={handleOpenScheduleExport}
           >
             导出课表
           </button>
           <button
-            type='button'
-            className='mine-group-button schedule-settings-action'
+            type="button"
+            className="mine-group-button schedule-settings-action"
             onClick={handleOpenScheduleSwitch}
           >
             切换课表
           </button>
           <button
-            type='button'
-            className='mine-group-button schedule-settings-action'
+            type="button"
+            className="mine-group-button schedule-settings-action"
             onClick={handleOpenChangeScheduleNameModal}
           >
             修改课表名称
           </button>
         </div>
-        <p className='schedule-settings-current-date'>
-          当前课表：{scheduleName || '未导入'}
-        </p>
+        <p className="schedule-settings-current-date">当前课表：{scheduleName || '未导入'}</p>
 
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-theme-family-panel'>
-            <div className='mine-theme-mode-header'>
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-theme-family-panel">
+            <div className="mine-theme-mode-header">
               <span>课表配色</span>
-              <span className='mine-theme-toggle-meta'>{getScheduleThemePresetById(scheduleThemeId).name}</span>
+              <span className="mine-theme-toggle-meta">
+                {getScheduleThemePresetById(scheduleThemeId).name}
+              </span>
             </div>
 
-            <div className='mine-theme-family-list'>
+            <div className="mine-theme-family-list">
               <VerticalSlideSelector
                 value={scheduleThemeId}
                 options={SCHEDULE_THEME_OPTIONS}
                 onChange={handleSelectTheme}
-                ariaLabel='课表主题切换'
-                className='schedule-theme-selector'
+                ariaLabel="课表主题切换"
+                className="schedule-theme-selector"
               />
             </div>
           </div>
         </div>
 
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-theme-family-panel'>
-            <div className='mine-theme-mode-header'>
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-theme-family-panel">
+            <div className="mine-theme-mode-header">
               <span>时间表设置</span>
-              <span className='mine-theme-toggle-meta'>{getTimeSlotPresetName(timeSlotPresetId)}</span>
+              <span className="mine-theme-toggle-meta">
+                {getTimeSlotPresetName(timeSlotPresetId)}
+              </span>
             </div>
 
-            <div className='mine-theme-family-list'>
+            <div className="mine-theme-family-list">
               <VerticalSlideSelector
                 value={timeSlotPresetId}
                 options={TIME_SLOT_PRESET_SELECTOR_OPTIONS}
                 onChange={handleSelectTimeSlotPreset}
-                ariaLabel='课表时间表设置'
-                className='schedule-theme-selector'
+                ariaLabel="课表时间表设置"
+                className="schedule-theme-selector"
               />
             </div>
           </div>
         </div>
 
-        <div className='mine-button-group'>
-          <div className='mine-group-button mine-setting-row'>
-            <div className='mine-setting-copy'>
-              <p className='mine-detail-card-title'>自动精简提示信息</p>
-              <p className='mine-detail-card-description'>
+        <div className="mine-button-group">
+          <div className="mine-group-button mine-setting-row">
+            <div className="mine-setting-copy">
+              <p className="mine-detail-card-title">自动精简提示信息</p>
+              <p className="mine-detail-card-description">
                 开启后会自动精简单元格提示文本（如去除校区前缀）
               </p>
             </div>
-            <Switch checked={isAutoSimplifyHintEnabled} onChange={handleAutoSimplifyHintSwitchChange} />
+            <Switch
+              checked={isAutoSimplifyHintEnabled}
+              onChange={handleAutoSimplifyHintSwitchChange}
+            />
           </div>
         </div>
       </div>
 
       <input
         ref={wakeupFileInputRef}
-        type='file'
-        accept='.wakeup_schedule,.json,.txt,.bin'
-        className='schedule-settings-file-input'
+        type="file"
+        accept=".wakeup_schedule,.json,.txt,.bin"
+        className="schedule-settings-file-input"
         disabled={isImportPending}
         onChange={handleImportSchedule}
       />
 
       <input
         ref={qmsFileInputRef}
-        type='file'
-        accept='.qms,.json,.txt,.bin'
-        className='schedule-settings-file-input'
+        type="file"
+        accept=".qms,.json,.txt,.bin"
+        className="schedule-settings-file-input"
         disabled={isImportPending}
         onChange={handleImportQms}
       />
 
       <input
         ref={htmlFileInputRef}
-        type='file'
-        accept='.html,.htm,.mht,.mhtml,.txt'
-        className='schedule-settings-file-input'
+        type="file"
+        accept=".html,.htm,.mht,.mhtml,.txt"
+        className="schedule-settings-file-input"
         disabled={isImportPending}
         onChange={handleImportHtmlFile}
       />
 
       <Modal
-        title='设置学期起始时间'
+        title="设置学期起始时间"
         open={isImportDateReminderOpen}
         onOk={handleConfirmImportDateReminder}
         onCancel={handleCloseImportDateReminder}
-        okText='去设置'
-        cancelText='稍后再说'
+        okText="去设置"
+        cancelText="稍后再说"
       >
         <p>导入成功！建议先设置学期起始时间，以保证周次、节次和课程日期计算准确。</p>
       </Modal>
 
       <Modal
-        title='设置学期起始时间'
+        title="设置学期起始时间"
         open={isDateModalOpen}
         onOk={handleConfirmDate}
         onCancel={handleCloseDateModal}
-        okText='确定'
-        cancelText='取消'
+        okText="确定"
+        cancelText="取消"
       >
         <DatePicker
-          className='schedule-semester-date-picker'
+          className="schedule-semester-date-picker"
           inputReadOnly
           style={{ width: '100%' }}
-          format='YYYY-MM-DD'
+          format="YYYY-MM-DD"
           placeholder={semesterStartDate}
           onChange={(_, dateString) => {
             if (Array.isArray(dateString)) {
@@ -1014,45 +1061,75 @@ function ScheduleSettingsPage() {
       </Modal>
 
       <Modal
-        title='导入课表'
+        title="导入课表"
         open={isImportModalOpen}
         onCancel={() => setIsImportModalOpen(false)}
         footer={null}
       >
-        <div className='schedule-import-list'>
-          <button type='button' className='schedule-import-item' onClick={handleImportWakeupEntry} disabled={isImportPending}>
+        <div className="schedule-import-list">
+          <button
+            type="button"
+            className="schedule-import-item"
+            onClick={handleImportWakeupEntry}
+            disabled={isImportPending}
+          >
             从 WakeUp 导入
           </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportHtmlEntry} disabled={isImportPending}>
+          <button
+            type="button"
+            className="schedule-import-item"
+            onClick={handleImportHtmlEntry}
+            disabled={isImportPending}
+          >
             从华工教务HTML导入
           </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportPdfEntry} disabled={isImportPending}>
+          <button
+            type="button"
+            className="schedule-import-item"
+            onClick={handleImportPdfEntry}
+            disabled={isImportPending}
+          >
             从华工教务PDF导入
           </button>
           {isAndroidNative && (
-            <button type='button' className='schedule-import-item' onClick={handleImportScutJwEntry} disabled={isImportPending}>
+            <button
+              type="button"
+              className="schedule-import-item"
+              onClick={handleImportScutJwEntry}
+              disabled={isImportPending}
+            >
               从华工教务系统导入
             </button>
           )}
-          <button type='button' className='schedule-import-item' onClick={handleImportQmsEntry} disabled={isImportPending}>
+          <button
+            type="button"
+            className="schedule-import-item"
+            onClick={handleImportQmsEntry}
+            disabled={isImportPending}
+          >
             从启梦文件QMS导入
           </button>
-          <button type='button' className='schedule-import-item' onClick={handleImportCompressedQmsFromClipboardEntry} disabled={isImportPending}>
+          <button
+            type="button"
+            className="schedule-import-item"
+            onClick={handleImportCompressedQmsFromClipboardEntry}
+            disabled={isImportPending}
+          >
             从剪贴板压缩QMS导入
           </button>
         </div>
       </Modal>
 
       <Modal
-        title='从华工教务HTML导入'
+        title="从华工教务HTML导入"
         open={isHtmlImportMethodModalOpen}
         onOk={handleConfirmHtmlImportMethod}
         onCancel={() => setIsHtmlImportMethodModalOpen(false)}
         confirmLoading={isImportPending}
         okButtonProps={{ disabled: isImportPending }}
         cancelButtonProps={{ disabled: isImportPending }}
-        okText='继续'
-        cancelText='取消'
+        okText="继续"
+        cancelText="取消"
       >
         <Select
           style={{ width: '100%' }}
@@ -1067,65 +1144,65 @@ function ScheduleSettingsPage() {
       </Modal>
 
       <Modal
-        title='直接输入华工教务HTML'
+        title="直接输入华工教务HTML"
         open={isHtmlInputModalOpen}
         onOk={handleConfirmHtmlInput}
         onCancel={() => setIsHtmlInputModalOpen(false)}
         confirmLoading={isImportPending}
         okButtonProps={{ disabled: isImportPending }}
         cancelButtonProps={{ disabled: isImportPending }}
-        okText='确定'
-        cancelText='取消'
+        okText="确定"
+        cancelText="取消"
       >
         <TextArea
           rows={10}
-          placeholder='请粘贴华工教务系统课表 HTML'
+          placeholder="请粘贴华工教务系统课表 HTML"
           value={htmlInputText}
           onChange={(event) => setHtmlInputText(event.target.value)}
         />
       </Modal>
 
       <Modal
-        title='粘贴压缩QMS'
+        title="粘贴压缩QMS"
         open={isImportCompressedQMSModalOpen}
         onOk={() => handleConfirmImportCompressedQMS()}
         onCancel={() => setIsImportCompressedQMSModalOpen(false)}
-        okText='确定'
-        cancelText='取消'
+        okText="确定"
+        cancelText="取消"
       >
         <TextArea
           rows={10}
-          placeholder='请填入要导入的课表QMS'
+          placeholder="请填入要导入的课表QMS"
           value={compressedQMSInputText}
           onChange={(event) => setCompressedQMSInputText(event.target.value)}
         />
       </Modal>
 
       <Modal
-        title='切换课表'
+        title="切换课表"
         open={isScheduleSwitchModalOpen}
         onCancel={() => setIsScheduleSwitchModalOpen(false)}
         footer={null}
       >
-        <div className='schedule-switch-list'>
+        <div className="schedule-switch-list">
           {savedSchedules.length === 0 ? (
-            <p className='schedule-switch-empty'>暂无已保存课表</p>
+            <p className="schedule-switch-empty">暂无已保存课表</p>
           ) : (
             savedSchedules.map((schedule) => (
-              <div key={schedule.id} className='schedule-switch-row'>
+              <div key={schedule.id} className="schedule-switch-row">
                 <button
-                  type='button'
+                  type="button"
                   className={`schedule-switch-item ${schedule.isActive ? 'is-active' : ''}`}
                   onClick={() => handleSwitchSchedule(schedule.id)}
                 >
                   <span>{schedule.name}</span>
-                  <span className='schedule-switch-meta'>
+                  <span className="schedule-switch-meta">
                     来源：{getScheduleSourceLabel(schedule.source)}
                   </span>
                 </button>
                 <button
-                  type='button'
-                  className='schedule-switch-delete'
+                  type="button"
+                  className="schedule-switch-delete"
                   aria-label={`删除课表 ${schedule.name}`}
                   onClick={() => handleOpenDeleteSchedule(schedule.id, schedule.name)}
                 >
@@ -1138,60 +1215,61 @@ function ScheduleSettingsPage() {
       </Modal>
 
       <Modal
-        title='修改课表名称'
+        title="修改课表名称"
         open={isChangeScheduleNameModalOpen}
         onOk={() => handleConfirmChangeScheduleName()}
         onCancel={() => setIsChangeScheduleNameModalOpen(false)}
-        okText='确定'
-        cancelText='取消'
+        okText="确定"
+        cancelText="取消"
       >
         <TextArea
           rows={5}
-          placeholder='请填入要修改的名称'
+          placeholder="请填入要修改的名称"
           value={newScheduleNameInputText}
           onChange={(event) => setNewScheduleNameInputText(event.target.value)}
         />
       </Modal>
 
       <Modal
-        title='删除课表确认'
+        title="删除课表确认"
         open={isScheduleDeleteModalOpen}
         onOk={handleConfirmDeleteSchedule}
         onCancel={() => setIsScheduleDeleteModalOpen(false)}
-        okText='确认删除'
-        cancelText='取消'
+        okText="确认删除"
+        cancelText="取消"
       >
-        <p className='schedule-switch-empty'>
-          该操作无法撤销。请输入课表名称 <strong>{deleteTargetScheduleName || '-'}</strong> 以确认删除。
+        <p className="schedule-switch-empty">
+          该操作无法撤销。请输入课表名称 <strong>{deleteTargetScheduleName || '-'}</strong>{' '}
+          以确认删除。
         </p>
         <Input
           value={deleteConfirmText}
-          placeholder='输入课表名称进行确认'
+          placeholder="输入课表名称进行确认"
           onChange={(event) => setDeleteConfirmText(event.target.value)}
         />
       </Modal>
 
       <Modal
-        title='导出课表'
+        title="导出课表"
         open={isScheduleExportModalOpen}
         onOk={handleConfirmExportScheduleTarget}
         onCancel={() => setIsScheduleExportModalOpen(false)}
-        okText='下一步'
-        cancelText='取消'
+        okText="下一步"
+        cancelText="取消"
       >
-        <div className='schedule-switch-list'>
+        <div className="schedule-switch-list">
           {savedSchedules.length === 0 ? (
-            <p className='schedule-switch-empty'>暂无已保存课表</p>
+            <p className="schedule-switch-empty">暂无已保存课表</p>
           ) : (
             savedSchedules.map((schedule) => (
               <button
                 key={schedule.id}
-                type='button'
+                type="button"
                 className={`schedule-switch-item ${schedule.id === exportTargetScheduleId ? 'is-active' : ''}`}
                 onClick={() => setExportTargetScheduleId(schedule.id)}
               >
                 <span>{schedule.name}</span>
-                <span className='schedule-switch-meta'>
+                <span className="schedule-switch-meta">
                   来源：{getScheduleSourceLabel(schedule.source)}
                 </span>
               </button>
@@ -1201,12 +1279,12 @@ function ScheduleSettingsPage() {
       </Modal>
 
       <Modal
-        title='选择导出格式'
+        title="选择导出格式"
         open={isExportFormatModalOpen}
         onOk={handleConfirmExportFormat}
         onCancel={() => setIsExportFormatModalOpen(false)}
-        okText='导出'
-        cancelText='取消'
+        okText="导出"
+        cancelText="取消"
       >
         <Select
           style={{ width: '100%' }}
@@ -1219,72 +1297,85 @@ function ScheduleSettingsPage() {
           ]}
         />
 
-        <div className='schedule-export-sanitize-card'>
-          <div className='schedule-export-sanitize-row'>
-            <div className='mine-setting-copy'>
-              <p className='mine-detail-card-title'>自定义写入的时间表</p>
-              <p className='mine-detail-card-description'>开启后可指定导出时写入的时间表预设</p>
+        <div className="schedule-export-sanitize-card">
+          <div className="schedule-export-sanitize-row">
+            <div className="mine-setting-copy">
+              <p className="mine-detail-card-title">自定义写入的时间表</p>
+              <p className="mine-detail-card-description">开启后可指定导出时写入的时间表预设</p>
             </div>
-            <Switch checked={isExportCustomTimeSlotEnabled} onChange={setIsExportCustomTimeSlotEnabled} />
+            <Switch
+              checked={isExportCustomTimeSlotEnabled}
+              onChange={setIsExportCustomTimeSlotEnabled}
+            />
           </div>
 
           {isExportCustomTimeSlotEnabled && (
-            <div className='schedule-export-sanitize-options'>
-              <div className='mine-theme-mode-header'>
+            <div className="schedule-export-sanitize-options">
+              <div className="mine-theme-mode-header">
                 <span>导出时间表</span>
-                <span className='mine-theme-toggle-meta'>{getTimeSlotPresetName(exportTimeSlotPresetId)}</span>
+                <span className="mine-theme-toggle-meta">
+                  {getTimeSlotPresetName(exportTimeSlotPresetId)}
+                </span>
               </div>
 
-              <div className='mine-theme-family-list'>
+              <div className="mine-theme-family-list">
                 <VerticalSlideSelector
                   value={exportTimeSlotPresetId}
                   options={TIME_SLOT_PRESET_SELECTOR_OPTIONS}
                   onChange={setExportTimeSlotPresetId}
-                  ariaLabel='导出时间表设置'
-                  className='schedule-theme-selector'
+                  ariaLabel="导出时间表设置"
+                  className="schedule-theme-selector"
                 />
               </div>
             </div>
           )}
         </div>
 
-        <div className='schedule-export-sanitize-card'>
-          <div className='schedule-export-sanitize-row'>
-            <div className='mine-setting-copy'>
-              <p className='mine-detail-card-title'>抹除详细信息</p>
-              <p className='mine-detail-card-description'>开启后可按需抹除导出课表中的敏感字段</p>
+        <div className="schedule-export-sanitize-card">
+          <div className="schedule-export-sanitize-row">
+            <div className="mine-setting-copy">
+              <p className="mine-detail-card-title">抹除详细信息</p>
+              <p className="mine-detail-card-description">开启后可按需抹除导出课表中的敏感字段</p>
             </div>
             <Switch checked={isExportSanitizeEnabled} onChange={handleExportSanitizeSwitchChange} />
           </div>
 
           {isExportSanitizeEnabled && (
-            <div className='schedule-export-sanitize-options'>
-              <div className='schedule-export-sanitize-option'>
+            <div className="schedule-export-sanitize-options">
+              <div className="schedule-export-sanitize-option">
                 <span>抹去绑定的作息时间</span>
                 <Switch
                   checked={exportSanitizeOptions.removeBoundTimeSlots}
-                  onChange={(checked) => handleExportSanitizeOptionSwitchChange('removeBoundTimeSlots', checked)}
+                  onChange={(checked) =>
+                    handleExportSanitizeOptionSwitchChange('removeBoundTimeSlots', checked)
+                  }
                 />
               </div>
-              <div className='schedule-export-sanitize-option'>
+              <div className="schedule-export-sanitize-option">
                 <span>抹去课程名称</span>
                 <Switch
                   checked={exportSanitizeOptions.removeCourseName}
-                  onChange={(checked) => handleExportSanitizeOptionSwitchChange('removeCourseName', checked)}
+                  onChange={(checked) =>
+                    handleExportSanitizeOptionSwitchChange('removeCourseName', checked)
+                  }
                 />
               </div>
-              <div className='schedule-export-sanitize-option'>
+              <div className="schedule-export-sanitize-option">
                 <span>抹去教师名称</span>
                 <Switch
                   checked={exportSanitizeOptions.removeTeacherName}
-                  onChange={(checked) => handleExportSanitizeOptionSwitchChange('removeTeacherName', checked)}
+                  onChange={(checked) =>
+                    handleExportSanitizeOptionSwitchChange('removeTeacherName', checked)
+                  }
                 />
               </div>
-              <div className='schedule-export-sanitize-option'>
+              <div className="schedule-export-sanitize-option">
                 <span>抹去教室位置</span>
                 <Switch
                   checked={exportSanitizeOptions.removeRoom}
-                  onChange={(checked) => handleExportSanitizeOptionSwitchChange('removeRoom', checked)}
+                  onChange={(checked) =>
+                    handleExportSanitizeOptionSwitchChange('removeRoom', checked)
+                  }
                 />
               </div>
             </div>

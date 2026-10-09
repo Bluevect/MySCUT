@@ -28,7 +28,10 @@ type StorageRuntimeProviderProps = {
   bootstrapRuntime: Promise<ApplicationStorageRuntime>
 }
 
-export function StorageRuntimeProvider({ children, bootstrapRuntime }: StorageRuntimeProviderProps) {
+export function StorageRuntimeProvider({
+  children,
+  bootstrapRuntime,
+}: StorageRuntimeProviderProps) {
   const [runtime, setRuntime] = useState<ApplicationStorageRuntime | null>(null)
   const [isRetrying, setIsRetrying] = useState(false)
   const [revision, setRevision] = useState(0)
@@ -72,9 +75,10 @@ export function StorageRuntimeProvider({ children, bootstrapRuntime }: StorageRu
     }
   }, [isRetrying])
 
-  const contextValue = useMemo<StorageRuntimeContextValue | null>(() => (
-    runtime ? { ...runtime, isRetrying, retry } : null
-  ), [isRetrying, retry, runtime])
+  const contextValue = useMemo<StorageRuntimeContextValue | null>(
+    () => (runtime ? { ...runtime, isRetrying, retry } : null),
+    [isRetrying, retry, runtime],
+  )
 
   // 存储就绪前先渲染启动骨架，课表等子树依赖已初始化的存储模块状态，不能提前挂载
   if (!runtime || !contextValue) {
@@ -105,21 +109,21 @@ export function StorageStatusBanner() {
 
   return (
     <Alert
-      className='storage-status-banner'
-      type='error'
+      className="storage-status-banner"
+      type="error"
       showIcon
-      message='课表存储当前为只读状态'
+      message="课表存储当前为只读状态"
       description={storageRuntime.error.message}
-      action={(
+      action={
         <Button
-          size='small'
+          size="small"
           danger
           loading={storageRuntime.isRetrying}
           onClick={() => void storageRuntime.retry()}
         >
           重试
         </Button>
-      )}
+      }
     />
   )
 }

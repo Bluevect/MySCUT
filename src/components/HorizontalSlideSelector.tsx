@@ -30,15 +30,15 @@ export function HorizontalSlideSelector<T extends string>({
   return (
     <div
       className={`horizontal-slide-selector${className ? ` ${className}` : ''}`}
-      role='group'
+      role="group"
       aria-label={ariaLabel}
       style={indicatorStyle}
     >
-      <span className='horizontal-slide-selector-indicator' aria-hidden='true' />
+      <span className="horizontal-slide-selector-indicator" aria-hidden="true" />
       {options.map((option) => (
         <button
           key={option.value}
-          type='button'
+          type="button"
           className={`horizontal-slide-selector-button ${option.value === value ? 'is-active' : ''}`}
           aria-pressed={option.value === value}
           onClick={() => onChange(option.value)}

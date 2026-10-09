@@ -1,7 +1,12 @@
 import { requestLocalModelChatCompletion } from './providers/localModelProvider'
 import { requestOpenAiCompatibleChatCompletion } from './providers/openaiCompatibleProvider'
 import { getOpenAiCompatibleSettings, getPreferredAiProvider } from './storage'
-import { AiClientError, type AiProviderId, type ChatCompletionRequest, type ChatCompletionResponse } from './types'
+import {
+  AiClientError,
+  type AiProviderId,
+  type ChatCompletionRequest,
+  type ChatCompletionResponse,
+} from './types'
 
 type ChatCompletionOptions = {
   providerId?: AiProviderId
@@ -24,7 +29,10 @@ export async function chatCompletion(
   if (providerId === 'openaiCompatible') {
     const settings = getOpenAiCompatibleSettings()
     if (!settings) {
-      throw new AiClientError('INVALID_CONFIG', '尚未配置 OpenAI 兼容服务，请先设置 Base URL 与 API Key')
+      throw new AiClientError(
+        'INVALID_CONFIG',
+        '尚未配置 OpenAI 兼容服务，请先设置 Base URL 与 API Key',
+      )
     }
 
     return requestOpenAiCompatibleChatCompletion(request, settings)

@@ -70,7 +70,10 @@ function createRippleElement(button: HTMLButtonElement, clientX: number, clientY
   window.setTimeout(() => ripple.remove(), RIPPLE_DURATION_MS + 200)
 }
 
-function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCurrentWeekButtonProps) {
+function ReturnToCurrentWeekButton({
+  inferredCurrentWeek,
+  onReturn,
+}: ReturnToCurrentWeekButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dragStateRef = useRef<DragState | null>(null)
   const suppressClickRef = useRef(false)
@@ -168,7 +171,10 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
     )
   }
 
-  const finishPointerInteraction = (event: ReactPointerEvent<HTMLButtonElement>, canceled: boolean) => {
+  const finishPointerInteraction = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    canceled: boolean,
+  ) => {
     const dragState = dragStateRef.current
     if (!dragState || dragState.pointerId !== event.pointerId) {
       return
@@ -217,7 +223,7 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
   return (
     <button
       ref={buttonRef}
-      type='button'
+      type="button"
       className={`return-current-week-fab ${isDragging ? 'is-dragging' : ''}`}
       style={positionStyle}
       aria-label={`回到当前周，第 ${inferredCurrentWeek} 周`}
@@ -227,7 +233,7 @@ function ReturnToCurrentWeekButton({ inferredCurrentWeek, onReturn }: ReturnToCu
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
-      <AimOutlined aria-hidden='true' />
+      <AimOutlined aria-hidden="true" />
       <span>回到当前周</span>
     </button>
   )

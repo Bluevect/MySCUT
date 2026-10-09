@@ -5,10 +5,7 @@ import {
   InAppBrowser,
   ToolBarType,
 } from '@capgo/capacitor-inappbrowser'
-import {
-  assertScheduleByteLength,
-  getUtf8ByteLength,
-} from '../../core/schedule/importLimits'
+import { assertScheduleByteLength, getUtf8ByteLength } from '../../core/schedule/importLimits'
 import {
   logScutJwImportDiagnostic,
   type ScutJwImportDiagnosticStage,
@@ -162,9 +159,8 @@ export async function openScutJwWebView(
     options.top = 0
   }
 
-  const isCurrentWebView = (eventId?: string) => (
+  const isCurrentWebView = (eventId?: string) =>
     !isClosed && webViewId !== null && (!eventId || eventId === webViewId)
-  )
 
   const reportError = (stage: ScutJwImportDiagnosticStage, fallbackMessage: string) => {
     logScutJwImportDiagnostic({ stage, targetUrl })
@@ -221,45 +217,56 @@ export async function openScutJwWebView(
     })
     await clearSessionCookies()
 
-    listenerHandles.push(await InAppBrowser.addListener('closeEvent', (event) => {
-      if (!isCurrentWebView(event.id)) {
-        return
-      }
+    listenerHandles.push(
+      await InAppBrowser.addListener('closeEvent', (event) => {
+        if (!isCurrentWebView(event.id)) {
+          return
+        }
 
-      isClosed = true
-      webViewId = null
-      void removeListenerHandles(listenerHandles)
-        .then(clearSessionCookies)
-        .catch(() => reportError('session-cleanup-failed', '教务系统会话清理失败，请重新打开导入页面'))
-        .finally(options.onClose)
-    }))
+        isClosed = true
+        webViewId = null
+        void removeListenerHandles(listenerHandles)
+          .then(clearSessionCookies)
+          .catch(() =>
+            reportError('session-cleanup-failed', '教务系统会话清理失败，请重新打开导入页面'),
+          )
+          .finally(options.onClose)
+      }),
+    )
 
-    listenerHandles.push(await InAppBrowser.addListener('urlChangeEvent', (event) => {
-      if (!isCurrentWebView(event.id)) {
-        return
-      }
+    listenerHandles.push(
+      await InAppBrowser.addListener('urlChangeEvent', (event) => {
+        if (!isCurrentWebView(event.id)) {
+          return
+        }
 
-      const visitedUrl = normalizeHttpUrl(event.url)
-      if (visitedUrl) {
-        logScutJwImportDiagnostic({
-          stage: 'page-origin-changed',
-          targetUrl: visitedUrl,
-        })
-      }
-    }))
+        const visitedUrl = normalizeHttpUrl(event.url)
+        if (visitedUrl) {
+          logScutJwImportDiagnostic({
+            stage: 'page-origin-changed',
+            targetUrl: visitedUrl,
+          })
+        }
+      }),
+    )
 
-    listenerHandles.push(await InAppBrowser.addListener('browserPageLoadStart', (event) => {
-      options.onBrowserPageLoadStart?.(event)
-    }))
+    listenerHandles.push(
+      await InAppBrowser.addListener('browserPageLoadStart', (event) => {
+        options.onBrowserPageLoadStart?.(event)
+      }),
+    )
 
-    listenerHandles.push(await InAppBrowser.addListener('browserPageLoadProgress', (event) => {
-      options.onBrowserPageLoadProgress?.(event)
-    }))
+    listenerHandles.push(
+      await InAppBrowser.addListener('browserPageLoadProgress', (event) => {
+        options.onBrowserPageLoadProgress?.(event)
+      }),
+    )
 
-    listenerHandles.push(await InAppBrowser.addListener('browserPageLoaded', (event) => {
-      options.onBrowserPageLoaded?.(event)
+    listenerHandles.push(
+      await InAppBrowser.addListener('browserPageLoaded', (event) => {
+        options.onBrowserPageLoaded?.(event)
 
-      /*
+        /*
         Don't use this guard.
         Button won't be injected in personal schedule page for some unknown reasons
         
@@ -268,19 +275,22 @@ export async function openScutJwWebView(
         }
       */
 
-      const eventWebViewId = event.id || webViewId
-      if (eventWebViewId) {
-        logScutJwImportDiagnostic({
-          stage: 'page-loaded',
-          targetUrl,
-        })
-        void injectImportButton(eventWebViewId)
-          .catch(() => reportError('button-injection-failed', '无法添加课表导入按钮，请刷新页面后重试'))
-      }
-    }))
+        const eventWebViewId = event.id || webViewId
+        if (eventWebViewId) {
+          logScutJwImportDiagnostic({
+            stage: 'page-loaded',
+            targetUrl,
+          })
+          void injectImportButton(eventWebViewId).catch(() =>
+            reportError('button-injection-failed', '无法添加课表导入按钮，请刷新页面后重试'),
+          )
+        }
+      }),
+    )
 
-    listenerHandles.push(await InAppBrowser.addListener('messageFromWebview', (event) => {
-      /*
+    listenerHandles.push(
+      await InAppBrowser.addListener('messageFromWebview', (event) => {
+        /*
         Don't use this guard.
         The message won't be handled.
         
@@ -289,60 +299,66 @@ export async function openScutJwWebView(
         }
       */
 
-      const detail = event.detail
-      if (detail?.message !== CAPTURE_HTML_MESSAGE || typeof detail.html !== 'string') {
-        return
-      }
+        const detail = event.detail
+        if (detail?.message !== CAPTURE_HTML_MESSAGE || typeof detail.html !== 'string') {
+          return
+        }
 
-      if (isCapturePending) {
-        logScutJwImportDiagnostic({
-          stage: 'duplicate-capture-ignored',
-          targetUrl,
-        })
-        return
-      }
-
-      const responseLength = getUtf8ByteLength(detail.html)
-      try {
-        assertScheduleByteLength(responseLength, '华工教务页面')
-      } catch (error) {
-        reportError(
-          'capture-rejected',
-          error instanceof Error ? error.message : '当前页面内容过大，无法安全导入',
-        )
-        return
-      }
-
-      isCapturePending = true
-      const eventWebViewId = event.id || webViewId
-      if (eventWebViewId) {
-        void setImportButtonPending(eventWebViewId, true).catch(() => {
+        if (isCapturePending) {
           logScutJwImportDiagnostic({
-            stage: 'button-state-update-failed',
+            stage: 'duplicate-capture-ignored',
             targetUrl,
           })
-        })
-      }
+          return
+        }
 
-      logScutJwImportDiagnostic({
-        stage: 'page-captured',
-        targetUrl,
-        responseLength,
-      })
-      void Promise.resolve(options.onHtmlCaptured(detail.html))
-        .catch(() => reportError('capture-processing-failed', '课表页面处理失败，请确认已打开个人课表查询页面'))
-        .finally(() => {
-          isCapturePending = false
-          if (!isClosed && eventWebViewId) {
-            void setImportButtonPending(eventWebViewId, false).catch(() => {
-              logScutJwImportDiagnostic({
-                stage: 'button-state-update-failed',
-                targetUrl,
-              })
+        const responseLength = getUtf8ByteLength(detail.html)
+        try {
+          assertScheduleByteLength(responseLength, '华工教务页面')
+        } catch (error) {
+          reportError(
+            'capture-rejected',
+            error instanceof Error ? error.message : '当前页面内容过大，无法安全导入',
+          )
+          return
+        }
+
+        isCapturePending = true
+        const eventWebViewId = event.id || webViewId
+        if (eventWebViewId) {
+          void setImportButtonPending(eventWebViewId, true).catch(() => {
+            logScutJwImportDiagnostic({
+              stage: 'button-state-update-failed',
+              targetUrl,
             })
-          }
+          })
+        }
+
+        logScutJwImportDiagnostic({
+          stage: 'page-captured',
+          targetUrl,
+          responseLength,
         })
-    }))
+        void Promise.resolve(options.onHtmlCaptured(detail.html))
+          .catch(() =>
+            reportError(
+              'capture-processing-failed',
+              '课表页面处理失败，请确认已打开个人课表查询页面',
+            ),
+          )
+          .finally(() => {
+            isCapturePending = false
+            if (!isClosed && eventWebViewId) {
+              void setImportButtonPending(eventWebViewId, false).catch(() => {
+                logScutJwImportDiagnostic({
+                  stage: 'button-state-update-failed',
+                  targetUrl,
+                })
+              })
+            }
+          })
+      }),
+    )
 
     const openedWebView = await InAppBrowser.openWebView({
       url: targetUrl,

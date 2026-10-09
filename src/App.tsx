@@ -34,7 +34,7 @@ function App() {
   const routeBoundaryKey = `${location.key}:${location.pathname}`
 
   return (
-    <div className='app-shell'>
+    <div className="app-shell">
       {contextHolder}
       <StorageStatusBanner />
       <main
@@ -56,14 +56,11 @@ function App() {
           <AppRoutes />
         </RouteContentErrorBoundary>
 
-        {!getReloadManualEnabledStartup() && (
-          <ManualPage />
-        )}
-        
+        {!getReloadManualEnabledStartup() && <ManualPage />}
       </main>
 
       {shouldShowBottomNavigation(location.pathname) && (
-        <QmuiTabbar items={TAB_ITEMS} ariaLabel='底部导航' />
+        <QmuiTabbar items={TAB_ITEMS} ariaLabel="底部导航" />
       )}
     </div>
   )

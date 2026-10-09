@@ -31,11 +31,11 @@ function validateLesson(lesson: ScutPdfLessonContract) {
   }
 
   if (
-    !Number.isInteger(lesson.startNode)
-    || !Number.isInteger(lesson.endNode)
-    || lesson.startNode < 1
-    || lesson.endNode < lesson.startNode
-    || lesson.endNode > SCUT_PDF_FIXED_LAYOUT.table.nodeCount
+    !Number.isInteger(lesson.startNode) ||
+    !Number.isInteger(lesson.endNode) ||
+    lesson.startNode < 1 ||
+    lesson.endNode < lesson.startNode ||
+    lesson.endNode > SCUT_PDF_FIXED_LAYOUT.table.nodeCount
   ) {
     throw createMappingError('课程节次字段无效')
   }
@@ -55,12 +55,12 @@ function validateLesson(lesson: ScutPdfLessonContract) {
 
   lesson.weekRanges.forEach((range) => {
     if (
-      !Number.isInteger(range.startWeek)
-      || !Number.isInteger(range.endWeek)
-      || !Number.isInteger(range.weekStep)
-      || range.startWeek < 1
-      || range.endWeek < range.startWeek
-      || range.weekStep < 1
+      !Number.isInteger(range.startWeek) ||
+      !Number.isInteger(range.endWeek) ||
+      !Number.isInteger(range.weekStep) ||
+      range.startWeek < 1 ||
+      range.endWeek < range.startWeek ||
+      range.weekStep < 1
     ) {
       throw createMappingError(`课程“${courseName}”的周次范围无效`)
     }
@@ -100,13 +100,13 @@ export function mapScutSchedulePdf(
   }
 
   if (
-    typeof extractionMeta.sourceFileName !== 'string'
-    || extractionMeta.sourceFileName.trim().length === 0
-    || !Number.isFinite(extractionMeta.byteLength)
-    || extractionMeta.byteLength <= 0
-    || extractionMeta.pageCount !== 1
-    || typeof extractionMeta.pdfjsVersion !== 'string'
-    || extractionMeta.pdfjsVersion.trim().length === 0
+    typeof extractionMeta.sourceFileName !== 'string' ||
+    extractionMeta.sourceFileName.trim().length === 0 ||
+    !Number.isFinite(extractionMeta.byteLength) ||
+    extractionMeta.byteLength <= 0 ||
+    extractionMeta.pageCount !== 1 ||
+    typeof extractionMeta.pdfjsVersion !== 'string' ||
+    extractionMeta.pdfjsVersion.trim().length === 0
   ) {
     throw createMappingError('PDF 提取诊断信息不完整')
   }

@@ -32,8 +32,8 @@ function matchesParameterizedPath(pattern: string, pathname: string) {
 
   return (
     patternSegments.length === pathSegments.length &&
-    patternSegments.every((segment, index) =>
-      segment.startsWith(':') || segment === pathSegments[index],
+    patternSegments.every(
+      (segment, index) => segment.startsWith(':') || segment === pathSegments[index],
     )
   )
 }
@@ -47,8 +47,8 @@ export function resolveBackPath(pathname: string) {
     return directParent
   }
 
-  const parameterizedParent = Object.entries(PARENT_ROUTE_MAP).find(([pattern]) =>
-    pattern.includes('/:') && matchesParameterizedPath(pattern, normalized),
+  const parameterizedParent = Object.entries(PARENT_ROUTE_MAP).find(
+    ([pattern]) => pattern.includes('/:') && matchesParameterizedPath(pattern, normalized),
   )?.[1]
 
   return parameterizedParent ?? APP_ROOT_PATH

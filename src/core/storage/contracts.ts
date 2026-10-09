@@ -1,9 +1,5 @@
 export type StorageErrorCode =
-  | 'unavailable'
-  | 'permission-denied'
-  | 'quota-exceeded'
-  | 'corrupt-data'
-  | 'unsupported'
+  'unavailable' | 'permission-denied' | 'quota-exceeded' | 'corrupt-data' | 'unsupported'
 
 export class StorageError extends Error {
   readonly code: StorageErrorCode
@@ -80,10 +76,7 @@ export interface PersistentStore {
   get<T>(key: PersistentKey<T>): Promise<T | null>
   set<T>(key: PersistentKey<T>, value: T): Promise<void>
   remove<T>(key: PersistentKey<T>): Promise<void>
-  update<T>(
-    key: PersistentKey<T>,
-    updater: (currentValue: T | null) => T | null,
-  ): Promise<T | null>
+  update<T>(key: PersistentKey<T>, updater: (currentValue: T | null) => T | null): Promise<T | null>
 }
 
 export interface SecretStore {

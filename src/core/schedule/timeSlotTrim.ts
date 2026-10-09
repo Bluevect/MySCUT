@@ -8,7 +8,14 @@ function parseTimeToMinutes(timeText: string) {
 
   const hour = Number.parseInt(matched[1], 10)
   const minute = Number.parseInt(matched[2], 10)
-  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
     return null
   }
 

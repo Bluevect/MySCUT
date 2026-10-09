@@ -18,7 +18,7 @@ export function RoundedSquareIconButton({
 }: RoundedSquareIconButtonProps) {
   return (
     <Button
-      type='text'
+      type="text"
       icon={icon}
       aria-label={ariaLabel}
       className={`app-icon-button-square${className ? ` ${className}` : ''}`}

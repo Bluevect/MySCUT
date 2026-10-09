@@ -83,11 +83,10 @@ function normalizeWeekRange(startWeek: number, endWeek: number, parity: string):
 }
 
 function parseWeekRanges(text: string): WeekRange[] {
-  const normalizedText = text
-    .replace(/（/g, '(')
-    .replace(/）/g, ')')
-    .replace(/，/g, ',')
-  const matches = normalizedText.matchAll(/(\d+)(?:\s*-\s*(\d+))?\s*周(?:\s*\((单|双)\))?(?:\s*(单周|双周))?/g)
+  const normalizedText = text.replace(/（/g, '(').replace(/）/g, ')').replace(/，/g, ',')
+  const matches = normalizedText.matchAll(
+    /(\d+)(?:\s*-\s*(\d+))?\s*周(?:\s*\((单|双)\))?(?:\s*(单周|双周))?/g,
+  )
 
   const ranges: WeekRange[] = []
   const seen = new Set<string>()
@@ -194,29 +193,39 @@ function buildScutDetailText(block: HTMLElement) {
 }
 
 function extractWeekText(block: HTMLElement) {
-  const weekParagraph = Array.from(block.querySelectorAll<HTMLParagraphElement>('p')).find((paragraph) => (
-    paragraph.querySelector('.glyphicon-calendar') ||
-    /^\s*(?:周数|周次)\s*[:：]/.test(paragraph.textContent ?? '')
-  ))
+  const weekParagraph = Array.from(block.querySelectorAll<HTMLParagraphElement>('p')).find(
+    (paragraph) =>
+      paragraph.querySelector('.glyphicon-calendar') ||
+      /^\s*(?:周数|周次)\s*[:：]/.test(paragraph.textContent ?? ''),
+  )
 
   return cleanText(weekParagraph?.textContent ?? '')
 }
 
 function extractNodeRangeText(block: HTMLElement) {
-  const nodeRangeParagraph = Array.from(block.querySelectorAll<HTMLParagraphElement>('p')).find((paragraph) => (
-    paragraph.querySelector('.glyphicon-time') ||
-    /\(\s*\d+\s*(?:-\s*\d+)?\s*节\s*\)/.test(paragraph.textContent ?? '')
-  ))
+  const nodeRangeParagraph = Array.from(block.querySelectorAll<HTMLParagraphElement>('p')).find(
+    (paragraph) =>
+      paragraph.querySelector('.glyphicon-time') ||
+      /\(\s*\d+\s*(?:-\s*\d+)?\s*节\s*\)/.test(paragraph.textContent ?? ''),
+  )
 
   return cleanText(nodeRangeParagraph?.textContent ?? '')
 }
 
-function createScutDetailKey(day: number, startNode: number, endNode: number, courseName: string, weekRange: WeekRange) {
+function createScutDetailKey(
+  day: number,
+  startNode: number,
+  endNode: number,
+  courseName: string,
+  weekRange: WeekRange,
+) {
   return `${day}-${startNode}-${endNode}-${courseName}-${weekRange.startWeek}-${weekRange.endWeek}-${weekRange.weekStep}`
 }
 
 function parseScutHtmlDetailEntries(document: Document) {
-  const rows = Array.from(document.querySelectorAll<HTMLTableRowElement>('#table2 tbody[id^="xq_"] tr'))
+  const rows = Array.from(
+    document.querySelectorAll<HTMLTableRowElement>('#table2 tbody[id^="xq_"] tr'),
+  )
   const entries: ScutHtmlDetailEntry[] = []
 
   rows.forEach((row) => {
@@ -285,7 +294,13 @@ export function parseScutScheduleHtml(html: string, options: ParseScutHtmlOption
   const detailEntries = parseScutHtmlDetailEntries(document)
   const detailEntryByKey = new Map<string, ScutHtmlDetailEntry>()
   detailEntries.forEach((entry) => {
-    const key = createScutDetailKey(entry.day, entry.startNode, entry.endNode, entry.courseName, entry.weekRange)
+    const key = createScutDetailKey(
+      entry.day,
+      entry.startNode,
+      entry.endNode,
+      entry.courseName,
+      entry.weekRange,
+    )
     if (!detailEntryByKey.has(key)) {
       detailEntryByKey.set(key, entry)
     }
@@ -339,16 +354,30 @@ export function parseScutScheduleHtml(html: string, options: ParseScutHtmlOption
       }
 
       const weekRanges = parseWeekRanges(weekText || blockText)
-      const nodeInfo = parseNodeRange(extractNodeRangeText(block) || blockText, fallbackNode, rowSpan)
+      const nodeInfo = parseNodeRange(
+        extractNodeRangeText(block) || blockText,
+        fallbackNode,
+        rowSpan,
+      )
 
-      const roomElement = Array.from(block.querySelectorAll('p')).find((p) => p.querySelector('.glyphicon-map-marker'))
-      const teacherElement = Array.from(block.querySelectorAll('p')).find((p) => p.querySelector('.glyphicon-user'))
+      const roomElement = Array.from(block.querySelectorAll('p')).find((p) =>
+        p.querySelector('.glyphicon-map-marker'),
+      )
+      const teacherElement = Array.from(block.querySelectorAll('p')).find((p) =>
+        p.querySelector('.glyphicon-user'),
+      )
 
       const room = cleanText(roomElement?.textContent ?? '')
       const teacher = cleanText(teacherElement?.textContent ?? '')
 
       for (const [rangeIndex, weekRange] of weekRanges.entries()) {
-        const detailKey = createScutDetailKey(day, nodeInfo.startNode, nodeInfo.endNode, courseName, weekRange)
+        const detailKey = createScutDetailKey(
+          day,
+          nodeInfo.startNode,
+          nodeInfo.endNode,
+          courseName,
+          weekRange,
+        )
         const matchedDetail = detailEntryByKey.get(detailKey)
 
         if (course.credit <= 0 && (matchedDetail?.credit ?? 0) > 0) {

@@ -27,28 +27,38 @@ const CAPABILITIES = [
   },
 ]
 
-export function shouldShowCoursesFirstUseGuide(savedScheduleCount: number, isIntersectionPreviewMode: boolean) {
+export function shouldShowCoursesFirstUseGuide(
+  savedScheduleCount: number,
+  isIntersectionPreviewMode: boolean,
+) {
   return savedScheduleCount === 0 && !isIntersectionPreviewMode
 }
 
 function CoursesFirstUseGuide({ onImport }: CoursesFirstUseGuideProps) {
   return (
-    <section className='courses-first-use-guide' aria-labelledby='courses-first-use-title'>
-      <div className='courses-first-use-hero'>
-        <img className='courses-first-use-app-icon' src='/icons/icon-192.png' alt='' aria-hidden='true' />
+    <section className="courses-first-use-guide" aria-labelledby="courses-first-use-title">
+      <div className="courses-first-use-hero">
+        <img
+          className="courses-first-use-app-icon"
+          src="/icons/icon-192.png"
+          alt=""
+          aria-hidden="true"
+        />
         <div>
-          <p className='courses-first-use-eyebrow'>欢迎使用 MySCUT</p>
-          <h1 id='courses-first-use-title' className='courses-first-use-title'>
+          <p className="courses-first-use-eyebrow">欢迎使用 MySCUT</p>
+          <h1 id="courses-first-use-title" className="courses-first-use-title">
             先导入一份课表
           </h1>
-          <p className='courses-first-use-description'>一次导入，随后每周都能更轻松地查看课程安排。</p>
+          <p className="courses-first-use-description">
+            一次导入，随后每周都能更轻松地查看课程安排。
+          </p>
         </div>
       </div>
 
-      <ul className='courses-first-use-capabilities' aria-label='课表能力介绍'>
+      <ul className="courses-first-use-capabilities" aria-label="课表能力介绍">
         {CAPABILITIES.map((capability) => (
-          <li key={capability.title} className='courses-first-use-capability'>
-            <span className='courses-first-use-capability-icon' aria-hidden='true'>
+          <li key={capability.title} className="courses-first-use-capability">
+            <span className="courses-first-use-capability-icon" aria-hidden="true">
               {capability.icon}
             </span>
             <div>
@@ -59,9 +69,9 @@ function CoursesFirstUseGuide({ onImport }: CoursesFirstUseGuideProps) {
         ))}
       </ul>
 
-      <button type='button' className='courses-first-use-import-button' onClick={onImport}>
+      <button type="button" className="courses-first-use-import-button" onClick={onImport}>
         <span>导入课表</span>
-        <RightOutlined aria-hidden='true' />
+        <RightOutlined aria-hidden="true" />
       </button>
     </section>
   )

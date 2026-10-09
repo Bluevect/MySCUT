@@ -1,5 +1,13 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { getGlobalThemePreset } from '../../../core/theme/globalThemePresets'
 import {
   getPreferredGlobalThemeFamily,
@@ -8,7 +16,11 @@ import {
   setStoredGlobalThemeFamily,
   setStoredGlobalThemeMode,
 } from '../../../core/theme/globalThemeStorage'
-import type { GlobalThemeFamily, GlobalThemeMode, ResolvedGlobalThemeMode } from '../../../core/theme/types'
+import type {
+  GlobalThemeFamily,
+  GlobalThemeMode,
+  ResolvedGlobalThemeMode,
+} from '../../../core/theme/types'
 import { syncStatusBarStyleForTheme } from '../../capacitor/syncStatusBarStyle'
 import { syncAndroidCourseWidgetAppearance } from '../../capacitor/courseWidgetSchedule'
 
@@ -27,7 +39,10 @@ type GlobalThemeContextValue = {
 
 const GlobalThemeContext = createContext<GlobalThemeContextValue | null>(null)
 
-function applyGlobalThemeVariables(themeFamily: GlobalThemeFamily, resolvedMode: ResolvedGlobalThemeMode) {
+function applyGlobalThemeVariables(
+  themeFamily: GlobalThemeFamily,
+  resolvedMode: ResolvedGlobalThemeMode,
+) {
   const preset = getGlobalThemePreset(resolvedMode, themeFamily)
   const root = document.documentElement
 
@@ -65,14 +80,21 @@ type GlobalThemeProviderProps = {
 }
 
 export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
-  const [themeFamily, setThemeFamilyState] = useState<GlobalThemeFamily>(() => getPreferredGlobalThemeFamily())
+  const [themeFamily, setThemeFamilyState] = useState<GlobalThemeFamily>(() =>
+    getPreferredGlobalThemeFamily(),
+  )
   const [mode, setModeState] = useState<GlobalThemeMode>(() => getPreferredGlobalThemeMode())
-  const [resolvedMode, setResolvedMode] = useState<ResolvedGlobalThemeMode>(() => resolveGlobalThemeMode(mode))
+  const [resolvedMode, setResolvedMode] = useState<ResolvedGlobalThemeMode>(() =>
+    resolveGlobalThemeMode(mode),
+  )
 
-  const applyResolvedTheme = useCallback((nextResolvedMode: ResolvedGlobalThemeMode) => {
-    applyGlobalThemeVariables(themeFamily, nextResolvedMode)
-    void syncStatusBarStyleForTheme(nextResolvedMode)
-  }, [themeFamily])
+  const applyResolvedTheme = useCallback(
+    (nextResolvedMode: ResolvedGlobalThemeMode) => {
+      applyGlobalThemeVariables(themeFamily, nextResolvedMode)
+      void syncStatusBarStyleForTheme(nextResolvedMode)
+    },
+    [themeFamily],
+  )
 
   useEffect(() => {
     const nextResolvedMode = resolveGlobalThemeMode(mode)

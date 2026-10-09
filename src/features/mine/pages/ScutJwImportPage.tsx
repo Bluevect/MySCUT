@@ -68,9 +68,8 @@ function ScutJwImportPage() {
 
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
   const entryUrlResult = resolveScutJwEntryUrl(accessMode, customUrl)
-  const customUrlError = accessMode === 'custom' && customUrl.trim() && !entryUrlResult.ok
-    ? entryUrlResult.error
-    : ''
+  const customUrlError =
+    accessMode === 'custom' && customUrl.trim() && !entryUrlResult.ok ? entryUrlResult.error : ''
 
   useEffect(() => {
     if (!isAndroidNative || hasShownGuideRef.current) {
@@ -80,7 +79,8 @@ function ScutJwImportPage() {
     hasShownGuideRef.current = true
     const guideModal = infoWithBackDismiss({
       title: '导入提示',
-      content: '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后点击网页右下角的“导入当前页面”。',
+      content:
+        '请选择当前可用的访问方式，登录教务系统并打开“个人课表查询”栏目，然后点击网页右下角的“导入当前页面”。',
       okText: '知道了',
     })
 
@@ -114,66 +114,68 @@ function ScutJwImportPage() {
   }
 
   return (
-    <section className='schedule-settings-page'>
+    <section className="schedule-settings-page">
       {contextHolder}
 
-      <header className='schedule-settings-header'>
+      <header className="schedule-settings-header">
         <div>
-          <p className='schedule-settings-title'>从华工教务系统导入</p>
-          <p className='schedule-settings-subtitle'>SCUT In-App Import</p>
+          <p className="schedule-settings-title">从华工教务系统导入</p>
+          <p className="schedule-settings-subtitle">SCUT In-App Import</p>
         </div>
 
-        <CircleIconButton ariaLabel='关闭页面' icon={<CloseOutlined />} onClick={handleClose} />
+        <CircleIconButton ariaLabel="关闭页面" icon={<CloseOutlined />} onClick={handleClose} />
       </header>
 
-      <div className='schedule-settings-content'>
+      <div className="schedule-settings-content">
         {!isAndroidNative ? (
-          <p className='schedule-pdf-error'>当前环境不支持该功能，请在安卓原生应用中使用。</p>
+          <p className="schedule-pdf-error">当前环境不支持该功能，请在安卓原生应用中使用。</p>
         ) : (
           <>
-            <fieldset className='scut-jw-access-group'>
-              <legend className='scut-jw-access-legend'>访问方式</legend>
-              <div className='scut-jw-access-options'>
+            <fieldset className="scut-jw-access-group">
+              <legend className="scut-jw-access-legend">访问方式</legend>
+              <div className="scut-jw-access-options">
                 {SCUT_JW_ACCESS_OPTIONS.map((option) => (
                   <label
                     key={option.value}
                     className={`scut-jw-access-option ${accessMode === option.value ? 'is-active' : ''}`}
                   >
                     <input
-                      type='radio'
-                      name='scut-jw-access-mode'
+                      type="radio"
+                      name="scut-jw-access-mode"
                       value={option.value}
                       checked={accessMode === option.value}
                       onChange={() => handleAccessModeChange(option.value)}
                     />
-                    <span className='scut-jw-access-radio' aria-hidden='true' />
-                    <span className='scut-jw-access-copy'>
-                      <span className='scut-jw-access-label'>
+                    <span className="scut-jw-access-radio" aria-hidden="true" />
+                    <span className="scut-jw-access-copy">
+                      <span className="scut-jw-access-label">
                         {option.label}
-                        {option.value === 'campus' ? <span className='scut-jw-access-badge'>默认</span> : null}
+                        {option.value === 'campus' ? (
+                          <span className="scut-jw-access-badge">默认</span>
+                        ) : null}
                       </span>
-                      <span className='scut-jw-access-description'>{option.description}</span>
+                      <span className="scut-jw-access-description">{option.description}</span>
                     </span>
                   </label>
                 ))}
               </div>
 
               {accessMode === 'custom' ? (
-                <div className='scut-jw-custom-url'>
+                <div className="scut-jw-custom-url">
                   <Input
                     value={customUrl}
                     onChange={(event) => handleCustomUrlChange(event.target.value)}
-                    placeholder='例如 jw.example.edu.cn'
-                    inputMode='url'
-                    autoCapitalize='none'
-                    autoCorrect='off'
+                    placeholder="例如 jw.example.edu.cn"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     spellCheck={false}
                     status={customUrlError ? 'error' : undefined}
                     aria-invalid={Boolean(customUrlError)}
-                    aria-describedby='scut-jw-custom-url-hint'
+                    aria-describedby="scut-jw-custom-url-hint"
                   />
                   <p
-                    id='scut-jw-custom-url-hint'
+                    id="scut-jw-custom-url-hint"
                     className={`scut-jw-custom-url-hint ${customUrlError ? 'is-error' : ''}`}
                     role={customUrlError ? 'alert' : undefined}
                   >
@@ -183,15 +185,20 @@ function ScutJwImportPage() {
               ) : null}
             </fieldset>
 
-            <div className='scut-jw-tip-card'>
-              <p className='scut-jw-tip-title'>操作提示</p>
-              <p className='scut-jw-tip-text'>1. 选择访问方式，点击“打开教务系统”并完成登录</p>
-              <p className='scut-jw-tip-text'>2. 在内置浏览器中进入“个人课表查询”栏目</p>
-              <p className='scut-jw-tip-text'>3. 出现课表后，点击“导入当前页面”按钮</p>
+            <div className="scut-jw-tip-card">
+              <p className="scut-jw-tip-title">操作提示</p>
+              <p className="scut-jw-tip-text">1. 选择访问方式，点击“打开教务系统”并完成登录</p>
+              <p className="scut-jw-tip-text">2. 在内置浏览器中进入“个人课表查询”栏目</p>
+              <p className="scut-jw-tip-text">3. 出现课表后，点击“导入当前页面”按钮</p>
             </div>
 
-            <div className='mine-button-group'>
-              <button type='button' className='mine-group-button schedule-settings-action' onClick={handleOpenBrowser} disabled={!entryUrlResult.ok}>
+            <div className="mine-button-group">
+              <button
+                type="button"
+                className="mine-group-button schedule-settings-action"
+                onClick={handleOpenBrowser}
+                disabled={!entryUrlResult.ok}
+              >
                 打开教务系统
               </button>
             </div>

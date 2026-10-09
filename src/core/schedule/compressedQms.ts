@@ -1,7 +1,4 @@
-import {
-  assertCompressedQmsDecodedSize,
-  assertCompressedQmsInputLength,
-} from './importLimits'
+import { assertCompressedQmsDecodedSize, assertCompressedQmsInputLength } from './importLimits'
 import { ScheduleImportError } from './importErrors'
 
 type ZstdModule = typeof import('@hpcc-js/wasm-zstd')

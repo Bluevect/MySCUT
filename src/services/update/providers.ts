@@ -67,7 +67,13 @@ const UPDATE_LINK_PROVIDERS: Record<UpdateLinkProviderId, UpdateLinkProvider> = 
   },
 }
 
-const ALLOWED_PROVIDER_IDS = new Set<UpdateLinkProviderId>(['fastgit', 'jsdelivr', 'unpkg', 'github', 'raw'])
+const ALLOWED_PROVIDER_IDS = new Set<UpdateLinkProviderId>([
+  'fastgit',
+  'jsdelivr',
+  'unpkg',
+  'github',
+  'raw',
+])
 
 function resolveDefaultProviderOrder(): UpdateLinkProviderId[] {
   const envOrder = import.meta.env.VITE_UPDATE_PROVIDER_ORDER

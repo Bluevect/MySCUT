@@ -18,7 +18,7 @@ export function CircleIconButton({
 }: CircleIconButtonProps) {
   return (
     <Button
-      type='text'
+      type="text"
       icon={icon}
       aria-label={ariaLabel}
       className={`app-icon-button-circle${className ? ` ${className}` : ''}`}

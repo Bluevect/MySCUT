@@ -98,7 +98,11 @@ export class LocalStoragePersistentStore implements PersistentStore {
         throw error
       }
 
-      throw new StorageError('corrupt-data', `持久化记录无法解析：${key.namespace}/${key.name}`, error)
+      throw new StorageError(
+        'corrupt-data',
+        `持久化记录无法解析：${key.namespace}/${key.name}`,
+        error,
+      )
     }
   }
 

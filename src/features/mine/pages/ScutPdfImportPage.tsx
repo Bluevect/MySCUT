@@ -14,20 +14,18 @@ import {
   saveScheduleDataWithOptions,
   type SaveScheduleOptions,
 } from '../../../core/schedule/storage'
-import {
-  getScheduleThemePreset,
-  setScheduleThemeId,
-} from '../../../core/schedule/themeStorage'
-import {
-  SCHEDULE_THEME_PRESETS,
-  type ScheduleThemeId,
-} from '../../../core/schedule/themePresets'
+import { getScheduleThemePreset, setScheduleThemeId } from '../../../core/schedule/themeStorage'
+import { SCHEDULE_THEME_PRESETS, type ScheduleThemeId } from '../../../core/schedule/themePresets'
 import {
   getTimeSlotPresetName,
   TIME_SLOT_PRESET_OPTIONS,
 } from '../../../core/schedule/timeSlotPresets'
 import type { ScheduleData, ScheduleLesson, TimeSlotPresetId } from '../../../core/schedule/types'
-import { DEFAULT_TIME_SLOT, getSemesterStartDate, saveSemesterStartDate } from '../../../core/scheduleSettings'
+import {
+  DEFAULT_TIME_SLOT,
+  getSemesterStartDate,
+  saveSemesterStartDate,
+} from '../../../core/scheduleSettings'
 
 const weekdayLabels = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
 
@@ -51,9 +49,10 @@ type ScutPdfImportPageProps = {
 }
 
 function formatWeekRange(lesson: ScheduleLesson) {
-  const range = lesson.startWeek === lesson.endWeek
-    ? `第 ${lesson.startWeek} 周`
-    : `第 ${lesson.startWeek}-${lesson.endWeek} 周`
+  const range =
+    lesson.startWeek === lesson.endWeek
+      ? `第 ${lesson.startWeek} 周`
+      : `第 ${lesson.startWeek}-${lesson.endWeek} 周`
 
   if (lesson.weekStep === 2) {
     return `${range}（${lesson.startWeek % 2 === 1 ? '单周' : '双周'}）`
@@ -74,12 +73,15 @@ function formatNodeRange(lesson: ScheduleLesson) {
 
 export function buildScutPdfPreview(scheduleData: ScheduleData) {
   const coveredNodes = new Set(scheduleData.timeSlots.map((slot) => slot.node))
-  const uncoveredLessons = scheduleData.lessons.filter((lesson) => (
-    !coveredNodes.has(lesson.startNode) || !coveredNodes.has(lesson.endNode)
-  ))
-  const warnings = uncoveredLessons.length > 0
-    ? [`有 ${uncoveredLessons.length} 个上课时段没有匹配的起止时间，保存后请在课表设置中选择合适的时间表。`]
-    : []
+  const uncoveredLessons = scheduleData.lessons.filter(
+    (lesson) => !coveredNodes.has(lesson.startNode) || !coveredNodes.has(lesson.endNode),
+  )
+  const warnings =
+    uncoveredLessons.length > 0
+      ? [
+          `有 ${uncoveredLessons.length} 个上课时段没有匹配的起止时间，保存后请在课表设置中选择合适的时间表。`,
+        ]
+      : []
 
   return {
     courseCount: scheduleData.courses.length,
@@ -190,7 +192,9 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
       const nextPreview = buildScutPdfPreview(result.value.scheduleData)
       setPendingImport(result.value)
       setScheduleName(result.value.scheduleData.table.name)
-      setStatusText(`识别完成：${nextPreview.courseCount} 门课程，${nextPreview.lessonCount} 个上课安排`)
+      setStatusText(
+        `识别完成：${nextPreview.courseCount} 门课程，${nextPreview.lessonCount} 个上课安排`,
+      )
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'PDF 识别失败'
       setPendingImport(null)
@@ -241,7 +245,8 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
           throw new Error('课表保存失败，请稍后重试')
         }
 
-        const defaultsSaved = services.saveThemeId(themeId) && services.saveSemesterDate(semesterStartDate)
+        const defaultsSaved =
+          services.saveThemeId(themeId) && services.saveSemesterDate(semesterStartDate)
         const timeSlotName = getTimeSlotPresetName(timeSlotPresetId)
         navigate('/courses', {
           replace: true,
@@ -264,29 +269,25 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
   }
 
   return (
-    <section className='schedule-settings-page schedule-pdf-import-page' aria-busy={isBusy}>
-      <header className='schedule-settings-header'>
+    <section className="schedule-settings-page schedule-pdf-import-page" aria-busy={isBusy}>
+      <header className="schedule-settings-header">
         <div>
-          <p className='schedule-settings-title'>从华工教务 PDF 导入</p>
-          <p className='schedule-settings-subtitle'>先识别预览，确认后才保存到本机</p>
+          <p className="schedule-settings-title">从华工教务 PDF 导入</p>
+          <p className="schedule-settings-subtitle">先识别预览，确认后才保存到本机</p>
         </div>
 
-        <CircleIconButton
-          ariaLabel='关闭页面'
-          icon={<CloseOutlined />}
-          onClick={handleClose}
-        />
+        <CircleIconButton ariaLabel="关闭页面" icon={<CloseOutlined />} onClick={handleClose} />
       </header>
 
-      <div className='schedule-settings-content'>
-        <section className='schedule-pdf-intro-card' aria-labelledby='schedule-pdf-select-title'>
+      <div className="schedule-settings-content">
+        <section className="schedule-pdf-intro-card" aria-labelledby="schedule-pdf-select-title">
           <div>
-            <h2 id='schedule-pdf-select-title'>选择课表文件</h2>
+            <h2 id="schedule-pdf-select-title">选择课表文件</h2>
             <p>仅支持固定华工教务布局、带可选择文本的单页 PDF。扫描件和未知布局不会保存。</p>
           </div>
           <button
-            type='button'
-            className='schedule-pdf-primary-button'
+            type="button"
+            className="schedule-pdf-primary-button"
             onClick={handleChoosePdf}
             disabled={isBusy}
           >
@@ -296,63 +297,78 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
 
         <input
           ref={fileInputRef}
-          type='file'
-          accept='application/pdf,.pdf'
-          className='schedule-settings-file-input'
+          type="file"
+          accept="application/pdf,.pdf"
+          className="schedule-settings-file-input"
           disabled={isBusy}
           onChange={(event) => {
             void handleSelectFile(event)
           }}
         />
 
-        <p className='schedule-pdf-status' role='status' aria-live='polite'>{statusText}</p>
-        {parseError && <p className='schedule-pdf-error' role='alert'>{parseError}</p>}
+        <p className="schedule-pdf-status" role="status" aria-live="polite">
+          {statusText}
+        </p>
+        {parseError && (
+          <p className="schedule-pdf-error" role="alert">
+            {parseError}
+          </p>
+        )}
 
         {preview && pendingImport && (
           <>
-            <section className='schedule-pdf-preview-card' aria-labelledby='schedule-pdf-preview-title'>
-              <div className='schedule-pdf-section-heading'>
+            <section
+              className="schedule-pdf-preview-card"
+              aria-labelledby="schedule-pdf-preview-title"
+            >
+              <div className="schedule-pdf-section-heading">
                 <div>
-                  <p className='schedule-pdf-eyebrow'>识别预览</p>
-                  <h2 id='schedule-pdf-preview-title'>请核对课程与上课安排</h2>
+                  <p className="schedule-pdf-eyebrow">识别预览</p>
+                  <h2 id="schedule-pdf-preview-title">请核对课程与上课安排</h2>
                 </div>
-                <span className='schedule-pdf-source-badge'>华工教务 PDF</span>
+                <span className="schedule-pdf-source-badge">华工教务 PDF</span>
               </div>
 
-              <div className='schedule-pdf-summary-grid' aria-label='识别结果统计'>
-                <div className='schedule-pdf-stat'>
+              <div className="schedule-pdf-summary-grid" aria-label="识别结果统计">
+                <div className="schedule-pdf-stat">
                   <strong>{preview.courseCount}</strong>
                   <span>门课程</span>
                 </div>
-                <div className='schedule-pdf-stat'>
+                <div className="schedule-pdf-stat">
                   <strong>{preview.lessonCount}</strong>
                   <span>个上课安排</span>
                 </div>
-                <div className='schedule-pdf-stat'>
+                <div className="schedule-pdf-stat">
                   <strong>{pendingImport.scheduleData.table.maxWeek}</strong>
                   <span>周范围</span>
                 </div>
               </div>
 
               {preview.warnings.length > 0 ? (
-                <ul className='schedule-pdf-warning-list' aria-label='识别提醒'>
-                  {preview.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+                <ul className="schedule-pdf-warning-list" aria-label="识别提醒">
+                  {preview.warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
                 </ul>
               ) : (
-                <p className='schedule-pdf-ready-note'>未发现阻止导入的问题。仍请逐项核对课程、周次、教师和教室。</p>
+                <p className="schedule-pdf-ready-note">
+                  未发现阻止导入的问题。仍请逐项核对课程、周次、教师和教室。
+                </p>
               )}
 
-              <div className='schedule-pdf-course-list'>
+              <div className="schedule-pdf-course-list">
                 {preview.courses.map((course) => (
-                  <article key={course.id} className='schedule-pdf-course-card'>
-                    <div className='schedule-pdf-course-heading'>
+                  <article key={course.id} className="schedule-pdf-course-card">
+                    <div className="schedule-pdf-course-heading">
                       <h3>{course.name}</h3>
                       <span>{course.credit} 学分</span>
                     </div>
-                    <ul className='schedule-pdf-lesson-list'>
+                    <ul className="schedule-pdf-lesson-list">
                       {course.lessons.map((lesson) => (
                         <li key={lesson.instanceId}>
-                          <strong>{weekdayLabels[lesson.day - 1]} · {formatNodeRange(lesson)}</strong>
+                          <strong>
+                            {weekdayLabels[lesson.day - 1]} · {formatNodeRange(lesson)}
+                          </strong>
                           <span>{formatWeekRange(lesson)}</span>
                           <span>教师：{lesson.teacher}</span>
                           <span>教室：{lesson.room}</span>
@@ -364,36 +380,39 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
               </div>
             </section>
 
-            <section className='schedule-pdf-confirm-card' aria-labelledby='schedule-pdf-confirm-title'>
-              <div className='schedule-pdf-section-heading'>
+            <section
+              className="schedule-pdf-confirm-card"
+              aria-labelledby="schedule-pdf-confirm-title"
+            >
+              <div className="schedule-pdf-section-heading">
                 <div>
-                  <p className='schedule-pdf-eyebrow'>保存设置</p>
-                  <h2 id='schedule-pdf-confirm-title'>确认后写入课表库</h2>
+                  <p className="schedule-pdf-eyebrow">保存设置</p>
+                  <h2 id="schedule-pdf-confirm-title">确认后写入课表库</h2>
                 </div>
               </div>
 
-              <div className='schedule-pdf-form-grid'>
-                <label className='schedule-pdf-field'>
+              <div className="schedule-pdf-form-grid">
+                <label className="schedule-pdf-field">
                   <span>课表名称</span>
                   <input
-                    type='text'
+                    type="text"
                     value={scheduleName}
                     onChange={(event) => setScheduleName(event.target.value)}
                     disabled={isSaving}
                   />
                 </label>
 
-                <label className='schedule-pdf-field'>
+                <label className="schedule-pdf-field">
                   <span>学期开始日期</span>
                   <input
-                    type='date'
+                    type="date"
                     value={semesterStartDate}
                     onChange={(event) => setSemesterStartDate(event.target.value)}
                     disabled={isSaving}
                   />
                 </label>
 
-                <label className='schedule-pdf-field'>
+                <label className="schedule-pdf-field">
                   <span>课表配色</span>
                   <select
                     value={themeId}
@@ -401,29 +420,39 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
                     disabled={isSaving}
                   >
                     {SCHEDULE_THEME_PRESETS.map((preset) => (
-                      <option key={preset.id} value={preset.id}>{preset.name}</option>
+                      <option key={preset.id} value={preset.id}>
+                        {preset.name}
+                      </option>
                     ))}
                   </select>
                 </label>
 
-                <label className='schedule-pdf-field'>
+                <label className="schedule-pdf-field">
                   <span>时间表预设</span>
                   <select
                     value={timeSlotPresetId}
-                    onChange={(event) => setTimeSlotPresetId(event.target.value as TimeSlotPresetId)}
+                    onChange={(event) =>
+                      setTimeSlotPresetId(event.target.value as TimeSlotPresetId)
+                    }
                     disabled={isSaving}
                   >
                     {TIME_SLOT_PRESET_OPTIONS.map((preset) => (
-                      <option key={preset.id} value={preset.id}>{preset.name}</option>
+                      <option key={preset.id} value={preset.id}>
+                        {preset.name}
+                      </option>
                     ))}
                   </select>
                 </label>
               </div>
 
-              {saveError && <p className='schedule-pdf-error' role='alert'>{saveError}</p>}
+              {saveError && (
+                <p className="schedule-pdf-error" role="alert">
+                  {saveError}
+                </p>
+              )}
               <button
-                type='button'
-                className='schedule-pdf-primary-button schedule-pdf-confirm-button'
+                type="button"
+                className="schedule-pdf-primary-button schedule-pdf-confirm-button"
                 onClick={() => {
                   void handleConfirmImport()
                 }}
@@ -434,12 +463,14 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
             </section>
 
             {import.meta.env.DEV && (
-              <aside className='schedule-pdf-developer-card' aria-label='开发者诊断工具'>
+              <aside className="schedule-pdf-developer-card" aria-label="开发者诊断工具">
                 <div>
                   <strong>开发者诊断</strong>
                   <p>抽取 JSON 可能包含完整课表数据。仅用于本地排查，不要上传、提交或分享。</p>
                 </div>
-                <button type='button' onClick={handleDownloadJson} disabled={isBusy}>下载抽取 JSON</button>
+                <button type="button" onClick={handleDownloadJson} disabled={isBusy}>
+                  下载抽取 JSON
+                </button>
               </aside>
             )}
           </>
