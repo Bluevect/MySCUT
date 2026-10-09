@@ -29,9 +29,9 @@ describe('buildScutJwImportDiagnostic', () => {
   it('omits invalid or unsupported target URLs', () => {
     expect(
       buildScutJwImportDiagnostic({
-        stage: 'opening',
+        stage: 'session-opening',
         targetUrl: 'javascript:alert(1)',
       }),
-    ).toEqual({ stage: 'opening' })
+    ).toEqual({ stage: 'session-opening' })
   })
 })

@@ -3,7 +3,6 @@ import {
   InMemoryPersistentStore,
   InMemoryPreferenceStore,
   InMemorySecretStore,
-  StorageError,
   type PersistentKey,
   type PreferenceKey,
   type SecretKey,
@@ -113,7 +112,7 @@ describe('typed store fakes', () => {
       schemaVersion: 2,
     }
 
-    await expect(store.get(incompatibleKey)).rejects.toMatchObject<Partial<StorageError>>({
+    await expect(store.get(incompatibleKey)).rejects.toMatchObject({
       code: 'corrupt-data',
     })
   })

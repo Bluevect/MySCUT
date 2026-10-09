@@ -48,11 +48,10 @@ describe('application startup states', () => {
   it('shows the branded shell while storage initialization is pending', () => {
     const pendingRuntime = new Promise<ApplicationStorageRuntime>(() => undefined)
     const markup = renderToStaticMarkup(
-      createElement(
-        StorageRuntimeProvider,
-        { bootstrapRuntime: pendingRuntime },
-        createElement('p', null, '应用已就绪'),
-      ),
+      createElement(StorageRuntimeProvider, {
+        bootstrapRuntime: pendingRuntime,
+        children: createElement('p', null, '应用已就绪'),
+      }),
     )
 
     expect(markup).toContain('role="status"')
@@ -67,11 +66,10 @@ describe('application startup states', () => {
       resolveRuntime = resolve
     })
     const container = await renderInDocument(
-      createElement(
-        StorageRuntimeProvider,
-        { bootstrapRuntime },
-        createElement('p', null, '应用已就绪'),
-      ),
+      createElement(StorageRuntimeProvider, {
+        bootstrapRuntime,
+        children: createElement('p', null, '应用已就绪'),
+      }),
     )
 
     expect(container.textContent).toContain('正在初始化本地数据')
@@ -94,7 +92,10 @@ describe('application startup states', () => {
       error: new StorageError('unavailable', 'storage unavailable'),
     })
     const container = await renderInDocument(
-      createElement(StorageRuntimeProvider, { bootstrapRuntime }, createElement(RuntimeProbe)),
+      createElement(StorageRuntimeProvider, {
+        bootstrapRuntime,
+        children: createElement(RuntimeProbe),
+      }),
     )
 
     await act(async () => {
@@ -130,11 +131,11 @@ describe('application route states', () => {
     }
 
     const container = await renderInDocument(
-      createElement(
-        RouteContentErrorBoundary,
-        { onRetry, onReturnToCourses },
-        createElement(RecoverableRoute),
-      ),
+      createElement(RouteContentErrorBoundary, {
+        onRetry,
+        onReturnToCourses,
+        children: createElement(RecoverableRoute),
+      }),
     )
 
     expect(container.textContent).toContain('当前页面暂时无法显示')

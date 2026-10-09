@@ -3,7 +3,7 @@ import { SinglePendingOperation } from '../../../src/core/async/singlePendingOpe
 
 describe('SinglePendingOperation', () => {
   it('runs only one operation while the first one is pending', async () => {
-    let releaseFirstOperation = () => undefined
+    let releaseFirstOperation: () => void = () => undefined
     const firstOperation = new Promise<string>((resolve) => {
       releaseFirstOperation = () => resolve('saved')
     })
