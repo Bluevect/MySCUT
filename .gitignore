@@ -35,6 +35,10 @@ pnpm-lock.yaml
 # TypeScript incremental build cache
 *.tsbuildinfo
 
+# ESLint caches and reports
+.eslintcache
+.eslint-report.json
+
 # Local secrets
 GITHUB_TOKEN.SEC
 R2_ENV
