@@ -117,7 +117,6 @@ function resolveWakeupLessonRange(lesson: WakeupLesson, timeSlots: WakeupTimeSlo
   const hasEndTime = isWakeupTimeTextPresent(lesson.endTime)
 
   let startNode = Number.isInteger(lesson.startNode) && lesson.startNode > 0 ? lesson.startNode : null
-  let endNode: number | null = null
   let startTime = hasStartTime ? normalizeWakeupTimeText(lesson.startTime) : ''
   let endTime = hasEndTime ? normalizeWakeupTimeText(lesson.endTime) : ''
 
@@ -140,7 +139,7 @@ function resolveWakeupLessonRange(lesson: WakeupLesson, timeSlots: WakeupTimeSlo
   }
 
   startNode = clampWakeupNode(startNode, maxNode)
-  endNode = clampWakeupNode(startNode + span - 1, maxNode)
+  const endNode = clampWakeupNode(startNode + span - 1, maxNode)
 
   if (!hasStartTime) {
     startTime = timeSlotNodeMap.get(startNode)?.startTime ?? ''

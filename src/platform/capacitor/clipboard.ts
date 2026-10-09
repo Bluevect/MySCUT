@@ -5,10 +5,10 @@ export async function clipboardReadText() {
     const readResult = await Clipboard.read()
 
     return readResult.value
-  } catch (error) {
+  } catch {
     // Fallback to navigator api
     if (!navigator.clipboard?.readText) {
-      throw new Error("No navigator clipboard api")
+      throw new Error('No navigator clipboard api')
     }
 
     const readResult = await navigator.clipboard.readText()
@@ -19,12 +19,12 @@ export async function clipboardReadText() {
 export async function clipboardWriteText(data: string) {
   try {
     await Clipboard.write({
-      string: data
+      string: data,
     })
-  } catch (error) {
+  } catch {
     // Fallback to navigator api
     if (!navigator.clipboard?.writeText) {
-      throw new Error("No navigator clipboard api")
+      throw new Error('No navigator clipboard api')
     }
 
     await navigator.clipboard.writeText(data)

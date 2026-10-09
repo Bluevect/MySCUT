@@ -1,5 +1,5 @@
 import { message } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getReloadManualEnabledStartup,
   getUseLocalManual,
@@ -32,6 +32,7 @@ function ManualPage() {
 
   useEffect(() => {
     if (isActive) {
+      // The iframe must stay mounted after its first activation so its history survives tab switches.
       setIframeEverActivated(true)
     }
   }, [isActive])
@@ -65,7 +66,7 @@ function ManualPage() {
     remoteFallbackTimerRef.current = null
   }
 
-  const fallbackToLocalManual = () => {
+  const fallbackToLocalManual = useCallback(() => {
     if (iframeSrc !== REMOTE_MANUAL_URL) {
       return
     }
@@ -74,7 +75,7 @@ function ManualPage() {
     setUseLocalManual(true)
     setIframeSrc(LOCAL_MANUAL_URL)
     messageApi.warning('网络异常，加载本地手册')
-  }
+  }, [iframeSrc, messageApi])
 
   useEffect(() => {
     clearRemoteTimer()
@@ -90,7 +91,7 @@ function ManualPage() {
     return () => {
       clearRemoteTimer()
     }
-  }, [iframeSrc])
+  }, [fallbackToLocalManual, iframeSrc])
 
   const handleIframeLoad = () => {
     if (expectFrameDocumentRef.current) {

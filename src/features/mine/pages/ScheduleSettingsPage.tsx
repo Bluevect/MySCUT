@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useRef, useState } from 'react'
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { Capacitor } from '@capacitor/core'
 import { DatePicker, Input, Modal, Select, Switch, message } from 'antd'
@@ -166,11 +166,7 @@ function ScheduleSettingsPage() {
   const importOperationRef = useRef(new SinglePendingOperation())
   const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
 
-  const navigateBack = () => {
-    navigate(resolveBackPath(location.pathname), { replace: true })
-  }
-
-  const startClosingTransition = () => {
+  const startClosingTransition = useCallback(() => {
     if (isClosingRef.current) {
       return false
     }
@@ -179,11 +175,11 @@ function ScheduleSettingsPage() {
     setTransitionStage('closing')
 
     closeTimerRef.current = window.setTimeout(() => {
-      navigateBack()
+      navigate(resolveBackPath(location.pathname), { replace: true })
     }, CLOSE_TRANSITION_MS)
 
     return true
-  }
+  }, [location.pathname, navigate])
 
   useEffect(() => {
     enterTimerRef.current = window.setTimeout(() => {
@@ -214,7 +210,7 @@ function ScheduleSettingsPage() {
         window.clearTimeout(closeTimerRef.current)
       }
     }
-  }, [])
+  }, [startClosingTransition])
 
   const refreshScheduleState = () => {
     const activeSchedule = loadActiveScheduleEntry()
@@ -348,7 +344,7 @@ function ScheduleSettingsPage() {
 
         try {
           compressedQmsText = await clipboardReadText()
-        } catch (error) {
+        } catch {
           setIsImportCompressedQMSModalOpen(true)
           return
         }
@@ -804,7 +800,7 @@ function ScheduleSettingsPage() {
 
         try {
           await clipboardWriteText(compressedQmsText)
-        } catch (error) {
+        } catch {
           messageApi.error('当前环境不支持写入剪贴板')
           return
         }

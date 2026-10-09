@@ -55,15 +55,22 @@ class FailingPersistentStore implements PersistentStore {
 }
 
 class DroppingPersistentStore implements PersistentStore {
-  async get<T>(_key: PersistentKey<T>) {
+  async get<T>(key: PersistentKey<T>) {
+    void key
     return null
   }
 
-  async set<T>(_key: PersistentKey<T>, _value: T) {}
+  async set<T>(key: PersistentKey<T>, value: T) {
+    void key
+    void value
+  }
 
-  async remove<T>(_key: PersistentKey<T>) {}
+  async remove<T>(key: PersistentKey<T>) {
+    void key
+  }
 
-  async update<T>(_key: PersistentKey<T>, updater: (currentValue: T | null) => T | null) {
+  async update<T>(key: PersistentKey<T>, updater: (currentValue: T | null) => T | null) {
+    void key
     return updater(null)
   }
 }

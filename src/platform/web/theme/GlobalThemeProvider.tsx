@@ -1,5 +1,5 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { getGlobalThemePreset } from '../../../core/theme/globalThemePresets'
 import {
   getPreferredGlobalThemeFamily,
@@ -69,17 +69,18 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
   const [mode, setModeState] = useState<GlobalThemeMode>(() => getPreferredGlobalThemeMode())
   const [resolvedMode, setResolvedMode] = useState<ResolvedGlobalThemeMode>(() => resolveGlobalThemeMode(mode))
 
-  const applyResolvedTheme = (nextResolvedMode: ResolvedGlobalThemeMode) => {
+  const applyResolvedTheme = useCallback((nextResolvedMode: ResolvedGlobalThemeMode) => {
     applyGlobalThemeVariables(themeFamily, nextResolvedMode)
     void syncStatusBarStyleForTheme(nextResolvedMode)
-  }
+  }, [themeFamily])
 
   useEffect(() => {
     const nextResolvedMode = resolveGlobalThemeMode(mode)
+    // This effect is the single synchronization point for mode, family, and resolved theme.
     setResolvedMode(nextResolvedMode)
     applyResolvedTheme(nextResolvedMode)
     syncAndroidCourseWidgetAppearance(mode, themeFamily)
-  }, [mode, resolvedMode, themeFamily])
+  }, [applyResolvedTheme, mode, resolvedMode, themeFamily])
 
   useEffect(() => {
     if (mode !== 'system' || typeof window.matchMedia !== 'function') {
@@ -106,23 +107,23 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
     return () => {
       mediaQuery.removeListener(handleSystemThemeChange)
     }
-  }, [mode])
+  }, [applyResolvedTheme, mode])
 
-  const setMode = (nextMode: GlobalThemeMode) => {
+  const setMode = useCallback((nextMode: GlobalThemeMode) => {
     startThemeTransition()
     setModeState(nextMode)
     setStoredGlobalThemeMode(nextMode)
-  }
+  }, [])
 
-  const setThemeFamily = (nextThemeFamily: GlobalThemeFamily) => {
+  const setThemeFamily = useCallback((nextThemeFamily: GlobalThemeFamily) => {
     startThemeTransition()
     setThemeFamilyState(nextThemeFamily)
     setStoredGlobalThemeFamily(nextThemeFamily)
-  }
+  }, [])
 
-  const toggleLightDark = () => {
+  const toggleLightDark = useCallback(() => {
     setMode(resolvedMode === 'dark' ? 'light' : 'dark')
-  }
+  }, [resolvedMode, setMode])
 
   const contextValue = useMemo(
     () => ({
@@ -133,7 +134,7 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
       setMode,
       toggleLightDark,
     }),
-    [mode, resolvedMode, themeFamily],
+    [mode, resolvedMode, setMode, setThemeFamily, themeFamily, toggleLightDark],
   )
 
   const preset = getGlobalThemePreset(resolvedMode, themeFamily)
