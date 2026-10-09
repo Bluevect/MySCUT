@@ -44,7 +44,7 @@
     "audit:public-data": "node scripts/auditPublicData.mjs",
     "lint": "eslint . --fix --cache",
     "lint:check": "eslint . --max-warnings=0",
-    "format": "prettier --write --experimental-cli src/",
+    "format": "prettier --write --experimental-cli src/ tests/",
     "check": "npm run lint:check && npm run typecheck && npm test && npm run build:app && npm run check:docs"
   },
   "dependencies": {

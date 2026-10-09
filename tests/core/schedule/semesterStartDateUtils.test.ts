@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { getDefaultSemesterStartDate } from '../../../src/core/schedule/semesterStartDateUtils'
 
 // month is 1-12 here; converts to Date's 0-11 internally
-const date = (year: number, month: number, day: number) =>
-  new Date(year, month - 1, day)
+const date = (year: number, month: number, day: number) => new Date(year, month - 1, day)
 
 describe('getDefaultSemesterStartDate', () => {
   describe('semester month detection', () => {

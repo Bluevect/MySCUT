@@ -35,9 +35,7 @@ function createScheduleData(): ScheduleData {
       { node: 1, startTime: '08:50', endTime: '09:35', timeTable: 2 },
       { node: 2, startTime: '09:40', endTime: '10:25', timeTable: 2 },
     ],
-    courses: [
-      { id: 1, tableId: 1, name: 'TEST-COURSE-ALPHA', color: '', credit: 3.5, note: '' },
-    ],
+    courses: [{ id: 1, tableId: 1, name: 'TEST-COURSE-ALPHA', color: '', credit: 3.5, note: '' }],
     lessons: [
       {
         instanceId: 'TEST-LESSON-1',
@@ -98,23 +96,25 @@ async function renderPage(services: ScutPdfImportPageServices) {
   roots.push(root)
 
   await act(async () => {
-    root.render(createElement(
-      MemoryRouter,
-      { initialEntries: ['/mine/import-scut-pdf'] },
+    root.render(
       createElement(
-        Routes,
-        null,
-        createElement(Route, {
-          path: '*',
-          element: createElement(
-            'div',
-            null,
-            createElement(ScutPdfImportPage, { services }),
-            createElement(LocationProbe),
-          ),
-        }),
+        MemoryRouter,
+        { initialEntries: ['/mine/import-scut-pdf'] },
+        createElement(
+          Routes,
+          null,
+          createElement(Route, {
+            path: '*',
+            element: createElement(
+              'div',
+              null,
+              createElement(ScutPdfImportPage, { services }),
+              createElement(LocationProbe),
+            ),
+          }),
+        ),
       ),
-    ))
+    )
     await Promise.resolve()
   })
 
@@ -139,8 +139,8 @@ async function selectFile(container: HTMLElement, fileName = 'TEST-schedule.pdf'
 }
 
 function findButton(container: HTMLElement, label: string) {
-  const button = Array.from(container.querySelectorAll('button')).find(
-    (candidate) => candidate.textContent?.includes(label),
+  const button = Array.from(container.querySelectorAll('button')).find((candidate) =>
+    candidate.textContent?.includes(label),
   )
   if (!button) {
     throw new Error(`button missing: ${label}`)
@@ -149,9 +149,8 @@ function findButton(container: HTMLElement, label: string) {
 }
 
 function setFormValue(element: HTMLInputElement | HTMLSelectElement, value: string) {
-  const prototype = element instanceof HTMLSelectElement
-    ? HTMLSelectElement.prototype
-    : HTMLInputElement.prototype
+  const prototype =
+    element instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype
   const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set
   valueSetter?.call(element, value)
   element.dispatchEvent(new Event('input', { bubbles: true }))
@@ -198,9 +197,7 @@ describe('ScutPdfImportPage', () => {
     const firstSave = new Promise<{ ok: boolean }>((_resolve, reject) => {
       rejectFirstSave = reject
     })
-    const saveSchedule = vi.fn()
-      .mockReturnValueOnce(firstSave)
-      .mockResolvedValueOnce({ ok: true })
+    const saveSchedule = vi.fn().mockReturnValueOnce(firstSave).mockResolvedValueOnce({ ok: true })
     const services: ScutPdfImportPageServices = {
       parseFile: vi.fn().mockResolvedValue(createPendingImport()),
       saveSchedule,
@@ -270,7 +267,8 @@ describe('ScutPdfImportPage', () => {
 
   it('clears confirmation when a newly selected PDF is rejected', async () => {
     const services: ScutPdfImportPageServices = {
-      parseFile: vi.fn()
+      parseFile: vi
+        .fn()
         .mockResolvedValueOnce(createPendingImport())
         .mockRejectedValueOnce(new Error('不支持的华工课表 PDF 格式：固定标题缺失')),
       saveSchedule: vi.fn().mockResolvedValue({ ok: true }),
@@ -285,9 +283,11 @@ describe('ScutPdfImportPage', () => {
     await selectFile(container, 'TEST-unsupported.pdf')
     expect(container.textContent).toContain('不支持的华工课表 PDF 格式：固定标题缺失')
     expect(container.textContent).not.toContain('TEST-COURSE-ALPHA')
-    expect(Array.from(container.querySelectorAll('button')).some(
-      (button) => button.textContent?.includes('确认并导入课表'),
-    )).toBe(false)
+    expect(
+      Array.from(container.querySelectorAll('button')).some((button) =>
+        button.textContent?.includes('确认并导入课表'),
+      ),
+    ).toBe(false)
   })
 
   it('reports actionable time-slot warnings in the preview model', () => {

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { dismissTopBackOverlay, registerBackDismiss } from '../../../src/core/navigation/backDismiss'
+import {
+  dismissTopBackOverlay,
+  registerBackDismiss,
+} from '../../../src/core/navigation/backDismiss'
 
 describe('back dismiss registry', () => {
   it('reports nothing to dismiss when no overlay is registered', () => {

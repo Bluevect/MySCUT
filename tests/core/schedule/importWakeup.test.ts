@@ -6,7 +6,14 @@ import { dirname, join } from 'node:path'
 import { parseWakeupScheduleText } from '../../../src/core/schedule/importWakeup'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const FIXTURE_PATH = join(__dirname, '..', '..', 'fixtures', 'public', 'wakeupSchedule.synthetic.txt')
+const FIXTURE_PATH = join(
+  __dirname,
+  '..',
+  '..',
+  'fixtures',
+  'public',
+  'wakeupSchedule.synthetic.txt',
+)
 
 function loadFixture() {
   return readFileSync(FIXTURE_PATH, 'utf8')

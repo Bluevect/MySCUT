@@ -17,7 +17,9 @@ const KNOWN_APP_PATHS = Object.values(APP_ROUTE_PATHS).filter(
 const KNOWN_APP_PATH_SET = new Set<string>(KNOWN_APP_PATHS)
 
 function isBackRouteCovered(pathname: string) {
-  return pathname === APP_ROOT_PATH || Object.prototype.hasOwnProperty.call(PARENT_ROUTE_MAP, pathname)
+  return (
+    pathname === APP_ROOT_PATH || Object.prototype.hasOwnProperty.call(PARENT_ROUTE_MAP, pathname)
+  )
 }
 
 describe('resolveBackPath', () => {
@@ -47,7 +49,9 @@ describe('resolveBackPath', () => {
   })
 
   it('returns course editing pages to the all-courses page', () => {
-    expect(resolveBackPath('/courses/edit-course/schedule-1/2/lesson-1')).toBe('/courses/all-courses')
+    expect(resolveBackPath('/courses/edit-course/schedule-1/2/lesson-1')).toBe(
+      '/courses/all-courses',
+    )
   })
 
   it('falls back to the root page for unknown paths', () => {
@@ -84,8 +88,7 @@ describe('isAppRootPath', () => {
 describe('back route coverage', () => {
   it('covers every app route and returns only known routes', () => {
     const uncoveredPaths = KNOWN_APP_PATHS.filter((path) => !isBackRouteCovered(path))
-    const invalidTargets = KNOWN_APP_PATHS
-      .filter((path) => !isAppRootPath(path))
+    const invalidTargets = KNOWN_APP_PATHS.filter((path) => !isAppRootPath(path))
       .map((path) => ({ path, target: resolveBackPath(path) }))
       .filter(({ target }) => !KNOWN_APP_PATH_SET.has(target))
 

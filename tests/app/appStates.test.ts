@@ -6,10 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import AppRoutes from '../../src/app/routes'
-import {
-  RouteContentErrorBoundary,
-  RouteLoadingView,
-} from '../../src/components/AppRouteStates'
+import { RouteContentErrorBoundary, RouteLoadingView } from '../../src/components/AppRouteStates'
 import {
   StorageRuntimeProvider,
   useStorageRuntime,
@@ -50,11 +47,13 @@ afterEach(async () => {
 describe('application startup states', () => {
   it('shows the branded shell while storage initialization is pending', () => {
     const pendingRuntime = new Promise<ApplicationStorageRuntime>(() => undefined)
-    const markup = renderToStaticMarkup(createElement(
-      StorageRuntimeProvider,
-      { bootstrapRuntime: pendingRuntime },
-      createElement('p', null, '应用已就绪'),
-    ))
+    const markup = renderToStaticMarkup(
+      createElement(
+        StorageRuntimeProvider,
+        { bootstrapRuntime: pendingRuntime },
+        createElement('p', null, '应用已就绪'),
+      ),
+    )
 
     expect(markup).toContain('role="status"')
     expect(markup).toContain('MySCUT')
@@ -67,11 +66,13 @@ describe('application startup states', () => {
     const bootstrapRuntime = new Promise<ApplicationStorageRuntime>((resolve) => {
       resolveRuntime = resolve
     })
-    const container = await renderInDocument(createElement(
-      StorageRuntimeProvider,
-      { bootstrapRuntime },
-      createElement('p', null, '应用已就绪'),
-    ))
+    const container = await renderInDocument(
+      createElement(
+        StorageRuntimeProvider,
+        { bootstrapRuntime },
+        createElement('p', null, '应用已就绪'),
+      ),
+    )
 
     expect(container.textContent).toContain('正在初始化本地数据')
 
@@ -92,11 +93,9 @@ describe('application startup states', () => {
       status: 'readOnly',
       error: new StorageError('unavailable', 'storage unavailable'),
     })
-    const container = await renderInDocument(createElement(
-      StorageRuntimeProvider,
-      { bootstrapRuntime },
-      createElement(RuntimeProbe),
-    ))
+    const container = await renderInDocument(
+      createElement(StorageRuntimeProvider, { bootstrapRuntime }, createElement(RuntimeProbe)),
+    )
 
     await act(async () => {
       await Promise.resolve()
@@ -130,23 +129,25 @@ describe('application route states', () => {
       return createElement('p', null, '页面已恢复')
     }
 
-    const container = await renderInDocument(createElement(
-      RouteContentErrorBoundary,
-      { onRetry, onReturnToCourses },
-      createElement(RecoverableRoute),
-    ))
+    const container = await renderInDocument(
+      createElement(
+        RouteContentErrorBoundary,
+        { onRetry, onReturnToCourses },
+        createElement(RecoverableRoute),
+      ),
+    )
 
     expect(container.textContent).toContain('当前页面暂时无法显示')
     expect(container.textContent).not.toContain('SECRET_RAW_ROUTE_ERROR')
 
-    const returnButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('返回课程页'),
+    const returnButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('返回课程页'),
     )
     await act(async () => returnButton?.click())
     expect(onReturnToCourses).toHaveBeenCalledOnce()
 
-    const retryButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('重试当前页面'),
+    const retryButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('重试当前页面'),
     )
     await act(async () => retryButton?.click())
 
@@ -156,11 +157,13 @@ describe('application route states', () => {
   })
 
   it('renders a not-found page for unknown application paths', () => {
-    const markup = renderToStaticMarkup(createElement(
-      MemoryRouter,
-      { initialEntries: ['/not-a-real-page'] },
-      createElement(AppRoutes),
-    ))
+    const markup = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        { initialEntries: ['/not-a-real-page'] },
+        createElement(AppRoutes),
+      ),
+    )
 
     expect(markup).toContain('页面不存在')
     expect(markup).toContain('返回课程页')

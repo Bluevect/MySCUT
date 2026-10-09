@@ -11,11 +11,7 @@ describe('shouldShowBottomNavigation', () => {
     expect(shouldShowBottomNavigation(pathname)).toBe(false)
   })
 
-  it.each([
-    '/courses',
-    '/manual',
-    '/mine',
-  ])('shows bottom navigation on %s', (pathname) => {
+  it.each(['/courses', '/manual', '/mine'])('shows bottom navigation on %s', (pathname) => {
     expect(shouldShowBottomNavigation(pathname)).toBe(true)
   })
 

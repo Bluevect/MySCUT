@@ -11,10 +11,7 @@ import {
 import { parseQmsScheduleText } from '../../../src/core/schedule/importQms'
 import { parseWakeupScheduleText } from '../../../src/core/schedule/importWakeup'
 import { mapScutSchedulePdf } from '../../../src/core/schedule/mapScutSchedulePdf'
-import {
-  SCHEDULE_LIBRARY_KEY,
-  type ScheduleLibrary,
-} from '../../../src/core/schedule/storage'
+import { SCHEDULE_LIBRARY_KEY, type ScheduleLibrary } from '../../../src/core/schedule/storage'
 import type { SavedSchedule, ScheduleData } from '../../../src/core/schedule/types'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -87,40 +84,42 @@ describe('mapScutSchedulePdf', () => {
       { id: 3, tableId: 1, name: 'TEST-COURSE-GAMMA', color: '', credit: 1.5, note: '' },
     ])
     expect(scheduleData.lessons).toHaveLength(5)
-    expect(scheduleData.lessons).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        courseId: 1,
-        day: 1,
-        startNode: 1,
-        endNode: 2,
-        startWeek: 1,
-        endWeek: 15,
-        weekStep: 2,
-        teacher: 'TEST-TEACHER-A,B',
-        room: 'TEST-ROOM-A101',
-      }),
-      expect.objectContaining({
-        courseId: 2,
-        day: 2,
-        startNode: 3,
-        endNode: 5,
-        startWeek: 2,
-        endWeek: 16,
-        weekStep: 2,
-      }),
-      expect.objectContaining({
-        courseId: 3,
-        startWeek: 1,
-        endWeek: 4,
-        weekStep: 1,
-      }),
-      expect.objectContaining({
-        courseId: 3,
-        startWeek: 9,
-        endWeek: 12,
-        weekStep: 1,
-      }),
-    ]))
+    expect(scheduleData.lessons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          courseId: 1,
+          day: 1,
+          startNode: 1,
+          endNode: 2,
+          startWeek: 1,
+          endWeek: 15,
+          weekStep: 2,
+          teacher: 'TEST-TEACHER-A,B',
+          room: 'TEST-ROOM-A101',
+        }),
+        expect.objectContaining({
+          courseId: 2,
+          day: 2,
+          startNode: 3,
+          endNode: 5,
+          startWeek: 2,
+          endWeek: 16,
+          weekStep: 2,
+        }),
+        expect.objectContaining({
+          courseId: 3,
+          startWeek: 1,
+          endWeek: 4,
+          weekStep: 1,
+        }),
+        expect.objectContaining({
+          courseId: 3,
+          startWeek: 9,
+          endWeek: 12,
+          weekStep: 1,
+        }),
+      ]),
+    )
   })
 
   it('stores diagnostic metadata only instead of PDF bytes or extracted page text', async () => {
@@ -146,27 +145,35 @@ describe('mapScutSchedulePdf', () => {
     const missingWeeks = structuredClone(contract)
     missingWeeks.lessons[0].weekRanges = []
 
-    expect(() => mapScutSchedulePdf(missingWeeks, extractionMeta, {
-      semesterStartDate: '2026-08-31',
-    })).toThrow('华工课表 PDF 映射失败：课程“TEST-COURSE-ALPHA”缺少周次范围')
+    expect(() =>
+      mapScutSchedulePdf(missingWeeks, extractionMeta, {
+        semesterStartDate: '2026-08-31',
+      }),
+    ).toThrow('华工课表 PDF 映射失败：课程“TEST-COURSE-ALPHA”缺少周次范围')
 
     const missingTime = structuredClone(contract)
     missingTime.lessons[0].startNode = 0
-    expect(() => mapScutSchedulePdf(missingTime, extractionMeta, {
-      semesterStartDate: '2026-08-31',
-    })).toThrow('华工课表 PDF 映射失败：课程节次字段无效')
+    expect(() =>
+      mapScutSchedulePdf(missingTime, extractionMeta, {
+        semesterStartDate: '2026-08-31',
+      }),
+    ).toThrow('华工课表 PDF 映射失败：课程节次字段无效')
 
     const missingRoom = structuredClone(contract)
     missingRoom.lessons[0].room = ' '
-    expect(() => mapScutSchedulePdf(missingRoom, extractionMeta, {
-      semesterStartDate: '2026-08-31',
-    })).toThrow('华工课表 PDF 映射失败：缺少课程“TEST-COURSE-ALPHA”的教室')
+    expect(() =>
+      mapScutSchedulePdf(missingRoom, extractionMeta, {
+        semesterStartDate: '2026-08-31',
+      }),
+    ).toThrow('华工课表 PDF 映射失败：缺少课程“TEST-COURSE-ALPHA”的教室')
 
     const conflictingCredit = structuredClone(contract)
     conflictingCredit.lessons[3].credit = 4
-    expect(() => mapScutSchedulePdf(conflictingCredit, extractionMeta, {
-      semesterStartDate: '2026-08-31',
-    })).toThrow('华工课表 PDF 映射失败：课程“TEST-COURSE-ALPHA”存在冲突的学分信息')
+    expect(() =>
+      mapScutSchedulePdf(conflictingCredit, extractionMeta, {
+        semesterStartDate: '2026-08-31',
+      }),
+    ).toThrow('华工课表 PDF 映射失败：课程“TEST-COURSE-ALPHA”存在冲突的学分信息')
   })
 
   it('remains compatible with QMS v2 and the normalized WakeUp export fallback', async () => {
@@ -190,12 +197,14 @@ describe('mapScutSchedulePdf', () => {
     expect(qmsImported.scheduleData.courses).toEqual(scheduleData.courses)
     expect(qmsImported.scheduleData.lessons).toEqual(scheduleData.lessons)
 
-    const qmsV1Imported = parseQmsScheduleText(JSON.stringify({
-      schema: 'qms',
-      version: 1,
-      exportedAt: 3000,
-      schedule: savedSchedule,
-    }))
+    const qmsV1Imported = parseQmsScheduleText(
+      JSON.stringify({
+        schema: 'qms',
+        version: 1,
+        exportedAt: 3000,
+        schedule: savedSchedule,
+      }),
+    )
     expect(qmsV1Imported.scheduleData).toEqual(scheduleData)
 
     const wakeupImported = parseWakeupScheduleText(buildWakeupExportText(savedSchedule))
@@ -222,6 +231,8 @@ describe('mapScutSchedulePdf', () => {
       kind: 'scutHtml',
       html: '',
     }
-    expect(() => SCHEDULE_LIBRARY_KEY.codec.decode(JSON.stringify(invalidLibrary))).toThrow('课表库数据格式无效')
+    expect(() => SCHEDULE_LIBRARY_KEY.codec.decode(JSON.stringify(invalidLibrary))).toThrow(
+      '课表库数据格式无效',
+    )
   })
 })

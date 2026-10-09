@@ -10,7 +10,9 @@ const npmConfigKeys = [
   'npm_config_asset_source',
   'npm_config_dry_run',
 ] as const
-const originalNpmConfigValues = Object.fromEntries(npmConfigKeys.map((key) => [key, process.env[key]]))
+const originalNpmConfigValues = Object.fromEntries(
+  npmConfigKeys.map((key) => [key, process.env[key]]),
+)
 
 function setArgv(args: string[]) {
   process.argv = ['node', 'scripts/release.mjs', ...args]
@@ -49,7 +51,16 @@ describe('parseReleaseOptions', () => {
   })
 
   it('parses ios and android flags with note file, R2 and dry run', () => {
-    setArgv(['0.4.2', '--android', '--ios', '--note-file', 'notes.md', '--asset-source', 'r2', '--dry-run'])
+    setArgv([
+      '0.4.2',
+      '--android',
+      '--ios',
+      '--note-file',
+      'notes.md',
+      '--asset-source',
+      'r2',
+      '--dry-run',
+    ])
     const options = parseReleaseOptions()
 
     expect(options.noteFile).toBe('notes.md')

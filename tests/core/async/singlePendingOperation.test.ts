@@ -23,9 +23,11 @@ describe('SinglePendingOperation', () => {
     const onPendingChange = vi.fn()
     const operation = new SinglePendingOperation()
 
-    await expect(operation.run(async () => {
-      throw new Error('TEST failure')
-    }, onPendingChange)).rejects.toThrow('TEST failure')
+    await expect(
+      operation.run(async () => {
+        throw new Error('TEST failure')
+      }, onPendingChange),
+    ).rejects.toThrow('TEST failure')
 
     expect(operation.isPending).toBe(false)
     expect(onPendingChange.mock.calls).toEqual([[true], [false]])

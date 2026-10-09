@@ -26,8 +26,10 @@ describe('r2 helper functions', () => {
   })
 
   it('builds a stable versions manifest object key', () => {
-    expect(buildR2LatestVersionsObjectKey({
-      keyPrefix: '/releases/',
-    })).toBe('releases/versions.json')
+    expect(
+      buildR2LatestVersionsObjectKey({
+        keyPrefix: '/releases/',
+      }),
+    ).toBe('releases/versions.json')
   })
 })

@@ -13,7 +13,9 @@ describe('courses first-use guide', () => {
   })
 
   it('renders the guide heading, capabilities, and import action', () => {
-    const markup = renderToStaticMarkup(createElement(CoursesFirstUseGuide, { onImport: () => undefined }))
+    const markup = renderToStaticMarkup(
+      createElement(CoursesFirstUseGuide, { onImport: () => undefined }),
+    )
 
     expect(markup).toContain('<h1')
     expect(markup).toContain('先导入一份课表')

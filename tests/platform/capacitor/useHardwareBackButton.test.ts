@@ -78,18 +78,20 @@ async function renderApp(
   roots.push(root)
 
   await act(async () => {
-    root.render(createElement(
-      MemoryRouter,
-      { initialEntries: [initialPath] },
+    root.render(
       createElement(
-        Routes,
-        null,
-        createElement(Route, {
-          path: '*',
-          element: createElement(BackHarness, { onDismiss, onExitHint }),
-        }),
+        MemoryRouter,
+        { initialEntries: [initialPath] },
+        createElement(
+          Routes,
+          null,
+          createElement(Route, {
+            path: '*',
+            element: createElement(BackHarness, { onDismiss, onExitHint }),
+          }),
+        ),
       ),
-    ))
+    )
   })
 
   return container
@@ -114,16 +116,16 @@ beforeEach(() => {
   capacitorMocks.backListeners.length = 0
   capacitorMocks.isNativePlatform.mockReset().mockReturnValue(true)
   capacitorMocks.exitApp.mockReset().mockResolvedValue(undefined)
-  capacitorMocks.addListener.mockReset().mockImplementation(
-    async (eventName: string, listener: () => void | Promise<void>) => {
+  capacitorMocks.addListener
+    .mockReset()
+    .mockImplementation(async (eventName: string, listener: () => void | Promise<void>) => {
       if (eventName !== 'backButton') {
         throw new Error(`unexpected listener: ${eventName}`)
       }
 
       capacitorMocks.backListeners.push(listener)
       return { remove: vi.fn().mockResolvedValue(undefined) }
-    },
-  )
+    })
 })
 
 afterEach(async () => {
@@ -231,10 +233,12 @@ describe('useHardwareBackButton', () => {
     const handlerBlocked = new Promise<void>((resolve) => {
       releaseHandler = resolve
     })
-    cleanups.push(registerHardwareBackButtonHandler(async () => {
-      await handlerBlocked
-      return false
-    }))
+    cleanups.push(
+      registerHardwareBackButtonHandler(async () => {
+        await handlerBlocked
+        return false
+      }),
+    )
 
     const listener = capacitorMocks.backListeners.at(-1)
     if (!listener) {

@@ -6,10 +6,12 @@ import {
 
 describe('resolveManualBuildProtocol', () => {
   it('uses npm and the VitePress output for the current manual project', () => {
-    expect(resolveManualBuildProtocol({
-      hasPackageLock: true,
-      hasVitePressConfig: true,
-    })).toEqual({
+    expect(
+      resolveManualBuildProtocol({
+        hasPackageLock: true,
+        hasVitePressConfig: true,
+      }),
+    ).toEqual({
       installCommand: 'npm ci --ignore-scripts',
       lockFileName: 'package-lock.json',
       outputDirectoryName: 'vite-platform-dist',
@@ -17,15 +19,19 @@ describe('resolveManualBuildProtocol', () => {
   })
 
   it('fails fast when the manual build contract is incomplete', () => {
-    expect(() => resolveManualBuildProtocol({
-      hasPackageLock: false,
-      hasVitePressConfig: true,
-    })).toThrow('package-lock.json')
+    expect(() =>
+      resolveManualBuildProtocol({
+        hasPackageLock: false,
+        hasVitePressConfig: true,
+      }),
+    ).toThrow('package-lock.json')
 
-    expect(() => resolveManualBuildProtocol({
-      hasPackageLock: true,
-      hasVitePressConfig: false,
-    })).toThrow('VitePress config')
+    expect(() =>
+      resolveManualBuildProtocol({
+        hasPackageLock: true,
+        hasVitePressConfig: false,
+      }),
+    ).toThrow('VitePress config')
   })
 })
 

@@ -5,7 +5,8 @@ describe('buildScutJwImportDiagnostic', () => {
   it('keeps only the sanitized origin and approved aggregate fields', () => {
     const diagnostic = buildScutJwImportDiagnostic({
       stage: 'parse-completed',
-      targetUrl: 'https://student:secret@jw.example.edu.cn/private/schedule?token=TEST-TOKEN#details',
+      targetUrl:
+        'https://student:secret@jw.example.edu.cn/private/schedule?token=TEST-TOKEN#details',
       status: 200,
       responseLength: 4096,
       courseCount: 8,
@@ -26,9 +27,11 @@ describe('buildScutJwImportDiagnostic', () => {
   })
 
   it('omits invalid or unsupported target URLs', () => {
-    expect(buildScutJwImportDiagnostic({
-      stage: 'opening',
-      targetUrl: 'javascript:alert(1)',
-    })).toEqual({ stage: 'opening' })
+    expect(
+      buildScutJwImportDiagnostic({
+        stage: 'opening',
+        targetUrl: 'javascript:alert(1)',
+      }),
+    ).toEqual({ stage: 'opening' })
   })
 })

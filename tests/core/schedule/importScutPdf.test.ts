@@ -47,7 +47,9 @@ describe('SCUT fixed PDF extraction contract', () => {
       width: SCUT_PDF_FIXED_LAYOUT.page.width,
       height: SCUT_PDF_FIXED_LAYOUT.page.height,
     })
-    expect(extracted.pages[0].items.some((item) => item.text.includes('TEST-COURSE-ALPHA'))).toBe(true)
+    expect(extracted.pages[0].items.some((item) => item.text.includes('TEST-COURSE-ALPHA'))).toBe(
+      true,
+    )
   })
 
   it('recognizes multiple courses, multi-node lessons, stepped weeks, metadata, teachers, rooms, and credits', async () => {

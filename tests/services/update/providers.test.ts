@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildProviderUrl, DEFAULT_UPDATE_PROVIDER_ORDER } from '../../../src/services/update/providers'
+import {
+  buildProviderUrl,
+  DEFAULT_UPDATE_PROVIDER_ORDER,
+} from '../../../src/services/update/providers'
 
 describe('buildProviderUrl', () => {
   it('defaults to direct GitHub asset downloads', () => {
