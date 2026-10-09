@@ -83,7 +83,9 @@ describe('checkForAppUpdate', () => {
 
     expect(result.latestVersion).toBe('0.4.3')
     expect(result.downloadUrl).toBe('https://r2.example.com/releases/v0.4.3/qmm-v0.4.3.apk')
-    expect(fetch).toHaveBeenCalledWith('https://r2.example.com/releases/versions.json', { cache: 'no-store' })
+    expect(fetch).toHaveBeenCalledWith('https://r2.example.com/releases/versions.json', {
+      cache: 'no-store',
+    })
   })
 
   it('prefers r2 asset when github appears first in list', async () => {
@@ -182,7 +184,8 @@ describe('checkForAppUpdate', () => {
   })
 
   it('falls back to the repository manifest when the primary source fails', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({ ok: false, status: 503 })
       .mockResolvedValueOnce({
         ok: true,
@@ -214,14 +217,18 @@ describe('checkForAppUpdate', () => {
   it('falls back when the primary manifest is invalid', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce({ ok: true, json: async () => ({ latest: {} }) })
         .mockResolvedValueOnce({ ok: true, json: async () => ({ latest: { version: '0.5.0' } }) }),
     )
 
     const result = await checkForAppUpdate({
       localVersion: '0.5.0',
-      manifestUrls: ['https://primary.example.com/versions.json', 'https://fallback.example.com/versions.json'],
+      manifestUrls: [
+        'https://primary.example.com/versions.json',
+        'https://fallback.example.com/versions.json',
+      ],
     })
 
     expect(result.status).toBe('up-to-date')
@@ -239,7 +246,10 @@ describe('checkForAppUpdate', () => {
     await expect(
       checkForAppUpdate({
         localVersion: '0.4.2',
-        manifestUrls: ['https://primary.example.com/versions.json', 'https://fallback.example.com/versions.json'],
+        manifestUrls: [
+          'https://primary.example.com/versions.json',
+          'https://fallback.example.com/versions.json',
+        ],
       }),
     ).rejects.toThrow('无法获取远程版本信息')
   })
@@ -281,9 +291,8 @@ describe('checkForAppUpdate', () => {
   it('uses the single nightly manifest source when channel is nightly', async () => {
     vi.resetModules()
     vi.stubEnv('VITE_UPDATE_CHANNEL', 'nightly')
-    const { checkForAppUpdate: freshCheckForAppUpdate } = await import(
-      '../../../src/services/update/checkForUpdate'
-    )
+    const { checkForAppUpdate: freshCheckForAppUpdate } =
+      await import('../../../src/services/update/checkForUpdate')
 
     const fetchMock = stubManifestFetch({ latest: { version: '0.0.0-nightly.20261002.abc1234' } })
 
@@ -302,8 +311,12 @@ describe('compareVersion', () => {
   })
 
   it('treats segments with suffixes by their leading digits', () => {
-    expect(compareVersion('0.0.0-nightly.20261001.abc1234', '0.0.0-nightly.20261002.abc1234')).toBeLessThan(0)
-    expect(compareVersion('0.0.0-nightly.20261002.abc1234', '0.0.0-nightly.20261001.def5678')).toBeGreaterThan(0)
+    expect(
+      compareVersion('0.0.0-nightly.20261001.abc1234', '0.0.0-nightly.20261002.abc1234'),
+    ).toBeLessThan(0)
+    expect(
+      compareVersion('0.0.0-nightly.20261002.abc1234', '0.0.0-nightly.20261001.def5678'),
+    ).toBeGreaterThan(0)
   })
 
   it('strips the v prefix and treats missing segments as zero', () => {

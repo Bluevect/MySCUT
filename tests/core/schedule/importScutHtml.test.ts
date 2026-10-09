@@ -6,7 +6,14 @@ import { dirname, join } from 'node:path'
 import { parseScutScheduleHtml } from '../../../src/core/schedule/importScutHtml'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const FIXTURE_PATH = join(__dirname, '..', '..', 'fixtures', 'public', 'scutSchedule.synthetic.html')
+const FIXTURE_PATH = join(
+  __dirname,
+  '..',
+  '..',
+  'fixtures',
+  'public',
+  'scutSchedule.synthetic.html',
+)
 
 function loadFixture() {
   return readFileSync(FIXTURE_PATH, 'utf8')
@@ -148,8 +155,8 @@ describe('parseScutScheduleHtml', () => {
       <tr><td><div class="timetable_title">2025-2026学年第2学期 测试同学的课表</div></td></tr>
       <tr><td id="1-1" class="td_wrap"></td></tr>
     </tbody></table></body></html>`
-    expect(() =>
-      parseScutScheduleHtml(html, { fallbackSemesterStartDate: '2026-02-23' }),
-    ).toThrow(/未解析到课程内容/)
+    expect(() => parseScutScheduleHtml(html, { fallbackSemesterStartDate: '2026-02-23' })).toThrow(
+      /未解析到课程内容/,
+    )
   })
 })

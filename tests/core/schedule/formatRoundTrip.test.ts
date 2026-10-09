@@ -6,10 +6,7 @@ import {
   decodeCompressedQmsText,
   encodeCompressedQmsText,
 } from '../../../src/core/schedule/compressedQms'
-import {
-  buildQmsExportText,
-  buildWakeupExportText,
-} from '../../../src/core/schedule/export'
+import { buildQmsExportText, buildWakeupExportText } from '../../../src/core/schedule/export'
 import { ScheduleImportError } from '../../../src/core/schedule/importErrors'
 import { parseQmsScheduleText } from '../../../src/core/schedule/importQms'
 import { parseWakeupScheduleText } from '../../../src/core/schedule/importWakeup'
@@ -68,33 +65,37 @@ function createNormalizedSchedule(): ScheduleData {
       { node: 1, startTime: '08:00', endTime: '08:45', timeTable: 2 },
       { node: 2, startTime: '08:55', endTime: '09:40', timeTable: 2 },
     ],
-    courses: [{
-      id: 1,
-      tableId: 1,
-      name: 'TEST-COURSE-ALPHA',
-      color: '#123456',
-      credit: 3,
-      note: 'TEST-COURSE-NOTE',
-    }],
-    lessons: [{
-      instanceId: 'TEST-LESSON-ALPHA',
-      courseId: 1,
-      tableId: 1,
-      day: 1,
-      startNode: 1,
-      endNode: 2,
-      startWeek: 1,
-      endWeek: 15,
-      weekStep: 2,
-      ownTime: false,
-      startTime: '',
-      endTime: '',
-      room: 'TEST-ROOM-A101',
-      teacher: 'TEST-TEACHER-A',
-      detailText: 'TEST-DETAIL',
-      type: 0,
-      level: 0,
-    }],
+    courses: [
+      {
+        id: 1,
+        tableId: 1,
+        name: 'TEST-COURSE-ALPHA',
+        color: '#123456',
+        credit: 3,
+        note: 'TEST-COURSE-NOTE',
+      },
+    ],
+    lessons: [
+      {
+        instanceId: 'TEST-LESSON-ALPHA',
+        courseId: 1,
+        tableId: 1,
+        day: 1,
+        startNode: 1,
+        endNode: 2,
+        startWeek: 1,
+        endWeek: 15,
+        weekStep: 2,
+        ownTime: false,
+        startTime: '',
+        endTime: '',
+        room: 'TEST-ROOM-A101',
+        teacher: 'TEST-TEACHER-A',
+        detailText: 'TEST-DETAIL',
+        type: 0,
+        level: 0,
+      },
+    ],
     raw: {
       kind: 'scutHtml',
       html: '<html>TEST-RAW-MUST-NOT-BE-REQUIRED</html>',
@@ -147,10 +148,13 @@ function addWakeupExtraMetadata(text: string) {
 
 async function saveAndReload(scheduleData: ScheduleData) {
   const repository = new ScheduleRepository()
-  await repository.initialize({
-    store: new InMemoryPersistentStore(),
-    migrationJournal: new InMemoryMigrationJournal(),
-  }, new MemoryStorage())
+  await repository.initialize(
+    {
+      store: new InMemoryPersistentStore(),
+      migrationJournal: new InMemoryMigrationJournal(),
+    },
+    new MemoryStorage(),
+  )
 
   await repository.saveScheduleDataWithOptions(scheduleData, {
     themeId: 'palacePlum',
@@ -256,16 +260,16 @@ describe('WakeUp format round trips', () => {
     const exportedLines = exportedText.split(/\r?\n/).map((line) => JSON.parse(line) as unknown)
 
     expect(exportedLines[0]).toMatchObject({ testExtraMeta: 'TEST-EXTRA-META' })
-    expect(exportedLines[1]).toEqual(expect.arrayContaining([
-      expect.objectContaining({ testExtraSlot: 'TEST-EXTRA-SLOT' }),
-    ]))
+    expect(exportedLines[1]).toEqual(
+      expect.arrayContaining([expect.objectContaining({ testExtraSlot: 'TEST-EXTRA-SLOT' })]),
+    )
     expect(exportedLines[2]).toMatchObject({ testExtraTable: 'TEST-EXTRA-TABLE' })
-    expect(exportedLines[3]).toEqual(expect.arrayContaining([
-      expect.objectContaining({ testExtraCourse: 'TEST-EXTRA-COURSE' }),
-    ]))
-    expect(exportedLines[4]).toEqual(expect.arrayContaining([
-      expect.objectContaining({ testExtraLesson: 'TEST-EXTRA-LESSON' }),
-    ]))
+    expect(exportedLines[3]).toEqual(
+      expect.arrayContaining([expect.objectContaining({ testExtraCourse: 'TEST-EXTRA-COURSE' })]),
+    )
+    expect(exportedLines[4]).toEqual(
+      expect.arrayContaining([expect.objectContaining({ testExtraLesson: 'TEST-EXTRA-LESSON' })]),
+    )
 
     const reimported = parseWakeupScheduleText(exportedText)
     expect(normalizedBusinessFields(reimported)).toEqual(normalizedBusinessFields(imported))

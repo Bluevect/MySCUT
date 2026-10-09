@@ -39,14 +39,16 @@ function createScheduleData(name: string, lessons: LessonInput[], maxWeek = 4): 
       timeTable: 2,
     },
     timeSlots: builtInUniversityTownSlots,
-    courses: [{
-      id: 1,
-      tableId: 1,
-      name: `TEST-${name}-COURSE`,
-      color: '#123456',
-      credit: 1,
-      note: '',
-    }],
+    courses: [
+      {
+        id: 1,
+        tableId: 1,
+        name: `TEST-${name}-COURSE`,
+        color: '#123456',
+        credit: 1,
+        note: '',
+      },
+    ],
     lessons: lessons.map((lesson, index) => ({
       instanceId: `TEST-${name}-LESSON-${index + 1}`,
       courseId: 1,
@@ -87,12 +89,13 @@ function getIntersectionCell(
   endTime: string,
   day = 1,
 ) {
-  const lesson = scheduleData.lessons.find((candidate) => (
-    candidate.startWeek === week &&
-    candidate.day === day &&
-    candidate.startTime === startTime &&
-    candidate.endTime === endTime
-  ))
+  const lesson = scheduleData.lessons.find(
+    (candidate) =>
+      candidate.startWeek === week &&
+      candidate.day === day &&
+      candidate.startTime === startTime &&
+      candidate.endTime === endTime,
+  )
   if (!lesson) {
     throw new Error(`intersection cell missing: week ${week}, ${startTime}-${endTime}`)
   }
@@ -112,30 +115,51 @@ function buildByMode(participants: IntersectionParticipant[], mode: Intersection
 describe('buildIntersectionSchedule', () => {
   it('maps partial and full overlap across presets for multiple participants and multi-node lessons', () => {
     const participants = [
-      createParticipant('TEST-A', 'wushan', [{
-        day: 1,
-        startNode: 1,
-        endNode: 2,
-        startWeek: 1,
-        endWeek: 1,
-        weekStep: 1,
-      }], 1),
-      createParticipant('TEST-B', 'universityTown', [{
-        day: 1,
-        startNode: 1,
-        endNode: 1,
-        startWeek: 1,
-        endWeek: 1,
-        weekStep: 1,
-      }], 1),
-      createParticipant('TEST-C', 'builtIn', [{
-        day: 1,
-        startNode: 1,
-        endNode: 1,
-        startWeek: 1,
-        endWeek: 1,
-        weekStep: 1,
-      }], 1),
+      createParticipant(
+        'TEST-A',
+        'wushan',
+        [
+          {
+            day: 1,
+            startNode: 1,
+            endNode: 2,
+            startWeek: 1,
+            endWeek: 1,
+            weekStep: 1,
+          },
+        ],
+        1,
+      ),
+      createParticipant(
+        'TEST-B',
+        'universityTown',
+        [
+          {
+            day: 1,
+            startNode: 1,
+            endNode: 1,
+            startWeek: 1,
+            endWeek: 1,
+            weekStep: 1,
+          },
+        ],
+        1,
+      ),
+      createParticipant(
+        'TEST-C',
+        'builtIn',
+        [
+          {
+            day: 1,
+            startNode: 1,
+            endNode: 1,
+            startWeek: 1,
+            endWeek: 1,
+            weekStep: 1,
+          },
+        ],
+        1,
+      ),
     ]
 
     const result = buildByMode(participants, 'default')
@@ -169,29 +193,35 @@ describe('buildIntersectionSchedule', () => {
 
   it('honors odd/even weeks and emits exact labels and colors for every display mode', () => {
     const participants = [
-      createParticipant('TEST-A', 'wushan', [{
-        day: 1,
-        startNode: 1,
-        endNode: 1,
-        startWeek: 1,
-        endWeek: 3,
-        weekStep: 2,
-      }]),
-      createParticipant('TEST-B', 'wushan', [{
-        day: 1,
-        startNode: 1,
-        endNode: 1,
-        startWeek: 2,
-        endWeek: 2,
-        weekStep: 1,
-      }]),
+      createParticipant('TEST-A', 'wushan', [
+        {
+          day: 1,
+          startNode: 1,
+          endNode: 1,
+          startWeek: 1,
+          endWeek: 3,
+          weekStep: 2,
+        },
+      ]),
+      createParticipant('TEST-B', 'wushan', [
+        {
+          day: 1,
+          startNode: 1,
+          endNode: 1,
+          startWeek: 2,
+          endWeek: 2,
+          weekStep: 1,
+        },
+      ]),
     ]
 
     const availableOnly = buildByMode(participants, 'availableOnly')
     expect(getIntersectionCell(availableOnly, 1, '08:00', '08:45').course.name).toBe('TEST-B')
     expect(getIntersectionCell(availableOnly, 2, '08:00', '08:45').course.name).toBe('TEST-A')
     expect(getIntersectionCell(availableOnly, 3, '08:00', '08:45').course.name).toBe('TEST-B')
-    expect(getIntersectionCell(availableOnly, 4, '08:00', '08:45').course.name).toBe('TEST-A TEST-B')
+    expect(getIntersectionCell(availableOnly, 4, '08:00', '08:45').course.name).toBe(
+      'TEST-A TEST-B',
+    )
 
     const unavailableOnly = buildByMode(participants, 'unavailableOnly')
     expect(getIntersectionCell(unavailableOnly, 1, '08:00', '08:45').course).toMatchObject({

@@ -168,10 +168,15 @@ describe('ScheduleRepository migration', () => {
     legacyStorage.setItem('scheduleLibrary', '{bad json')
     const repository = new ScheduleRepository()
 
-    await expect(repository.initialize({
-      store: new InMemoryPersistentStore(),
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, legacyStorage)).rejects.toMatchObject({ code: 'corrupt-data' })
+    await expect(
+      repository.initialize(
+        {
+          store: new InMemoryPersistentStore(),
+          migrationJournal: new InMemoryMigrationJournal(),
+        },
+        legacyStorage,
+      ),
+    ).rejects.toMatchObject({ code: 'corrupt-data' })
     expect(legacyStorage.getItem('scheduleLibrary')).toBe('{bad json')
   })
 
@@ -180,10 +185,15 @@ describe('ScheduleRepository migration', () => {
     legacyStorage.setItem('scheduleLibrary', JSON.stringify(createLibrary()))
     const repository = new ScheduleRepository()
 
-    await expect(repository.initialize({
-      store: new DroppingPersistentStore(),
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, legacyStorage)).rejects.toMatchObject({ code: 'corrupt-data' })
+    await expect(
+      repository.initialize(
+        {
+          store: new DroppingPersistentStore(),
+          migrationJournal: new InMemoryMigrationJournal(),
+        },
+        legacyStorage,
+      ),
+    ).rejects.toMatchObject({ code: 'corrupt-data' })
     expect(legacyStorage.getItem('scheduleLibrary')).not.toBeNull()
   })
 })
@@ -191,10 +201,13 @@ describe('ScheduleRepository migration', () => {
 describe('ScheduleRepository durable snapshots', () => {
   it('notifies subscribers after schedule changes and supports unsubscribe', async () => {
     const repository = new ScheduleRepository()
-    await repository.initialize({
-      store: new InMemoryPersistentStore(),
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, new MemoryStorage())
+    await repository.initialize(
+      {
+        store: new InMemoryPersistentStore(),
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
     let notificationCount = 0
     const unsubscribe = repository.subscribe(() => {
       notificationCount += 1
@@ -222,10 +235,13 @@ describe('ScheduleRepository durable snapshots', () => {
   it('updates only the active schedule theme after the durable write succeeds', async () => {
     const persistentStore = new InMemoryPersistentStore()
     const repository = new ScheduleRepository()
-    await repository.initialize({
-      store: persistentStore,
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, new MemoryStorage())
+    await repository.initialize(
+      {
+        store: persistentStore,
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
 
     await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
       themeId: 'skyBlue',
@@ -240,19 +256,26 @@ describe('ScheduleRepository durable snapshots', () => {
 
     await expect(repository.setActiveScheduleThemeId('autumnOsmanthus')).resolves.toBe(true)
 
-    expect(repository.listSavedSchedules().map(({ name, themeId }) => ({ name, themeId }))).toEqual([
-      { name: '第一份', themeId: 'skyBlue' },
-      { name: '第二份', themeId: 'autumnOsmanthus' },
-    ])
-    expect((await persistentStore.get(SCHEDULE_LIBRARY_KEY))?.schedules[1]?.themeId).toBe('autumnOsmanthus')
+    expect(repository.listSavedSchedules().map(({ name, themeId }) => ({ name, themeId }))).toEqual(
+      [
+        { name: '第一份', themeId: 'skyBlue' },
+        { name: '第二份', themeId: 'autumnOsmanthus' },
+      ],
+    )
+    expect((await persistentStore.get(SCHEDULE_LIBRARY_KEY))?.schedules[1]?.themeId).toBe(
+      'autumnOsmanthus',
+    )
   })
 
   it('updates the requested saved schedule data without changing its identity or active schedule', async () => {
     const repository = new ScheduleRepository()
-    await repository.initialize({
-      store: new InMemoryPersistentStore(),
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, new MemoryStorage())
+    await repository.initialize(
+      {
+        store: new InMemoryPersistentStore(),
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
 
     const firstSave = await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
       themeId: 'skyBlue',
@@ -266,20 +289,21 @@ describe('ScheduleRepository durable snapshots', () => {
     })
     const updatedScheduleData = {
       ...firstSave.schedule.scheduleData,
-      courses: [{
-        id: 2,
-        tableId: 1,
-        name: '更新后的课程名',
-        color: '#7db3ff',
-        credit: 0,
-        note: '',
-      }],
+      courses: [
+        {
+          id: 2,
+          tableId: 1,
+          name: '更新后的课程名',
+          color: '#7db3ff',
+          credit: 0,
+          note: '',
+        },
+      ],
     }
 
-    await expect(repository.updateSavedScheduleData(
-      firstSave.schedule.id,
-      updatedScheduleData,
-    )).resolves.toBe(true)
+    await expect(
+      repository.updateSavedScheduleData(firstSave.schedule.id, updatedScheduleData),
+    ).resolves.toBe(true)
 
     expect(repository.loadSavedScheduleById(firstSave.schedule.id)).toMatchObject({
       name: '第一份',
@@ -290,17 +314,21 @@ describe('ScheduleRepository durable snapshots', () => {
       },
     })
     expect(repository.loadActiveScheduleEntry()?.id).toBe(secondSave.schedule.id)
-    await expect(repository.updateSavedScheduleData('missing-schedule', updatedScheduleData))
-      .resolves.toBe(false)
+    await expect(
+      repository.updateSavedScheduleData('missing-schedule', updatedScheduleData),
+    ).resolves.toBe(false)
   })
 
   it('updates the active schedule data in place without adding a schedule', async () => {
     const repository = new ScheduleRepository()
     const persistentStore = new InMemoryPersistentStore()
-    await repository.initialize({
-      store: persistentStore,
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, new MemoryStorage())
+    await repository.initialize(
+      {
+        store: persistentStore,
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
 
     const firstSave = await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
       themeId: 'skyBlue',
@@ -315,14 +343,16 @@ describe('ScheduleRepository durable snapshots', () => {
     })
     const updatedData = {
       ...secondSave.schedule.scheduleData,
-      courses: [{
-        id: 1,
-        tableId: 1,
-        name: '新增课程',
-        color: '',
-        credit: 0,
-        note: '',
-      }],
+      courses: [
+        {
+          id: 1,
+          tableId: 1,
+          name: '新增课程',
+          color: '',
+          credit: 0,
+          note: '',
+        },
+      ],
     }
 
     await expect(repository.updateActiveScheduleData(updatedData)).resolves.toBe(true)
@@ -330,7 +360,9 @@ describe('ScheduleRepository durable snapshots', () => {
     const library = await persistentStore.get(SCHEDULE_LIBRARY_KEY)
     expect(library?.schedules).toHaveLength(2)
     expect(library?.activeScheduleId).toBe(secondSave.schedule.id)
-    expect(repository.loadSavedScheduleById(firstSave.schedule.id)?.scheduleData.courses).toEqual([])
+    expect(repository.loadSavedScheduleById(firstSave.schedule.id)?.scheduleData.courses).toEqual(
+      [],
+    )
     expect(repository.loadActiveScheduleEntry()).toMatchObject({
       id: secondSave.schedule.id,
       themeId: 'bambooGrove',
@@ -345,10 +377,13 @@ describe('ScheduleRepository durable snapshots', () => {
     const targetStore = new InMemoryPersistentStore()
     const store = new FailingPersistentStore(targetStore)
     const repository = new ScheduleRepository()
-    await repository.initialize({
-      store,
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, new MemoryStorage())
+    await repository.initialize(
+      {
+        store,
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
 
     await repository.saveScheduleDataWithOptions(createScheduleData(), {
       themeId: 'skyBlue',
@@ -367,10 +402,13 @@ describe('ScheduleRepository durable snapshots', () => {
     const targetStore = new InMemoryPersistentStore()
     const store = new FailingPersistentStore(targetStore)
     const repository = new ScheduleRepository()
-    await repository.initialize({
-      store,
-      migrationJournal: new InMemoryMigrationJournal(),
-    }, new MemoryStorage())
+    await repository.initialize(
+      {
+        store,
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
 
     await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
       themeId: 'skyBlue',
@@ -378,10 +416,12 @@ describe('ScheduleRepository durable snapshots', () => {
     })
     store.failWrites = true
 
-    await expect(repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
-      themeId: 'skyBlue',
-      semesterStartDate: '2026-02-23',
-    })).rejects.toMatchObject({ code: 'unavailable' })
+    await expect(
+      repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
+        themeId: 'skyBlue',
+        semesterStartDate: '2026-02-23',
+      }),
+    ).rejects.toMatchObject({ code: 'unavailable' })
 
     expect(repository.listSavedSchedules().map((schedule) => schedule.name)).toEqual(['第一份'])
     expect((await targetStore.get(SCHEDULE_LIBRARY_KEY))?.schedules).toHaveLength(1)

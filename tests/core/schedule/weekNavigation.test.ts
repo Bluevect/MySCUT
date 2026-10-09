@@ -47,9 +47,11 @@ describe('schedule week start and columns', () => {
     const offset = getScheduleWeekdayOffset('2026-09-01')
 
     expect(offset).toBe(1)
-    expect(Array.from({ length: 7 }, (_, columnIndex) => (
-      getScheduleLessonDayForColumn(offset, columnIndex)
-    ))).toEqual([2, 3, 4, 5, 6, 7, 1])
+    expect(
+      Array.from({ length: 7 }, (_, columnIndex) =>
+        getScheduleLessonDayForColumn(offset, columnIndex),
+      ),
+    ).toEqual([2, 3, 4, 5, 6, 7, 1])
   })
 
   it('defaults to Monday-first columns and placeholders for an invalid date', () => {

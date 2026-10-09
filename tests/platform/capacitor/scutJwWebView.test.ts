@@ -33,15 +33,16 @@ describe('openScutJwWebView', () => {
     pluginMocks.close.mockReset().mockResolvedValue(undefined)
     pluginMocks.executeScript.mockReset().mockResolvedValue(undefined)
     pluginMocks.openWebView.mockReset().mockResolvedValue({ id: 'jw-webview' })
-    pluginMocks.addListener.mockReset().mockImplementation(async (
-      eventName: string,
-      listener: (event: Record<string, unknown>) => void,
-    ) => {
-      pluginMocks.listeners.set(eventName, listener)
-      const remove = vi.fn().mockResolvedValue(undefined)
-      pluginMocks.removeHandles.push(remove)
-      return { remove }
-    })
+    pluginMocks.addListener
+      .mockReset()
+      .mockImplementation(
+        async (eventName: string, listener: (event: Record<string, unknown>) => void) => {
+          pluginMocks.listeners.set(eventName, listener)
+          const remove = vi.fn().mockResolvedValue(undefined)
+          pluginMocks.removeHandles.push(remove)
+          return { remove }
+        },
+      )
   })
 
   it('opens an isolated session and accepts events only from its own webview', async () => {
@@ -56,12 +57,14 @@ describe('openScutJwWebView', () => {
     })
 
     expect(pluginMocks.clearAllCookies).toHaveBeenCalledOnce()
-    expect(pluginMocks.openWebView).toHaveBeenCalledWith(expect.objectContaining({
-      url: 'https://jw.example.edu.cn/',
-      handleDownloads: false,
-      persistWebViewData: false,
-      preventDeeplink: false,
-    }))
+    expect(pluginMocks.openWebView).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://jw.example.edu.cn/',
+        handleDownloads: false,
+        persistWebViewData: false,
+        preventDeeplink: false,
+      }),
+    )
 
     // Temporary approach, may need a better solution
     // pluginMocks.listeners.get('browserPageLoaded')?.({ id: 'other-webview' })
@@ -69,9 +72,11 @@ describe('openScutJwWebView', () => {
 
     pluginMocks.listeners.get('browserPageLoaded')?.({ id: 'jw-webview' })
     await vi.waitFor(() => {
-      expect(pluginMocks.executeScript).toHaveBeenCalledWith(expect.objectContaining({
-        id: 'jw-webview',
-      }))
+      expect(pluginMocks.executeScript).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'jw-webview',
+        }),
+      )
     })
 
     // Same as above
@@ -148,9 +153,11 @@ describe('openScutJwWebView', () => {
     })
 
     expect(onHtmlCaptured).not.toHaveBeenCalled()
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-      message: '华工教务页面：内容大小超过 512 KiB 限制，请确认内容来自受支持的课表导出',
-    }))
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: '华工教务页面：内容大小超过 512 KiB 限制，请确认内容来自受支持的课表导出',
+      }),
+    )
     await session.close()
   })
 
@@ -176,37 +183,43 @@ describe('openScutJwWebView', () => {
 
     await vi.waitFor(() => {
       expect(onHtmlCaptured).toHaveBeenCalledOnce()
-      expect(pluginMocks.executeScript).toHaveBeenCalledWith(expect.objectContaining({
-        id: 'jw-webview',
-        code: expect.stringContaining('button.disabled = true'),
-      }))
+      expect(pluginMocks.executeScript).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'jw-webview',
+          code: expect.stringContaining('button.disabled = true'),
+        }),
+      )
     })
 
     finishImport()
     await vi.waitFor(() => {
-      expect(pluginMocks.executeScript).toHaveBeenCalledWith(expect.objectContaining({
-        id: 'jw-webview',
-        code: expect.stringContaining('button.disabled = false'),
-      }))
+      expect(pluginMocks.executeScript).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'jw-webview',
+          code: expect.stringContaining('button.disabled = false'),
+        }),
+      )
     })
     await session.close()
   })
 
   it('rejects unsupported target URLs before opening a native webview', async () => {
-    await expect(openScutJwWebView({
-      url: 'javascript:alert(1)',
-      onClose: vi.fn(),
-      onError: vi.fn(),
-      onHtmlCaptured: vi.fn(),
-    })).rejects.toThrow('仅支持 HTTP 或 HTTPS')
+    await expect(
+      openScutJwWebView({
+        url: 'javascript:alert(1)',
+        onClose: vi.fn(),
+        onError: vi.fn(),
+        onHtmlCaptured: vi.fn(),
+      }),
+    ).rejects.toThrow('仅支持 HTTP 或 HTTPS')
 
     expect(pluginMocks.openWebView).not.toHaveBeenCalled()
   })
 
   it('does not expose native failure details to the caller', async () => {
-    pluginMocks.openWebView.mockRejectedValueOnce(new Error(
-      'Cookie: TEST-SECRET; response=<html>private schedule</html>',
-    ))
+    pluginMocks.openWebView.mockRejectedValueOnce(
+      new Error('Cookie: TEST-SECRET; response=<html>private schedule</html>'),
+    )
 
     const error = await openScutJwWebView({
       url: 'https://jw.example.edu.cn/private?token=TEST-TOKEN',

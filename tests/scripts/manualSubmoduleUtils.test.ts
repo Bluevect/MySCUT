@@ -24,12 +24,14 @@ describe('ensureManualSubmodule', () => {
     writeFileSync(resolve(manualDir, '.git'), 'gitdir: test')
     let initializeCalls = 0
 
-    expect(ensureManualSubmodule({
-      manualDir,
-      initialize: () => {
-        initializeCalls += 1
-      },
-    })).toBe(false)
+    expect(
+      ensureManualSubmodule({
+        manualDir,
+        initialize: () => {
+          initializeCalls += 1
+        },
+      }),
+    ).toBe(false)
     expect(initializeCalls).toBe(0)
   })
 
@@ -37,12 +39,14 @@ describe('ensureManualSubmodule', () => {
     const manualDir = createTempDirectory()
     let initializeCalls = 0
 
-    expect(ensureManualSubmodule({
-      manualDir,
-      initialize: () => {
-        initializeCalls += 1
-      },
-    })).toBe(true)
+    expect(
+      ensureManualSubmodule({
+        manualDir,
+        initialize: () => {
+          initializeCalls += 1
+        },
+      }),
+    ).toBe(true)
     expect(initializeCalls).toBe(1)
   })
 })

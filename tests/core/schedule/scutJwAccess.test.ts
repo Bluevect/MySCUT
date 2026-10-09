@@ -35,7 +35,9 @@ describe('resolveScutJwEntryUrl', () => {
   })
 
   it('preserves a complete custom HTTPS URL', () => {
-    expect(resolveScutJwEntryUrl('custom', 'https://jw.example.edu.cn/schedule?semester=1#week')).toEqual({
+    expect(
+      resolveScutJwEntryUrl('custom', 'https://jw.example.edu.cn/schedule?semester=1#week'),
+    ).toEqual({
       ok: true,
       url: 'https://jw.example.edu.cn/schedule?semester=1#week',
     })
