@@ -2,9 +2,10 @@ const SCHEDULE_WEEK_STORAGE_KEY = 'scheduleWeekStorage'
 
 export function getScheduleWeekStorage() {
   try {
-    return localStorage.getItem(SCHEDULE_WEEK_STORAGE_KEY) === '1'
+    const storedValue = localStorage.getItem(SCHEDULE_WEEK_STORAGE_KEY)
+    return storedValue !== '0'
   } catch {
-    return false
+    return true
   }
 }
 
