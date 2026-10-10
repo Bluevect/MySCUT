@@ -73,18 +73,38 @@ function readRememberedScheduleWeek(scheduleId: string, semesterStartDate: strin
   }
 }
 
-export function getScheduleWeekNumber(date: Date, semesterStartDateText: string) {
+function getScheduleDayDifference(date: Date, semesterStartDateText: string) {
   const semesterStart = parseDateParts(semesterStartDateText)
   if (!semesterStart || Number.isNaN(date.getTime())) {
-    return 1
+    return null
   }
 
   const semesterStartDay = Date.UTC(semesterStart.year, semesterStart.month - 1, semesterStart.day)
   const currentDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  const differenceDays = Math.floor((currentDay - semesterStartDay) / DAY_IN_MS)
+  return Math.floor((currentDay - semesterStartDay) / DAY_IN_MS)
+}
+
+export function getScheduleWeekNumber(date: Date, semesterStartDateText: string) {
+  const differenceDays = getScheduleDayDifference(date, semesterStartDateText)
+  if (differenceDays === null) {
+    return 1
+  }
+
   const week = Math.floor(differenceDays / 7) + 1
 
   return Math.max(1, week)
+}
+
+export function hasScheduleStarted(date: Date, semesterStartDateText: string) {
+  const differenceDays = getScheduleDayDifference(date, semesterStartDateText)
+  return differenceDays !== null && differenceDays >= 0
+}
+
+export function clampScheduleWeek(week: number, maxWeek: number) {
+  const safeMaxWeek = Number.isFinite(maxWeek) ? Math.max(1, Math.floor(maxWeek)) : 1
+  const safeWeek = Number.isFinite(week) ? Math.max(1, Math.floor(week)) : 1
+
+  return Math.min(safeWeek, safeMaxWeek)
 }
 
 export function getScheduleWeekStartDate(semesterStartDateText: string, weekNumber: number) {
@@ -119,23 +139,27 @@ export function resolveInitialScheduleWeekView(
   scheduleId: string,
   semesterStartDate: string,
   inferredCurrentWeek: number,
+  maxWeek = Number.MAX_SAFE_INTEGER,
 ): ScheduleWeekView {
   const rememberedWeek = readRememberedScheduleWeek(scheduleId, semesterStartDate)
+  const normalizedInferredWeek = clampScheduleWeek(inferredCurrentWeek, maxWeek)
+  const normalizedRememberedWeek =
+    rememberedWeek === null ? null : clampScheduleWeek(rememberedWeek, maxWeek)
 
   if (
-    rememberedWeek === null ||
-    rememberedWeek === inferredCurrentWeek ||
+    normalizedRememberedWeek === null ||
+    normalizedRememberedWeek === normalizedInferredWeek ||
     !getScheduleWeekStorage()
   ) {
     clearRememberedScheduleWeek(scheduleId)
     return {
-      week: inferredCurrentWeek,
+      week: normalizedInferredWeek,
       hasManualOverride: false,
     }
   }
 
   return {
-    week: rememberedWeek,
+    week: normalizedRememberedWeek,
     hasManualOverride: true,
   }
 }

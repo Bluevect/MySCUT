@@ -2,10 +2,12 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  clampScheduleWeek,
   getScheduleLessonDayForColumn,
   getScheduleWeekNumber,
   getScheduleWeekStartDate,
   getScheduleWeekdayOffset,
+  hasScheduleStarted,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../../src/core/schedule/weekNavigation'
@@ -22,6 +24,34 @@ describe('getScheduleWeekNumber', () => {
     expect(getScheduleWeekNumber(new Date(2026, 1, 1), '2026-02-23')).toBe(1)
     expect(getScheduleWeekNumber(new Date(2026, 1, 23), '2026-02-31')).toBe(1)
     expect(getScheduleWeekNumber(new Date(Number.NaN), '2026-02-23')).toBe(1)
+  })
+})
+
+describe('hasScheduleStarted', () => {
+  it('distinguishes dates before, on, and after the semester start', () => {
+    expect(hasScheduleStarted(new Date(2026, 1, 22), '2026-02-23')).toBe(false)
+    expect(hasScheduleStarted(new Date(2026, 1, 23), '2026-02-23')).toBe(true)
+    expect(hasScheduleStarted(new Date(2026, 1, 24), '2026-02-23')).toBe(true)
+  })
+
+  it('returns false when either date is invalid', () => {
+    expect(hasScheduleStarted(new Date(Number.NaN), '2026-02-23')).toBe(false)
+    expect(hasScheduleStarted(new Date(2026, 1, 23), '2026-02-31')).toBe(false)
+  })
+})
+
+describe('clampScheduleWeek', () => {
+  it('keeps weeks inside the available semester range', () => {
+    expect(clampScheduleWeek(0, 16)).toBe(1)
+    expect(clampScheduleWeek(1, 16)).toBe(1)
+    expect(clampScheduleWeek(8, 16)).toBe(8)
+    expect(clampScheduleWeek(16, 16)).toBe(16)
+    expect(clampScheduleWeek(17, 16)).toBe(16)
+  })
+
+  it('falls back to a valid week when values are not finite', () => {
+    expect(clampScheduleWeek(Number.NaN, 16)).toBe(1)
+    expect(clampScheduleWeek(8, Number.NaN)).toBe(1)
   })
 })
 
@@ -103,6 +133,15 @@ describe('schedule week view memory', () => {
     })
     expect(resolveInitialScheduleWeekView('schedule-a', '2026-03-02', 2)).toEqual({
       week: 2,
+      hasManualOverride: false,
+    })
+  })
+
+  it('clamps remembered weeks to the available semester range', () => {
+    rememberScheduleWeek('schedule-a', '2026-02-23', 20)
+
+    expect(resolveInitialScheduleWeekView('schedule-a', '2026-02-23', 17, 16)).toEqual({
+      week: 16,
       hasManualOverride: false,
     })
   })

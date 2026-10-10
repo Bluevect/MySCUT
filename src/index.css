@@ -747,7 +747,18 @@ body {
 }
 
 .courses-date-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   text-align: left;
+}
+
+.courses-week-status {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .courses-week {

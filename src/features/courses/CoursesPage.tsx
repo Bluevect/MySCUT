@@ -60,11 +60,13 @@ import type {
   WeekCellCourse,
 } from '../../core/schedule/types'
 import {
+  clampScheduleWeek,
   clearRememberedScheduleWeek,
   getScheduleLessonDayForColumn,
   getScheduleWeekdayOffset,
   getScheduleWeekNumber,
   getScheduleWeekStartDate,
+  hasScheduleStarted,
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
@@ -436,9 +438,9 @@ function renderCourseCell(
   )
 }
 
-function createSwipeState(currentWeek: number, direction: 'prev' | 'next' | null) {
+function createSwipeState(currentWeek: number, maxWeek: number, direction: 'prev' | 'next' | null) {
   const prevWeek = Math.max(1, currentWeek - 1)
-  const nextWeek = currentWeek + 1
+  const nextWeek = Math.min(maxWeek, currentWeek + 1)
 
   return {
     prevWeek,
@@ -587,20 +589,32 @@ function CoursesPage() {
     ],
     [scheduleWeekdayOffset],
   )
-  const inferredCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
+  const calendarCurrentWeek = getScheduleWeekNumber(currentDate, semesterStartDate)
+  const maxWeek = Math.max(1, scheduleData?.table.maxWeek ?? 1)
+  const inferredCurrentWeek = clampScheduleWeek(calendarCurrentWeek, maxWeek)
+  const isSemesterNotStarted = !hasScheduleStarted(currentDate, semesterStartDate)
+  const isSemesterOver = calendarCurrentWeek > maxWeek
+
+  const semesterStatusText = isSemesterNotStarted
+    ? '学期未开始'
+    : isSemesterOver
+      ? '学期已结束'
+      : null
+
   const scheduleWeekViewId = activeScheduleEntry?.id ?? 'no-active-schedule'
   const [weekView, setWeekView] = useState(() =>
-    resolveInitialScheduleWeekView(scheduleWeekViewId, semesterStartDate, inferredCurrentWeek),
+    resolveInitialScheduleWeekView(
+      scheduleWeekViewId,
+      semesterStartDate,
+      inferredCurrentWeek,
+      maxWeek,
+    ),
   )
   const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false)
   const [selectedWeekForPicker, setSelectedWeekForPicker] = useState(weekView.week)
-  const weekViewContextRef = useRef(`${scheduleWeekViewId}:${semesterStartDate}`)
+  const weekViewContextRef = useRef(`${scheduleWeekViewId}:${semesterStartDate}:${maxWeek}`)
   const currentWeek = weekView.week
-  const maxSelectableWeek = Math.max(
-    scheduleData?.table.maxWeek ?? 1,
-    inferredCurrentWeek,
-    currentWeek,
-  )
+  const maxSelectableWeek = maxWeek
   const weekOptions = useMemo(
     () =>
       Array.from({ length: maxSelectableWeek }, (_, index) => ({
@@ -611,8 +625,8 @@ function CoursesPage() {
   )
 
   const swipeState = useMemo(
-    () => createSwipeState(currentWeek, swipeDirection),
-    [currentWeek, swipeDirection],
+    () => createSwipeState(currentWeek, maxWeek, swipeDirection),
+    [currentWeek, maxWeek, swipeDirection],
   )
 
   useEffect(() => {
@@ -666,11 +680,16 @@ function CoursesPage() {
   }, [messageApi])
 
   useEffect(() => {
-    const nextWeekViewContext = `${scheduleWeekViewId}:${semesterStartDate}`
+    const nextWeekViewContext = `${scheduleWeekViewId}:${semesterStartDate}:${maxWeek}`
     if (weekViewContextRef.current !== nextWeekViewContext) {
       weekViewContextRef.current = nextWeekViewContext
       setWeekView(
-        resolveInitialScheduleWeekView(scheduleWeekViewId, semesterStartDate, inferredCurrentWeek),
+        resolveInitialScheduleWeekView(
+          scheduleWeekViewId,
+          semesterStartDate,
+          inferredCurrentWeek,
+          maxWeek,
+        ),
       )
       return
     }
@@ -694,6 +713,7 @@ function CoursesPage() {
     }
   }, [
     inferredCurrentWeek,
+    maxWeek,
     scheduleWeekViewId,
     semesterStartDate,
     weekView.hasManualOverride,
@@ -767,20 +787,20 @@ function CoursesPage() {
     }
 
     const weekStart = Math.max(1, currentWeek - PRELOAD_WEEK_RADIUS)
-    const weekEnd = currentWeek + PRELOAD_WEEK_RADIUS
+    const weekEnd = Math.min(maxWeek, currentWeek + PRELOAD_WEEK_RADIUS)
 
     for (let week = weekStart; week <= weekEnd; week += 1) {
       cache.set(week, buildWeekScheduleRenderData(scheduleData, week, lessonCount))
     }
 
     return cache
-  }, [currentWeek, lessonCount, scheduleData])
+  }, [currentWeek, lessonCount, maxWeek, scheduleData])
 
   const getWeekRenderData = (weekNumber: number) =>
     weekRenderDataCache.get(weekNumber) ?? EMPTY_WEEK_RENDER_DATA
 
   const applyViewedWeek = (nextWeek: number) => {
-    const normalizedWeek = Math.max(1, nextWeek)
+    const normalizedWeek = clampScheduleWeek(nextWeek, maxWeek)
     const hasManualOverride = normalizedWeek !== inferredCurrentWeek
 
     if (hasManualOverride) {
@@ -917,6 +937,11 @@ function CoursesPage() {
       return
     }
 
+    if (deltaX < 0 && currentWeek >= maxWeek) {
+      applyDragOffset(deltaX * 0.35)
+      return
+    }
+
     applyDragOffset(deltaX)
   }
 
@@ -975,6 +1000,12 @@ function CoursesPage() {
       return
     }
 
+    if (currentWeek >= maxWeek) {
+      setIsResetting(true)
+      scheduleSwipeTransitionFallback('reset')
+      return
+    }
+
     setIsResetting(false)
     setIsAnimating(true)
     synchronizeSwipePaneScrollPositions()
@@ -1025,7 +1056,7 @@ function CoursesPage() {
   }
 
   const handleGoNextWeek = () => {
-    if (isAnimating || isDragging) {
+    if (isAnimating || isDragging || currentWeek >= maxWeek) {
       return
     }
 
@@ -1241,6 +1272,9 @@ function CoursesPage() {
             <span>第 {currentWeek} 周</span>
             <CaretDownFilled aria-hidden="true" />
           </button>
+          {semesterStatusText ? (
+            <span className="courses-week-status">{semesterStatusText}</span>
+          ) : null}
         </div>
 
         <div className="courses-actions">
@@ -1344,7 +1378,7 @@ function CoursesPage() {
         </div>
       </section>
 
-      {currentWeek !== inferredCurrentWeek && (
+      {currentWeek !== inferredCurrentWeek && !isSemesterNotStarted && (
         <ReturnToCurrentWeekButton
           inferredCurrentWeek={inferredCurrentWeek}
           onReturn={handleReturnToCurrentWeek}
