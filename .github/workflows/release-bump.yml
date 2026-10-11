@@ -56,6 +56,16 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      # checkout 不配置 git 身份，bump/漂移 commit 需要显式署名（用触发者身份）
+      - name: Configure git identity from triggering actor
+        env:
+          ACTOR_NAME: ${{ github.actor }}
+          ACTOR_ID: ${{ github.actor_id }}
+        run: |
+          set -eu
+          git config user.name "$ACTOR_NAME"
+          git config user.email "${ACTOR_ID}+${ACTOR_NAME}@users.noreply.github.com"
+
       # note 输入留空时回退到仓库中已提交的 .release-notes/vX.md（团队既有预写习惯）；
       # 输入内容写到仓库外，避免污染 prepare 的干净工作树校验，
       # 由脚本统一落盘到 .release-notes/vX.md 并随 bump commit 提交（输入优先于预提交文件）
