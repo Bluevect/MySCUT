@@ -47,6 +47,7 @@ import {
 } from '../../core/schedule/displayTextSimplifier'
 import {
   listSavedSchedules,
+  getActiveScheduleSemesterStartDate,
   loadActiveScheduleEntry,
   saveScheduleDataWithOptions,
 } from '../../core/schedule/storage'
@@ -70,7 +71,7 @@ import {
   rememberScheduleWeek,
   resolveInitialScheduleWeekView,
 } from '../../core/schedule/weekNavigation'
-import { DEFAULT_TIME_SLOT, getSemesterStartDate } from '../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT } from '../../core/scheduleSettings'
 import { useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import { syncAndroidCourseWidgetSchedule } from '../../platform/capacitor/courseWidgetSchedule'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
@@ -566,7 +567,7 @@ function CoursesPage() {
           themeId: persistedActiveScheduleEntry?.themeId ?? 'skyBlue',
           timeSlotPresetId: 'union' as const,
           semesterStartDate:
-            persistedActiveScheduleEntry?.semesterStartDate ?? getSemesterStartDate(),
+            persistedActiveScheduleEntry?.semesterStartDate || getActiveScheduleSemesterStartDate(),
           // Preview timestamps intentionally update on each render before the preview is saved.
           createdAt: Date.now(),
           scheduleData: intersectionPreviewPayload.scheduleData,
@@ -580,7 +581,8 @@ function CoursesPage() {
   const autoSimplifyHintEnabled = useMemo(() => getAutoSimplifyScheduleHintEnabled(), [])
 
   const currentDate = new Date()
-  const semesterStartDate = getSemesterStartDate()
+  const semesterStartDate =
+    activeScheduleEntry?.semesterStartDate || getActiveScheduleSemesterStartDate()
   const scheduleWeekdayOffset = getScheduleWeekdayOffset(semesterStartDate)
   const scheduleWeekdayLabels = useMemo(
     () => [
@@ -631,9 +633,9 @@ function CoursesPage() {
 
   useEffect(() => {
     if (location.pathname === '/courses') {
-      syncAndroidCourseWidgetSchedule(getSemesterStartDate())
+      syncAndroidCourseWidgetSchedule(semesterStartDate)
     }
-  }, [location.pathname])
+  }, [location.pathname, semesterStartDate])
 
   useEffect(() => {
     const popupMessage = location.state?.message
@@ -1221,7 +1223,8 @@ function CoursesPage() {
           intersectionPreviewPayload.scheduleData,
           {
             themeId: activeScheduleEntry?.themeId ?? 'skyBlue',
-            semesterStartDate: getSemesterStartDate(),
+            semesterStartDate:
+              activeScheduleEntry?.semesterStartDate || getActiveScheduleSemesterStartDate(),
             timeSlotPresetId: 'union',
             preferredName,
             setActive: true,

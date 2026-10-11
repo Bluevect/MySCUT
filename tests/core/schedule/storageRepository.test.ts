@@ -267,6 +267,41 @@ describe('ScheduleRepository durable snapshots', () => {
     )
   })
 
+  it('updates only the active schedule semester start date', async () => {
+    const persistentStore = new InMemoryPersistentStore()
+    const repository = new ScheduleRepository()
+    await repository.initialize(
+      {
+        store: persistentStore,
+        migrationJournal: new InMemoryMigrationJournal(),
+      },
+      new MemoryStorage(),
+    )
+
+    const firstSave = await repository.saveScheduleDataWithOptions(createScheduleData('第一份'), {
+      themeId: 'skyBlue',
+      semesterStartDate: '2026-02-23',
+      setActive: true,
+    })
+    await repository.saveScheduleDataWithOptions(createScheduleData('第二份'), {
+      themeId: 'bambooGrove',
+      semesterStartDate: '2026-03-02',
+      setActive: true,
+    })
+
+    await expect(repository.setActiveScheduleSemesterStartDate('2026-03-09')).resolves.toBe(true)
+
+    expect(repository.loadSavedScheduleById(firstSave.schedule.id)?.semesterStartDate).toBe(
+      '2026-02-23',
+    )
+    expect(repository.loadActiveScheduleEntry()?.semesterStartDate).toBe('2026-03-09')
+    expect((await persistentStore.get(SCHEDULE_LIBRARY_KEY))?.schedules[1]?.semesterStartDate).toBe(
+      '2026-03-09',
+    )
+    await expect(repository.setActiveScheduleSemesterStartDate('2026/03/09')).resolves.toBe(false)
+    expect(repository.loadActiveScheduleEntry()?.semesterStartDate).toBe('2026-03-09')
+  })
+
   it('updates the requested saved schedule data without changing its identity or active schedule', async () => {
     const repository = new ScheduleRepository()
     await repository.initialize(

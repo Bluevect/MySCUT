@@ -7,7 +7,7 @@ import {
 } from '../storage'
 import { getDefaultSemesterStartDate } from './semesterStartDateUtils'
 import { resolveScheduleImportThemePreset, type ScheduleThemeId } from './themePresets'
-import { DEFAULT_TIME_SLOT } from '../scheduleSettings'
+import { DEFAULT_TIME_SLOT, getSemesterStartDate } from '../scheduleSettings'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from './types'
 
 const LEGACY_SCHEDULE_STORAGE_KEY = 'scheduleData'
@@ -42,6 +42,10 @@ function normalizeTimeSlotPresetId(value: unknown): TimeSlotPresetId {
   }
 
   return DEFAULT_TIME_SLOT
+}
+
+function isValidDateText(dateText: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateText)
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -441,6 +445,38 @@ export class ScheduleRepository {
     })
   }
 
+  async setActiveScheduleSemesterStartDate(semesterStartDate: string) {
+    return this.enqueueMutation(async () => {
+      if (!isValidDateText(semesterStartDate)) {
+        return false
+      }
+
+      const store = this.requireWritableStore()
+      if (this.snapshot === null) {
+        return false
+      }
+
+      const activeSchedule = this.snapshot.schedules.find(
+        (schedule) => schedule.id === this.snapshot?.activeScheduleId,
+      )
+      if (!activeSchedule) {
+        return false
+      }
+
+      const nextLibrary: ScheduleLibrary = {
+        ...this.snapshot,
+        schedules: this.snapshot.schedules.map((schedule) =>
+          schedule.id === activeSchedule.id ? { ...schedule, semesterStartDate } : schedule,
+        ),
+      }
+
+      await store.set(SCHEDULE_LIBRARY_KEY, nextLibrary)
+      this.snapshot = nextLibrary
+      this.notifyListeners()
+      return true
+    })
+  }
+
   async setActiveScheduleThemeId(themeId: ScheduleThemeId) {
     return this.enqueueMutation(async () => {
       const store = this.requireWritableStore()
@@ -747,6 +783,10 @@ export function setActiveScheduleTimeSlotPreset(timeSlotPresetId: TimeSlotPreset
   return scheduleRepository.setActiveScheduleTimeSlotPreset(timeSlotPresetId)
 }
 
+export function setActiveScheduleSemesterStartDate(semesterStartDate: string) {
+  return scheduleRepository.setActiveScheduleSemesterStartDate(semesterStartDate)
+}
+
 export function setActiveScheduleThemeId(themeId: ScheduleThemeId) {
   return scheduleRepository.setActiveScheduleThemeId(themeId)
 }
@@ -780,6 +820,17 @@ export function loadScheduleData() {
 
 export function loadActiveScheduleEntry() {
   return scheduleRepository.loadActiveScheduleEntry()
+}
+
+export function getActiveScheduleSemesterStartDate() {
+  try {
+    return (
+      scheduleRepository.loadActiveScheduleEntry()?.semesterStartDate ||
+      getSemesterStartDate()
+    )
+  } catch {
+    return getSemesterStartDate()
+  }
 }
 
 export function subscribeScheduleLibraryChanges(listener: () => void) {

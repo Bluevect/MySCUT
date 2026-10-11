@@ -5,7 +5,6 @@ import {
   loadActiveScheduleEntry,
   subscribeScheduleLibraryChanges,
 } from '../../core/schedule/storage'
-import { getSemesterStartDate } from '../../core/scheduleSettings'
 import { getScheduleThemePresetById } from '../../core/schedule/themePresets'
 
 type CourseWidgetPlugin = {
@@ -31,7 +30,10 @@ export function syncAndroidCourseWidgetSchedule(semesterStartDate?: string) {
     const activeSchedule = loadActiveScheduleEntry()
     const scheduleTheme = getScheduleThemePresetById(activeSchedule?.themeId ?? '')
     const scheduleForWidget = activeSchedule
-      ? { ...activeSchedule, semesterStartDate: semesterStartDate ?? getSemesterStartDate() }
+      ? {
+          ...activeSchedule,
+          semesterStartDate: semesterStartDate ?? activeSchedule.semesterStartDate,
+        }
       : null
     await CourseWidget.syncSchedule({
       scheduleJson: JSON.stringify(scheduleForWidget),

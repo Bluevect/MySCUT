@@ -17,10 +17,12 @@ import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
 import {
   applyScheduleNameToScheduleData,
   deleteSavedSchedule,
+  getActiveScheduleSemesterStartDate,
   listSavedSchedules,
   loadActiveScheduleEntry,
   loadSavedScheduleById,
   saveScheduleDataWithOptions,
+  setActiveScheduleSemesterStartDate,
   setActiveSchedulePreferredName,
   setActiveScheduleThemeId,
   setActiveScheduleTimeSlotPreset,
@@ -47,11 +49,7 @@ import {
   TIME_SLOT_PRESET_OPTIONS,
 } from '../../../core/schedule/timeSlotPresets'
 import { setScheduleThemeId } from '../../../core/schedule/themeStorage'
-import {
-  DEFAULT_TIME_SLOT,
-  getSemesterStartDate,
-  saveSemesterStartDate,
-} from '../../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import type { SavedSchedule, ScheduleData, TimeSlotPresetId } from '../../../core/schedule/types'
 import {
   ANIMATED_BACK_EVENT,
@@ -162,7 +160,9 @@ function ScheduleSettingsPage() {
   const [isAutoSimplifyHintEnabled, setIsAutoSimplifyHintEnabled] = useState(() =>
     getAutoSimplifyScheduleHintEnabled(),
   )
-  const [semesterStartDate, setSemesterStartDate] = useState(() => getSemesterStartDate())
+  const [semesterStartDate, setSemesterStartDate] = useState(() =>
+    getActiveScheduleSemesterStartDate(),
+  )
   const [pendingDate, setPendingDate] = useState(semesterStartDate)
   const [scheduleName, setScheduleName] = useState(() => loadActiveScheduleEntry()?.name ?? '')
   const [scheduleThemeId, setScheduleThemeIdState] = useState<ScheduleThemeId>(() => {
@@ -230,6 +230,9 @@ function ScheduleSettingsPage() {
     const activeSchedule = loadActiveScheduleEntry()
     setScheduleName(activeSchedule?.name ?? '')
     setTimeSlotPresetId(activeSchedule?.timeSlotPresetId ?? DEFAULT_TIME_SLOT)
+    setSemesterStartDate(
+      activeSchedule?.semesterStartDate || getActiveScheduleSemesterStartDate(),
+    )
     setSavedSchedules(listSavedSchedules())
   }
 
@@ -295,22 +298,32 @@ function ScheduleSettingsPage() {
     })
   }
 
-  const handleConfirmDate = () => {
+  const handleConfirmDate = async () => {
     if (!pendingDate) {
       messageApi.error('请先选择日期')
       return
     }
 
-    const isSaved = saveSemesterStartDate(pendingDate)
-    if (!isSaved) {
-      messageApi.error('保存失败，请稍后重试')
-      return
-    }
+    try {
+      const isSaved = await setActiveScheduleSemesterStartDate(pendingDate)
+      if (!isSaved) {
+        messageApi.error('请先导入课表，再设置学期起始时间')
+        return
+      }
 
-    syncAndroidCourseWidgetSchedule(pendingDate)
-    setSemesterStartDate(pendingDate)
-    setIsDateModalOpen(false)
-    messageApi.success('学期起始时间已保存')
+      const fallbackSaved = saveSemesterStartDate(pendingDate)
+      syncAndroidCourseWidgetSchedule(pendingDate)
+      setSemesterStartDate(pendingDate)
+      setIsDateModalOpen(false)
+      if (fallbackSaved) {
+        messageApi.success('学期起始时间已保存')
+      } else {
+        messageApi.warning('学期起始时间已保存；本地备用记录写入失败')
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '保存失败，请稍后重试'
+      messageApi.error(errorMessage)
+    }
   }
 
   const handleOpenImport = () => {
@@ -554,7 +567,6 @@ function ScheduleSettingsPage() {
           setScheduleThemeIdState(nextThemeId)
           setTimeSlotPresetId(nextTimeSlotPresetId)
 
-          saveSemesterStartDate(nextSemesterStartDate)
           setSemesterStartDate(nextSemesterStartDate)
           setPendingDate(nextSemesterStartDate)
           const matchedTimeSlotName = getTimeSlotPresetName(nextTimeSlotPresetId)
@@ -594,7 +606,6 @@ function ScheduleSettingsPage() {
       setScheduleThemeId(nextThemeId)
       setScheduleThemeIdState(nextThemeId)
       setTimeSlotPresetId(parsedQms.timeSlotPresetId)
-      saveSemesterStartDate(nextSemesterStartDate)
       setSemesterStartDate(nextSemesterStartDate)
       setPendingDate(nextSemesterStartDate)
       refreshScheduleState()
@@ -665,7 +676,6 @@ function ScheduleSettingsPage() {
         return
       }
 
-      saveSemesterStartDate(nextSemesterStartDate)
       setSemesterStartDate(nextSemesterStartDate)
       setPendingDate(nextSemesterStartDate)
       messageApi.success(`华工教务课表导入成功，已应用配色：${selectedThemePreset.name}`)
@@ -699,11 +709,6 @@ function ScheduleSettingsPage() {
 
       setScheduleThemeId(switchedSchedule.themeId as ScheduleThemeId)
       setScheduleThemeIdState(getScheduleThemePresetById(switchedSchedule.themeId).id)
-
-      if (switchedSchedule.semesterStartDate) {
-        saveSemesterStartDate(switchedSchedule.semesterStartDate)
-        setSemesterStartDate(switchedSchedule.semesterStartDate)
-      }
 
       refreshScheduleState()
       setIsScheduleSwitchModalOpen(false)
@@ -744,11 +749,6 @@ function ScheduleSettingsPage() {
       if (nextActiveSchedule) {
         setScheduleThemeId(nextActiveSchedule.themeId as ScheduleThemeId)
         setScheduleThemeIdState(getScheduleThemePresetById(nextActiveSchedule.themeId).id)
-
-        if (nextActiveSchedule.semesterStartDate) {
-          saveSemesterStartDate(nextActiveSchedule.semesterStartDate)
-          setSemesterStartDate(nextActiveSchedule.semesterStartDate)
-        }
       }
 
       refreshScheduleState()
