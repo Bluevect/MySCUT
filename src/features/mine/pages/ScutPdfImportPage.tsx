@@ -11,6 +11,7 @@ import {
 } from '../../../core/schedule/importScutPdf'
 import { mapScutSchedulePdf } from '../../../core/schedule/mapScutSchedulePdf'
 import {
+  getActiveScheduleSemesterStartDate,
   saveScheduleDataWithOptions,
   type SaveScheduleOptions,
 } from '../../../core/schedule/storage'
@@ -21,11 +22,7 @@ import {
   TIME_SLOT_PRESET_OPTIONS,
 } from '../../../core/schedule/timeSlotPresets'
 import type { ScheduleData, ScheduleLesson, TimeSlotPresetId } from '../../../core/schedule/types'
-import {
-  DEFAULT_TIME_SLOT,
-  getSemesterStartDate,
-  saveSemesterStartDate,
-} from '../../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, saveSemesterStartDate } from '../../../core/scheduleSettings'
 
 const weekdayLabels = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
 
@@ -127,7 +124,9 @@ function ScutPdfImportPage({ services = defaultServices }: ScutPdfImportPageProp
   const [statusText, setStatusText] = useState('请选择华工教务导出的课表 PDF')
   const [pendingImport, setPendingImport] = useState<PendingScutPdfImport | null>(null)
   const [scheduleName, setScheduleName] = useState('')
-  const [semesterStartDate, setSemesterStartDate] = useState(() => getSemesterStartDate())
+  const [semesterStartDate, setSemesterStartDate] = useState(() =>
+    getActiveScheduleSemesterStartDate(),
+  )
   const [themeId, setThemeId] = useState<ScheduleThemeId>(() => getScheduleThemePreset().id)
   const [timeSlotPresetId, setTimeSlotPresetId] = useState<TimeSlotPresetId>(DEFAULT_TIME_SLOT)
   const isBusy = isParsing || isSaving

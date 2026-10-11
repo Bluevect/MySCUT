@@ -6,14 +6,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { SinglePendingOperation } from '../../../core/async/singlePendingOperation'
 import { resolveBackPath } from '../../../core/navigation/appBack'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
-import { saveScheduleDataWithOptions } from '../../../core/schedule/storage'
+import {
+  getActiveScheduleSemesterStartDate,
+  saveScheduleDataWithOptions,
+} from '../../../core/schedule/storage'
 import { resolveScheduleImportThemePreset } from '../../../core/schedule/themePresets'
 import { getScheduleThemeId } from '../../../core/schedule/themeStorage'
-import {
-  DEFAULT_TIME_SLOT,
-  getSemesterStartDate,
-  saveSemesterStartDate,
-} from '../../../core/scheduleSettings'
+import { DEFAULT_TIME_SLOT, saveSemesterStartDate } from '../../../core/scheduleSettings'
 import {
   closeActiveWebView,
   dispatchTouchEvent,
@@ -71,7 +70,7 @@ function ScutJwWebViewPage() {
             targetUrl,
             responseLength: htmlText.length,
           })
-          const fallbackSemesterStartDate = getSemesterStartDate()
+          const fallbackSemesterStartDate = getActiveScheduleSemesterStartDate()
           const scheduleData = parseScutScheduleHtml(htmlText, { fallbackSemesterStartDate })
           const courseCount = scheduleData.courses.length
           const lessonCount = scheduleData.lessons.length

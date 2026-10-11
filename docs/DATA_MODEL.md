@@ -45,6 +45,8 @@
 
 `SavedSchedule` 在 `ScheduleData` 外增加用户管理字段：`id`、`name`、`source`、`themeId`、`timeSlotPresetId`、`semesterStartDate` 和 `createdAt`。
 
+`semesterStartDate` 是每份课表自己的学期起始时间。设置界面优先使用当前 active 课表的该字段，并在用户手动修改时同步更新 `localStorage.semesterStartDate` 作为 fallback 和最近一次用户修改记录；该设置不修改 `ScheduleData.table.startDate`。
+
 课表库结构为：
 
 ```text

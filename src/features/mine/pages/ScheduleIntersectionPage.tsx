@@ -20,12 +20,12 @@ import { parseQmsScheduleText } from '../../../core/schedule/importQms'
 import { parseScutScheduleHtml } from '../../../core/schedule/importScutHtml'
 import { parseWakeupScheduleText } from '../../../core/schedule/importWakeup'
 import {
+  getActiveScheduleSemesterStartDate,
   listSavedSchedules,
   loadActiveScheduleEntry,
   loadSavedScheduleById,
 } from '../../../core/schedule/storage'
 import type { ScheduleData } from '../../../core/schedule/types'
-import { getSemesterStartDate } from '../../../core/scheduleSettings'
 import { useBackDismiss } from '../../../platform/capacitor/useBackDismiss'
 
 const { TextArea } = Input
@@ -190,7 +190,7 @@ function ScheduleIntersectionPage() {
     try {
       const clipboardText = await navigator.clipboard.readText()
       const scheduleData = parseScutScheduleHtml(clipboardText, {
-        fallbackSemesterStartDate: getSemesterStartDate(),
+        fallbackSemesterStartDate: getActiveScheduleSemesterStartDate(),
       })
       openExternalNameModal(scheduleData, '华工教务HTML')
     } catch (error) {
@@ -282,7 +282,7 @@ function ScheduleIntersectionPage() {
       assertScheduleTextFileSize(file, '华工教务 HTML')
       const html = await file.text()
       const scheduleData = parseScutScheduleHtml(html, {
-        fallbackSemesterStartDate: getSemesterStartDate(),
+        fallbackSemesterStartDate: getActiveScheduleSemesterStartDate(),
       })
       openExternalNameModal(scheduleData, '华工教务HTML')
     } catch (error) {
@@ -301,7 +301,7 @@ function ScheduleIntersectionPage() {
 
     try {
       const scheduleData = parseScutScheduleHtml(htmlInputText, {
-        fallbackSemesterStartDate: getSemesterStartDate(),
+        fallbackSemesterStartDate: getActiveScheduleSemesterStartDate(),
       })
       openExternalNameModal(scheduleData, '华工教务HTML')
       setIsHtmlInputModalOpen(false)
