@@ -14,6 +14,7 @@ import {
   ensureGitHubAuth,
   ensureMainBranch,
   ensureTagNotExists,
+  getExpectedReleasePaths,
   pushReleaseBranch,
   stageAndCommitRelease,
   stageCommitAndTag,
@@ -90,7 +91,8 @@ async function main() {
   runFile('node', ['scripts/syncNativeVersion.mjs'], rootDir)
   runFile('npm', ['run', 'check'], rootDir)
 
-  commitManualDriftIfAny()
+  // bump 自身的预期改动作为漂移检查的允许清单；漂移(若有)单独预提交
+  commitManualDriftIfAny(getExpectedReleasePaths(''))
 
   const noteFilePath = writeReleaseNoteFile({ tag, content: note })
 

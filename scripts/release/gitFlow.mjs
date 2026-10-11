@@ -66,8 +66,10 @@ export function ensureTagExists(tag) {
 }
 
 // manual 子模块漂移:buildApp 会把 gitlink 切到远端 tip 并重生成 todoSnapshot;
-// 发版准备阶段若发现漂移,自动预提交,避免白名单检查中止
-export function commitManualDriftIfAny() {
+// 发版准备阶段若发现漂移,自动预提交,避免白名单检查中止。
+// bump 自身的预期改动(版本文件等)经 allowedPaths 传入:不属于漂移、也不视为异常,
+// 留在后续 bump commit 中提交
+export function commitManualDriftIfAny(allowedPaths = []) {
   const driftPaths = [toRepoPath(manualSubmodulePath), 'src/generated/todoSnapshot.ts']
   const changedPaths = parseStatusPaths(getGitStatusSnapshot())
   const drifted = driftPaths.filter((filePath) => changedPaths.includes(filePath))
@@ -75,7 +77,8 @@ export function commitManualDriftIfAny() {
     return false
   }
 
-  const unexpected = changedPaths.filter((filePath) => !driftPaths.includes(filePath))
+  const allowedSet = new Set([...driftPaths, ...allowedPaths])
+  const unexpected = changedPaths.filter((filePath) => !allowedSet.has(filePath))
   if (unexpected.length > 0) {
     throw new Error(`Unexpected changes besides manual drift:\n${unexpected.join('\n')}`)
   }
@@ -106,7 +109,7 @@ export function parseStatusPaths(status) {
   })
 }
 
-function getExpectedReleasePaths(noteFilePath) {
+export function getExpectedReleasePaths(noteFilePath) {
   return [
     packageJsonPath,
     packageLockJsonPath,
