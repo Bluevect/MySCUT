@@ -1,2 +1,6 @@
 export { default as QmuiTabbar } from './tabbar/Tabbar'
 export type { QmuiTabbarItem } from './tabbar/Tabbar'
+export { default as QmuiModal } from './modal/Modal'
+export type { QmuiModalProps } from './modal/Modal'
+export { default as QmuiWheelPicker } from './picker/WheelPicker'
+export type { QmuiWheelPickerOption, QmuiWheelPickerProps } from './picker/WheelPicker'

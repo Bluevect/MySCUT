@@ -18,7 +18,7 @@ import {
   RightOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
-import { Dropdown, Input, Modal, Select, message } from 'antd'
+import { Dropdown, Input, Modal, message } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TransparentIconButton } from '../../components/buttons/TransparentIconButton'
 import { SinglePendingOperation } from '../../core/async/singlePendingOperation'
@@ -74,6 +74,7 @@ import {
 import { DEFAULT_TIME_SLOT } from '../../core/scheduleSettings'
 import { useBackDismiss } from '../../platform/capacitor/useBackDismiss'
 import { syncAndroidCourseWidgetSchedule } from '../../platform/capacitor/courseWidgetSchedule'
+import { QmuiModal, QmuiWheelPicker } from '../../qmui'
 import ReturnToCurrentWeekButton from './ReturnToCurrentWeekButton'
 import CoursesFirstUseGuide, { shouldShowCoursesFirstUseGuide } from './CoursesFirstUseGuide'
 import { APP_ROUTE_PATHS } from '../../app/routePaths'
@@ -1438,7 +1439,7 @@ function CoursesPage() {
         />
       )}
 
-      <Modal
+      <QmuiModal
         title="选择周次"
         open={isWeekPickerOpen}
         onOk={handleConfirmWeekSelection}
@@ -1446,14 +1447,14 @@ function CoursesPage() {
         okText="确定"
         cancelText="取消"
       >
-        <Select
-          aria-label="选择周次"
-          style={{ width: '100%' }}
+        <QmuiWheelPicker
+          ariaLabel="选择周次"
           value={selectedWeekForPicker}
           onChange={setSelectedWeekForPicker}
           options={weekOptions}
+          showBackground={false}
         />
-      </Modal>
+      </QmuiModal>
 
       <Modal
         title={`课程详情 · 星期${selectedWeekday} 第${selectedNode}节`}
