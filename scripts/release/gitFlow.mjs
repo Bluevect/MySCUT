@@ -119,7 +119,9 @@ function getExpectedReleasePaths(noteFilePath) {
   ].map(toRepoPath)
 }
 
-export function stageCommitAndTag({ version, tag, noteFilePath }) {
+// 校验改动范围并把 bump commit 提交到当前分支（不打 tag、不推送），
+// 供本地直推（stageCommitAndTag）与 PR 模式（pushReleaseBranch）共用
+export function stageAndCommitRelease({ version, noteFilePath }) {
   const expectedPaths = getExpectedReleasePaths(noteFilePath)
   const expectedSet = new Set(expectedPaths)
   const changedPaths = parseStatusPaths(getGitStatusSnapshot())
@@ -142,7 +144,25 @@ export function stageCommitAndTag({ version, tag, noteFilePath }) {
   }
 
   runFile('git', ['commit', '-m', `chore(release): prepare v${version}`], rootDir)
+}
+
+export function stageCommitAndTag({ version, tag, noteFilePath }) {
+  stageAndCommitRelease({ version, noteFilePath })
   runFile('git', ['tag', tag], rootDir)
   runFile('git', ['push', 'origin', 'HEAD:main'], rootDir)
   runFile('git', ['push', 'origin', `refs/tags/${tag}`], rootDir)
+}
+
+// PR 模式：把 bump 工作切到 release/vX 分支上，main 保持不动
+export function checkoutReleaseBranch(branch) {
+  const existingBranch = runFileSilently('git', ['branch', '--list', branch], rootDir).trim()
+  if (existingBranch) {
+    throw new Error(`Local branch ${branch} already exists. Delete it or use a new version.`)
+  }
+  runFile('git', ['checkout', '-b', branch], rootDir)
+}
+
+// 重跑 bump 时允许覆盖远端同名分支（PR 尚未合并）；lease 防止覆盖他人新推的提交
+export function pushReleaseBranch(branch) {
+  runFile('git', ['push', '--force-with-lease', 'origin', `HEAD:refs/heads/${branch}`], rootDir)
 }

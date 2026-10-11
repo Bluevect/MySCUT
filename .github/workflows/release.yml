@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号（需已执行 release:bump 并推送 tag vX；workflow 从该 tag 构建发布）'
+        description: '版本号（重试用：输入已有 tag 的版本；正常发版由 bump PR 合并自动触发）'
         required: true
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
 
 permissions:
   contents: write
@@ -16,7 +21,57 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # bump PR 合并后（package.json 版本变化落到 main）自动补 tag。
+  # tag 指向合并提交；若 HEAD 后来又漂移，release 阶段会检出 tag 树构建
+  tag:
+    name: Tag merged release commit
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      tagged: ${{ steps.tag.outputs.tagged }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Resolve released version
+        id: resolve
+        run: |
+          set -eu
+          version=$(node -p "require('./package.json').version")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag if missing
+        id: tag
+        env:
+          RELEASE_VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -eu
+          tag="v${RELEASE_VERSION}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "tag ${tag} already exists; nothing to release"
+            echo "tagged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          manifest_version=$(node -p "require('./versions.json').latest.version")
+          if [ "${manifest_version}" != "${RELEASE_VERSION}" ]; then
+            echo "::warning::package.json 是 ${RELEASE_VERSION}，但 versions.json latest 是 ${manifest_version}，不是 bump PR 合并；跳过发版"
+            echo "tagged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag "${tag}" "${GITHUB_SHA}"
+          git push origin "refs/tags/${tag}"
+          echo "tagged=true" >> "$GITHUB_OUTPUT"
+
   release:
+    needs: [tag]
+    # dispatch：人工重试已有 tag 的版本；push：仅当本次 push 新打了 tag
+    if: >-
+      !cancelled() && (
+        github.event_name == 'workflow_dispatch' ||
+        needs.tag.outputs.tagged == 'true'
+      )
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     # stable keystore 挂在 release environment 上，触发后需维护者审批才运行
@@ -62,4 +117,4 @@ jobs:
         run: npm ci
 
       - name: Build and publish from the tagged bump commit
-        run: node scripts/release/ci.mjs "${{ inputs.version }}"
+        run: node scripts/release/ci.mjs "${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.tag.outputs.version }}"

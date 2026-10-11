@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { parseReleaseOptions } from '../../../scripts/release/options.mjs'
+import { parsePrepareArgs, parseReleaseOptions } from '../../../scripts/release/options.mjs'
 
 const originalArgv = [...process.argv]
 const originalNpmConfigArgv = process.env.npm_config_argv
@@ -17,6 +17,31 @@ const originalNpmConfigValues = Object.fromEntries(
 function setArgv(args: string[]) {
   process.argv = ['node', 'scripts/release.mjs', ...args]
 }
+
+describe('parsePrepareArgs', () => {
+  it('defaults the note file to the release-notes directory', () => {
+    expect(parsePrepareArgs(['0.9.0'])).toEqual({
+      version: '0.9.0',
+      noteFile: '.release-notes/v0.9.0.md',
+      minVersion: '',
+      prMode: false,
+    })
+  })
+
+  it('parses note file, min version and pr mode', () => {
+    const args = parsePrepareArgs(['0.9.0', '--pr', '--note-file=/tmp/note.md', '--min-version=0.8.0'])
+    expect(args.version).toBe('0.9.0')
+    expect(args.noteFile).toBe('/tmp/note.md')
+    expect(args.minVersion).toBe('0.8.0')
+    expect(args.prMode).toBe(true)
+  })
+
+  it('keeps the note file empty when no version is given', () => {
+    const args = parsePrepareArgs(['--pr'])
+    expect(args.version).toBe('')
+    expect(args.noteFile).toBe('')
+  })
+})
 
 describe('parseReleaseOptions', () => {
   beforeEach(() => {

@@ -1,0 +1,77 @@
+name: Release Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（大于当前版本的 x.y.z）'
+        required: true
+        type: string
+      note:
+        description: 'Release note（Markdown；留空则使用仓库中已提交的 .release-notes/vX.md）'
+        required: false
+        type: string
+      min_version:
+        description: '可选 minVersion，低于该版本的已安装客户端提示卸载重装'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+      R2_KEY_PREFIX: ${{ secrets.R2_KEY_PREFIX }}
+      R2_S3_ENDPOINT: ${{ secrets.R2_S3_ENDPOINT }}
+
+    steps:
+      - name: Checkout repository and pinned manual
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          # 全量历史与 tag：prepare 需校验 tag 不存在，并 force-with-lease 推送 release/vX 分支
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      # note 输入留空时回退到仓库中已提交的 .release-notes/vX.md（团队既有预写习惯）；
+      # 输入内容写到仓库外，避免污染 prepare 的干净工作树校验，
+      # 由脚本统一落盘到 .release-notes/vX.md 并随 bump commit 提交（输入优先于预提交文件）
+      - name: Prepare bump commit and open release PR
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_NOTE: ${{ inputs.note }}
+          RELEASE_MIN_VERSION: ${{ inputs.min_version }}
+        run: |
+          set -eu
+          args=("$RELEASE_VERSION" --pr)
+          if [ -n "$RELEASE_NOTE" ]; then
+            printf '%s\n' "$RELEASE_NOTE" > "$RUNNER_TEMP/release-note.md"
+            args+=("--note-file=$RUNNER_TEMP/release-note.md")
+          fi
+          if [ -n "$RELEASE_MIN_VERSION" ]; then
+            args+=("--min-version=$RELEASE_MIN_VERSION")
+          fi
+          node scripts/release/prepare.mjs "${args[@]}"

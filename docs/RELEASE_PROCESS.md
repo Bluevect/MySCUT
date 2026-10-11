@@ -1,30 +1,33 @@
 # 发布流程
 
-安装包不进入 Git。发版以 GitHub Actions 为主路径：stable 版本由维护者触发 workflow 发布，nightly 版本在 main 推送后自动构建。本地交互式脚本保留为应急路径。设计决策见 [ADR 0003](adr/0003-dual-channel-release-pipeline.md)。
+安装包不进入 Git。发版以 GitHub Actions 为主路径：stable 版本由 Release Bump workflow 生成 bump PR、维护者合并后自动构建发布；nightly 版本在 main 推送后自动构建。本地交互式脚本保留为应急路径。设计决策见 [ADR 0003](adr/0003-dual-channel-release-pipeline.md) 与 [ADR 0004](adr/0004-pr-based-release-bump.md)。
 
-## Stable 发版（CI，两阶段）
+## Stable 发版（CI，bump PR + 自动发布）
 
-发版分两个阶段：**bump 阶段**由维护者在本地提交版本提交并打 tag（不做任何构建、签名、不接触 keystore）；**发布阶段**由 CI 从该 tag 构建、签名并发布，不回推 main。CI 因此不需要任何分支推送权限，无需为 Actions 配置 ruleset bypass。
+stable 发版不依赖维护者本地环境。bump commit 由 Release Bump workflow 生成在 `release/vX` 分支上并以 PR 提交；**合并 PR 是维护者对发版的认可动作**。Actions 全程不直接推 main，无需 ruleset bypass；合并后 Stable Release workflow 自动打 tag，并照旧经 environment 审批构建发布，不回推 main。
 
-### 第一阶段：bump commit（维护者本地）
+### 第一步：生成 bump PR（Release Bump workflow）
+
+Actions → Release Bump → Run workflow，输入版本号与可选 minVersion。release note 两种来源：留空 note 输入时使用仓库中已提交的 `.release-notes/vX.md`（可提前经普通 PR 写入 main）；填写 note 输入时以输入为准。workflow 执行 `scripts/release/prepare.mjs --pr`：版本校验（需大于当前版本）→ 更新 `package.json`/`package-lock.json`/`versions.json` 骨架（版本、tag、下载 URL、`minVersion`；不含 APK 的 size/sha256）→ 同步原生版本文件 → `npm run check` → manual 漂移自动预提交 → 在 `release/vX` 分支提交 bump commit 并推送 → 创建 PR（重跑时 force-with-lease 覆盖分支并复用已有 PR）。
+
+多行 release note 建议预提交 `.release-notes/vX.md` 后再触发，或用 `gh workflow run` 传入（workflow_dispatch 的 UI 输入框是单行，只适合单行 note）：
 
 ```bash
-npm run release:bump -- <版本> --note-file=.release-notes/v<版本>.md [--min-version=<版本>]
+gh workflow run release-bump.yml \
+  -f version=0.9.0 \
+  -f note="$(cat path/to/notes.md)" \
+  -f min_version=0.8.0   # 可选
 ```
 
-脚本执行：版本校验（需大于当前版本）→ 更新 `package.json`/`package-lock.json`/`versions.json` 骨架（版本、tag、下载 URL、`minVersion`；不含 APK 的 size/sha256）→ 同步原生版本文件 → `npm run check` → manual 漂移自动预提交 → 提交 bump commit、打 tag 并推送 main。
+### 第二步：合并 PR → 自动打 tag 并发布
 
-前置条件：干净 `main` 工作树、`gh auth status` 成功、本地 `R2_ENV` 或等价环境变量（用于推导骨架中的下载 URL）。
+1. 审阅并合并 bump PR（merge commit / squash / rebase 均可，tag 会打在落到 main 的提交上）；
+2. Stable Release workflow 因 main push（`package.json` 变化）触发 tag job：校验 `package.json` 与 `versions.json` 的版本一致后，在 main HEAD 创建并推送 tag `vX`；tag 已存在或版本不一致（非 bump 来源的 package.json 变化）则跳过并告警；
+3. release job 等待 environment `release` 审批（Kozmosa 或 Bluevect 任一人批准）后执行 `scripts/release/ci.mjs <版本>`：校验 tag 指向 bump 提交（HEAD 漂移时自动检出 tag 树）、三处版本一致、骨架 URL 与 R2 secrets 推导一致 → `npm run check` → gradle `assembleStableRelease` 构建并签名（证书指纹固定校验）→ 本地补全 versions.json 元数据 → R2 上传（版本化 APK、版本化清单、latest 清单，均含 Cache-Control）→ 上传永久下载别名 `releases/latest/qmm-latest.apk`（no-cache 覆盖，供手册 App 介绍页等外部页面直接引用）→ GitHub Release（`--verify-tag`）资产上传与 digest 核验 → 清理 R2 上一版前缀。
 
-### 第二阶段：构建发布（CI）
+骨架与元数据的分工：仓库中的 `versions.json` 只含骨架（无 size/sha256）；最终校验和只写入 R2 清单与 GitHub Release 资产中的 `versions.json`。jsDelivr 回退通道因此下载时不校验哈希（客户端兼容缺失字段；HTTPS 与 Android 签名连续性仍然兜底）。如需回退通道也带校验和，可在发布后手动提交补全（参考历史 backfill commit）。合并后、发布完成前的短窗口内，回退通道可能看到指向尚不存在对象的链接，主通道（R2 latest）不受影响。
 
-1. Actions → Stable Release → Run workflow，输入与 bump 相同的版本号（首个 CI 版本为 0.8.0）；
-2. 等待 environment 审批（Kozmosa 或 Bluevect 任一人批准）；
-3. workflow 执行 `scripts/release/ci.mjs <版本>`：校验 tag 指向 bump commit（HEAD 漂移时自动检出 tag 树）、三处版本一致、骨架 URL 与 R2 secrets 推导一致 → `npm run check` → gradle `assembleStableRelease` 构建并签名（证书指纹固定校验）→ 本地补全 versions.json 元数据 → R2 上传（版本化 APK、版本化清单、latest 清单，均含 Cache-Control）→ 上传永久下载别名 `releases/latest/qmm-latest.apk`（no-cache 覆盖，供手册 App 介绍页等外部页面直接引用）→ GitHub Release（`--verify-tag`）资产上传与 digest 核验 → 清理 R2 上一版前缀。
-
-骨架与元数据的分工：仓库中的 `versions.json` 只含骨架（无 size/sha256）；最终校验和只写入 R2 清单与 GitHub Release 资产中的 `versions.json`。jsDelivr 回退通道因此下载时不校验哈希（客户端兼容缺失字段；HTTPS 与 Android 签名连续性仍然兜底）。如需回退通道也带校验和，可在发布后手动提交补全（参考历史 backfill commit）。bump 推送后、CI 完成前的短窗口内，回退通道可能看到指向尚不存在对象的链接，主通道（R2 latest）不受影响。
-
-失败处理：CI 阶段失败可直接重新 dispatch（`releaseExists` 分支走 `--clobber` 覆盖上传，R2 同键覆盖）。若需放弃该版本，删除远端 tag 与 bump commit 对应的 Release 后重做（bump commit 本身无害，可保留）。
+失败处理：bump 阶段失败直接重跑 Release Bump workflow（同名分支被覆盖、PR 被复用）；要放弃该版本，关闭 PR 并删除远端 `release/vX` 分支。发布阶段失败可直接重新 dispatch Stable Release workflow 输入相同版本号（`releaseExists` 分支走 `--clobber` 覆盖上传，R2 同键覆盖）；要放弃版本，删除远端 tag 与对应 Release 后重做（bump commit 本身无害，可保留）。
 
 `min_version` 在 bump 阶段写入 versions.json 的 `latest.minVersion`：低于该值的已安装版本在检查更新时会收到「卸载重装」迁移提示，不再尝试原地升级。该逻辑仅对包含此功能的客户端版本生效。
 
@@ -61,6 +64,8 @@ R2 保留策略：stable 仅保留最新版本目录（发版成功后自动清�
 | R2_ACCOUNT_ID / R2_BUCKET / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_PUBLIC_BASE_URL / R2_KEY_PREFIX / R2_S3_ENDPOINT | repo secrets | 与本地 `R2_ENV` 等价；token 按 bucket 范围签发 |
 | R2 生命周期规则 | Cloudflare R2 → bucket → Settings | `releases/nightly/history/` 前缀 7 天后删除 |
 
+无需为 Actions 配置 main 推送权限或 ruleset bypass：bump workflow 用 `GITHUB_TOKEN` 推送 `release/*` 分支、创建 PR 与 tag（`permissions` 已在 workflow 内声明）；`release/*` 分支命名空间会被 workflow 覆盖，不得纳入分支保护。
+
 ## 本地应急发版
 
 交互式全流程（需要 Android Studio 手动构建，含版本提交、R2 与 Release 发布，一步到底）：
@@ -74,9 +79,11 @@ npm run release -- <next-version> --android --asset-source=r2 --note-file=path/t
 非交互两阶段 CLI（与 CI 相同形态，可在配齐环境变量的本地执行）：
 
 ```bash
-npm run release:bump -- <next-version> --note-file=path/to/notes.md
+npm run release:bump -- <next-version> --note-file=path/to/notes.md   # 直接在 main 提交、打 tag 并推送
 npm run release:ci -- <next-version>
 ```
+
+应急路径的 `release:bump` 不带 `--pr`：它直接把 bump commit 和 tag 推到 main（与 workflow 的 PR 模式共享全部校验），随后需手动 dispatch Stable Release workflow 或本地跑 `release:ci`。
 
 Dry run（仅交互式流程支持）：
 

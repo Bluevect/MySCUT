@@ -11,6 +11,50 @@ function releaseExists(tag, repoSlug) {
   }
 }
 
+function buildReleasePrBody({ version, note }) {
+  return [
+    '此 PR 由 Release Bump workflow 生成，包含 v' + version + ' 的 bump commit（版本文件、versions.json 骨架与 release note）。',
+    '',
+    '## Release note',
+    '',
+    note,
+    '',
+    '## 合并后自动执行',
+    '',
+    '- Stable Release workflow 检测到 main 上的版本变化，创建并推送 tag `v' + version + '`',
+    '- 从该 tag 构建、签名并发布（需 environment `release` 审批）',
+    '',
+  ].join('\n')
+}
+
+// bump PR 不存在则创建；重跑 bump 时分支已带 PR，改为更新标题与正文
+export function createOrUpdateReleasePullRequest({ version, branch, note, repoSlug }) {
+  const title = `chore(release): prepare v${version}`
+  const body = buildReleasePrBody({ version, note })
+
+  try {
+    return runFileSilently(
+      'gh',
+      ['pr', 'create', '--repo', repoSlug, '--base', 'main', '--head', branch, '--title', title, '--body', body],
+      rootDir,
+    ).trim()
+  } catch (createError) {
+    let url = ''
+    try {
+      url = String(JSON.parse(runFileSilently('gh', ['pr', 'view', branch, '--repo', repoSlug, '--json', 'url'], rootDir))?.url || '')
+    } catch {
+      throw createError
+    }
+
+    if (!url) {
+      throw createError
+    }
+
+    runFile('gh', ['pr', 'edit', branch, '--repo', repoSlug, '--title', title, '--body', body], rootDir)
+    return url
+  }
+}
+
 function buildReleaseNoteArgs(noteFilePath) {
   return noteFilePath ? ['--notes-file', noteFilePath] : ['--generate-notes']
 }

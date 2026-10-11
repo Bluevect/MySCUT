@@ -35,6 +35,39 @@ function isEnabledNpmConfig(key) {
   return value === 'true' || value === '1'
 }
 
+export function parsePrepareArgs(argv) {
+  let version = ''
+  let noteFile = ''
+  let minVersion = ''
+  let prMode = false
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+    if (!version && VERSION_PATTERN.test(arg)) {
+      version = arg
+      continue
+    }
+    if (arg.startsWith('--note-file=')) {
+      noteFile = arg.slice('--note-file='.length)
+      continue
+    }
+    if (arg.startsWith('--min-version=')) {
+      minVersion = arg.slice('--min-version='.length)
+      continue
+    }
+    if (arg === '--pr') {
+      prMode = true
+    }
+  }
+
+  return {
+    version,
+    noteFile: noteFile || (version ? `.release-notes/v${version}.md` : ''),
+    minVersion,
+    prMode,
+  }
+}
+
 export function parseReleaseOptions() {
   const directArgs = process.argv.slice(2).map((item) => item.trim()).filter((item) => item.length > 0)
   const rawArgs = directArgs.length > 0 ? directArgs : parseNpmOriginalArgs()
