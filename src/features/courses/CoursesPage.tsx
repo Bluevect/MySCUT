@@ -84,6 +84,7 @@ const TIME_PLACEHOLDER = '--:--'
 const SCROLL_HINT_THRESHOLD = 2
 const PRELOAD_WEEK_RADIUS = 3
 const SWIPE_TRANSITION_FALLBACK_MS = 400
+const RETURN_WEEK_ANIMATION_MS = 240
 const EMPTY_WEEK_RENDER_DATA = createEmptyWeekScheduleRenderData()
 const INTERSECTION_PREVIEW_PATH = '/courses/intersection-preview'
 const IMPORT_START_DATE_REMINDER_KEY = 'schedule-import-start-date-reminder'
@@ -439,9 +440,20 @@ function renderCourseCell(
   )
 }
 
-function createSwipeState(currentWeek: number, maxWeek: number, direction: 'prev' | 'next' | null) {
-  const prevWeek = Math.max(1, currentWeek - 1)
-  const nextWeek = Math.min(maxWeek, currentWeek + 1)
+function createSwipeState(
+  currentWeek: number,
+  maxWeek: number,
+  direction: 'prev' | 'next' | null,
+  returnTargetWeek: number | null = null,
+) {
+  const prevWeek =
+    returnTargetWeek !== null && returnTargetWeek < currentWeek
+      ? returnTargetWeek
+      : Math.max(1, currentWeek - 1)
+  const nextWeek =
+    returnTargetWeek !== null && returnTargetWeek > currentWeek
+      ? returnTargetWeek
+      : Math.min(maxWeek, currentWeek + 1)
 
   return {
     prevWeek,
@@ -540,9 +552,14 @@ function CoursesPage() {
   const dragOffsetXRef = useRef(0)
   const trackRef = useRef<HTMLDivElement>(null)
   const swipeTransitionTimeoutRef = useRef<number | null>(null)
+  const returnWeekAnimationTimeoutRef = useRef<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [returnWeekTransition, setReturnWeekTransition] = useState<{
+    direction: 'prev' | 'next'
+    toWeek: number
+  } | null>(null)
   const [isStartDateReminderOpen, setIsStartDateReminderOpen] = useState(false)
   const [isCourseDetailOpen, setIsCourseDetailOpen] = useState(false)
   const [selectedCourses, setSelectedCourses] = useState<WeekCellCourse[]>([])
@@ -627,8 +644,9 @@ function CoursesPage() {
   )
 
   const swipeState = useMemo(
-    () => createSwipeState(currentWeek, maxWeek, swipeDirection),
-    [currentWeek, maxWeek, swipeDirection],
+    () =>
+      createSwipeState(currentWeek, maxWeek, swipeDirection, returnWeekTransition?.toWeek ?? null),
+    [currentWeek, maxWeek, returnWeekTransition, swipeDirection],
   )
 
   useEffect(() => {
@@ -795,8 +813,18 @@ function CoursesPage() {
       cache.set(week, buildWeekScheduleRenderData(scheduleData, week, lessonCount))
     }
 
+    if (
+      returnWeekTransition &&
+      (returnWeekTransition.toWeek < weekStart || returnWeekTransition.toWeek > weekEnd)
+    ) {
+      cache.set(
+        returnWeekTransition.toWeek,
+        buildWeekScheduleRenderData(scheduleData, returnWeekTransition.toWeek, lessonCount),
+      )
+    }
+
     return cache
-  }, [currentWeek, lessonCount, maxWeek, scheduleData])
+  }, [currentWeek, lessonCount, maxWeek, returnWeekTransition, scheduleData])
 
   const getWeekRenderData = (weekNumber: number) =>
     weekRenderDataCache.get(weekNumber) ?? EMPTY_WEEK_RENDER_DATA
@@ -849,6 +877,9 @@ function CoursesPage() {
     () => () => {
       if (swipeTransitionTimeoutRef.current !== null) {
         window.clearTimeout(swipeTransitionTimeoutRef.current)
+      }
+      if (returnWeekAnimationTimeoutRef.current !== null) {
+        window.clearTimeout(returnWeekAnimationTimeoutRef.current)
       }
     },
     [],
@@ -1038,8 +1069,12 @@ function CoursesPage() {
       return 'schedule-swipe-track is-dragging'
     }
 
+    if (returnWeekTransition) {
+      return `schedule-swipe-track is-returning-${returnWeekTransition.direction}`
+    }
+
     return 'schedule-swipe-track'
-  }, [isDragging, isResetting, swipeDirection])
+  }, [isDragging, isResetting, returnWeekTransition, swipeDirection])
 
   const trackStyle = isDragging
     ? { transform: `translateX(calc(-33.3333% + ${dragOffsetXRef.current}px))` }
@@ -1070,14 +1105,29 @@ function CoursesPage() {
   }
 
   const handleReturnToCurrentWeek = () => {
-    if (isAnimating || isDragging) {
+    if (isAnimating || isDragging || currentWeek === inferredCurrentWeek) {
       return
+    }
+
+    if (returnWeekAnimationTimeoutRef.current !== null) {
+      window.clearTimeout(returnWeekAnimationTimeoutRef.current)
     }
 
     setSwipeDirection(null)
     setIsResetting(false)
     dragOffsetXRef.current = 0
-    applyViewedWeek(inferredCurrentWeek)
+    const returnTargetWeek = inferredCurrentWeek
+    setReturnWeekTransition({
+      direction: returnTargetWeek > currentWeek ? 'next' : 'prev',
+      toWeek: returnTargetWeek,
+    })
+    setIsAnimating(true)
+    returnWeekAnimationTimeoutRef.current = window.setTimeout(() => {
+      returnWeekAnimationTimeoutRef.current = null
+      applyViewedWeek(returnTargetWeek)
+      setReturnWeekTransition(null)
+      setIsAnimating(false)
+    }, RETURN_WEEK_ANIMATION_MS)
   }
 
   const handleOpenWeekPicker = () => {
