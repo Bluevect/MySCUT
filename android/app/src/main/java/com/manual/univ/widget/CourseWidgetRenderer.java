@@ -78,6 +78,7 @@ final class CourseWidgetRenderer {
             applyAppearance(views, data.appearance(), palette);
             applyHeader(context, views, scheduleName, todayWeekday, currentWeek);
             applyLessons(
+                    context,
                     views,
                     scheduleData,
                     data.scheduleTheme(),
@@ -112,13 +113,13 @@ final class CourseWidgetRenderer {
             R.id.widget_week,
             R.id.widget_status,
             R.id.course_1_card,
-            R.id.course_1_bg,
+            R.id.course_1_bar,
             R.id.course_1_name,
             R.id.course_1_place,
             R.id.course_1_start_time,
             R.id.course_1_end_time,
             R.id.course_2_card,
-            R.id.course_2_bg,
+            R.id.course_2_bar,
             R.id.course_2_name,
             R.id.course_2_place,
             R.id.course_2_start_time,
@@ -157,6 +158,7 @@ final class CourseWidgetRenderer {
     }
 
     private static void applyLessons(
+            Context context,
             RemoteViews views,
             JSONObject scheduleData,
             JSONObject scheduleTheme,
@@ -180,6 +182,7 @@ final class CourseWidgetRenderer {
         views.setViewVisibility(R.id.widget_status, android.view.View.GONE);
         views.setViewVisibility(R.id.course_1_card, android.view.View.VISIBLE);
         CourseWidgetCourseManager.applyCourse(
+                context,
                 views,
                 scheduleData,
                 scheduleTheme,
@@ -191,6 +194,7 @@ final class CourseWidgetRenderer {
         if (todaysLessons.size() > 1) {
             views.setViewVisibility(R.id.course_2_card, android.view.View.VISIBLE);
             CourseWidgetCourseManager.applyCourse(
+                    context,
                     views,
                     scheduleData,
                     scheduleTheme,

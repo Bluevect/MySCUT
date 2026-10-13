@@ -1,9 +1,11 @@
 package com.manual.univ.widget;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.DisplayMetrics;
 import android.widget.RemoteViews;
 
 import com.manual.univ.R;
@@ -23,7 +25,10 @@ import java.util.TimeZone;
 
 final class CourseWidgetCourseManager {
     private static final long DAY_IN_MILLIS = 24L * 60L * 60L * 1000L;
-    private static final float CORNER_RADIUS_PX = 24.0f;
+    private static final int BAR_WIDTH_DP = 4;
+    // A bitmap's intrinsic height feeds the measurement of the wrap_content course row, so this
+    // value doubles as the minimum row height. Keep it close to two lines of course text.
+    private static final int BAR_HEIGHT_DP = 44;
 
     private CourseWidgetCourseManager() {}
 
@@ -113,6 +118,7 @@ final class CourseWidgetCourseManager {
     }
 
     static void applyCourse(
+            Context context,
             RemoteViews views,
             JSONObject scheduleData,
             JSONObject scheduleTheme,
@@ -124,7 +130,7 @@ final class CourseWidgetCourseManager {
         int placeViewId = slot == 1 ? R.id.course_1_place : R.id.course_2_place;
         int startTimeViewId = slot == 1 ? R.id.course_1_start_time : R.id.course_2_start_time;
         int endTimeViewId = slot == 1 ? R.id.course_1_end_time : R.id.course_2_end_time;
-        int backgroundViewId = slot == 1 ? R.id.course_1_bg : R.id.course_2_bg;
+        int barViewId = slot == 1 ? R.id.course_1_bar : R.id.course_2_bar;
         int courseCardViewId = slot == 1 ? R.id.course_1_card : R.id.course_2_card;
 
         JSONObject course =
@@ -140,7 +146,7 @@ final class CourseWidgetCourseManager {
                         lesson.optInt("courseId"),
                         weekday,
                         lesson.optInt("startNode"));
-        int backgroundColor = CourseWidgetColorUtils.parseColor(courseColor, fallbackColor);
+        int barColor = CourseWidgetColorUtils.parseColor(courseColor, fallbackColor);
         int primaryTextColor =
                 CourseWidgetColorUtils.readColor(
                         scheduleTheme, "textColorPrimary", Color.rgb(31, 42, 60));
@@ -156,7 +162,7 @@ final class CourseWidgetCourseManager {
         views.setTextColor(placeViewId, secondaryTextColor);
         views.setTextColor(startTimeViewId, secondaryTextColor);
         views.setTextColor(endTimeViewId, secondaryTextColor);
-        views.setImageViewBitmap(backgroundViewId, createRoundedRectBitmap(backgroundColor));
+        views.setImageViewBitmap(barViewId, createBarBitmap(context, barColor));
         views.setViewVisibility(courseCardViewId, android.view.View.VISIBLE);
     }
 
@@ -218,14 +224,18 @@ final class CourseWidgetCourseManager {
         return CourseWidgetColorUtils.parseColor(color, Color.rgb(217, 232, 255));
     }
 
-    private static Bitmap createRoundedRectBitmap(int color) {
-        int width = 800;
-        int height = 200;
+    private static Bitmap createBarBitmap(Context context, int color) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        int width = Math.max(1, Math.round(BAR_WIDTH_DP * metrics.density));
+        int height = Math.max(1, Math.round(BAR_HEIGHT_DP * metrics.density));
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        // Pin the density so the intrinsic size stays exactly this many dp.
+        bitmap.setDensity(metrics.densityDpi);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setColor(color);
-        canvas.drawRoundRect(0f, 0f, width, height, CORNER_RADIUS_PX, CORNER_RADIUS_PX, paint);
+        float radius = width / 2.0f;
+        canvas.drawRoundRect(0f, 0f, width, height, radius, radius, paint);
         return bitmap;
     }
 }
