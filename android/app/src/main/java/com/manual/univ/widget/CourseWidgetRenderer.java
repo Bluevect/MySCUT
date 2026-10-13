@@ -69,7 +69,7 @@ final class CourseWidgetRenderer {
             }
         }
         CourseWidgetProvider.scheduleNextRefresh(
-                context, nextLessonEndAt == Long.MAX_VALUE ? -1 : nextLessonEndAt);
+                context, resolveNextRefreshAt(now, nextLessonEndAt));
 
         for (int appWidgetId : appWidgetIds) {
             RemoteViews views =
@@ -201,6 +201,21 @@ final class CourseWidgetRenderer {
         } else {
             views.setViewVisibility(R.id.course_2_card, android.view.View.GONE);
         }
+    }
+
+    private static long resolveNextRefreshAt(Calendar now, long nextLessonEndAt) {
+        if (nextLessonEndAt != Long.MAX_VALUE) {
+            return nextLessonEndAt;
+        }
+
+        // The day rollover cannot rely on DATE_CHANGED alone, so refresh just after midnight.
+        Calendar nextMidnight = (Calendar) now.clone();
+        nextMidnight.add(Calendar.DAY_OF_MONTH, 1);
+        nextMidnight.set(Calendar.HOUR_OF_DAY, 0);
+        nextMidnight.set(Calendar.MINUTE, 0);
+        nextMidnight.set(Calendar.SECOND, 5);
+        nextMidnight.set(Calendar.MILLISECOND, 0);
+        return nextMidnight.getTimeInMillis();
     }
 
     private static String getTodayLabel(int dayOfWeek) {

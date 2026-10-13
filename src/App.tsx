@@ -4,6 +4,7 @@ import { message } from 'antd'
 import AppRoutes from './app/routes'
 import { useHardwareBackButton } from './platform/capacitor/useHardwareBackButton'
 import { useAndroidViewportInset } from './platform/capacitor/useAndroidViewportInset'
+import { useAndroidCourseWidgetExactAlarmPrompt } from './platform/capacitor/useAndroidCourseWidgetExactAlarmPrompt'
 import { StorageStatusBanner } from './platform/storage/StorageRuntimeProvider'
 import { RouteContentErrorBoundary } from './components/AppRouteStates'
 import { ManualPage } from './features/manual'
@@ -22,6 +23,7 @@ function App() {
 
   useHardwareBackButton({ onExitHint: () => messageApi.info('再按一次返回键退出应用') })
   useAndroidViewportInset()
+  useAndroidCourseWidgetExactAlarmPrompt()
 
   const location = useLocation()
   const navigate = useNavigate()
