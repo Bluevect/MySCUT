@@ -57,7 +57,10 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <receiver android:name=".widget.CourseWidgetProvider" android:exported="false">
+        <receiver
+            android:name=".widget.BarWidgetProvider"
+            android:exported="false"
+            android:label="@string/bar_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
@@ -68,7 +71,24 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/course_widget_info" />
+                android:resource="@xml/bar_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.CardWidgetProvider"
+            android:exported="false"
+            android:label="@string/card_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/card_widget_info" />
         </receiver>
     </application>
 

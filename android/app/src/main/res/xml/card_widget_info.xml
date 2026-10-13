@@ -4,6 +4,6 @@
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:updatePeriodMillis="1800000"
-    android:initialLayout="@layout/course_widget_layout"
+    android:initialLayout="@layout/card_widget_layout"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

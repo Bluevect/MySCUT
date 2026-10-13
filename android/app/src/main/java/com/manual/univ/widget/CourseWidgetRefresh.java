@@ -9,7 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-public class CourseWidgetProvider extends AppWidgetProvider {
+// Alarm scheduling and refresh triggers shared by every course widget style.
+final class CourseWidgetRefresh {
     private static final String ACTION_REFRESH_COURSE_WIDGET =
             "com.manual.univ.widget.ACTION_REFRESH_COURSE_WIDGET";
 
@@ -17,15 +18,29 @@ public class CourseWidgetProvider extends AppWidgetProvider {
     private static final String ACTION_EXACT_ALARM_PERMISSION_GRANTED =
             "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED";
 
-    public static void refreshAll(Context context) {
-        CourseWidgetRenderer.refreshAll(context);
+    private CourseWidgetRefresh() {}
+
+    static void refreshAll(Context context) {
+        BarWidgetRenderer.refreshAll(context);
+        CardWidgetRenderer.refreshAll(context);
     }
 
-    static boolean hasPlacedWidget(Context context) {
+    static int[] getWidgetIds(Context context, Class<? extends AppWidgetProvider> provider) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        return manager.getAppWidgetIds(new ComponentName(context, CourseWidgetProvider.class))
-                        .length
-                > 0;
+        return manager.getAppWidgetIds(new ComponentName(context, provider));
+    }
+
+    static boolean hasPlacedWidget(Context context, Class<? extends AppWidgetProvider> provider) {
+        return getWidgetIds(context, provider).length > 0;
+    }
+
+    static boolean isRefreshTrigger(String action) {
+        return ACTION_REFRESH_COURSE_WIDGET.equals(action)
+                || ACTION_EXACT_ALARM_PERMISSION_GRANTED.equals(action)
+                || Intent.ACTION_DATE_CHANGED.equals(action)
+                || Intent.ACTION_TIME_CHANGED.equals(action)
+                || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
+                || Intent.ACTION_CONFIGURATION_CHANGED.equals(action);
     }
 
     static boolean canScheduleExactAlarms(Context context) {
@@ -38,9 +53,10 @@ public class CourseWidgetProvider extends AppWidgetProvider {
         return alarmManager != null && alarmManager.canScheduleExactAlarms();
     }
 
-    static void scheduleNextRefresh(Context context, long triggerAtMillis) {
+    static void scheduleNextRefresh(
+            Context context, Class<? extends AppWidgetProvider> provider, long triggerAtMillis) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, CourseWidgetProvider.class);
+        Intent intent = new Intent(context, provider);
         intent.setAction(ACTION_REFRESH_COURSE_WIDGET);
         PendingIntent pendingIntent =
                 PendingIntent.getBroadcast(
@@ -66,28 +82,5 @@ public class CourseWidgetProvider extends AppWidgetProvider {
 
         // RTC does not wake the device, so Doze would defer this alarm until the device wakes.
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
-    }
-
-    @Override
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        CourseWidgetRenderer.update(context, appWidgetManager, appWidgetIds);
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        super.onReceive(context, intent);
-        if (intent == null) {
-            return;
-        }
-
-        String action = intent.getAction();
-        if (ACTION_REFRESH_COURSE_WIDGET.equals(action)
-                || ACTION_EXACT_ALARM_PERMISSION_GRANTED.equals(action)
-                || Intent.ACTION_DATE_CHANGED.equals(action)
-                || Intent.ACTION_TIME_CHANGED.equals(action)
-                || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
-                || Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
-            refreshAll(context);
-        }
     }
 }

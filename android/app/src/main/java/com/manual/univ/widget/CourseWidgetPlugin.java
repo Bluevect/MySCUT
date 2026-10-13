@@ -23,7 +23,7 @@ public class CourseWidgetPlugin extends Plugin {
         }
 
         CourseWidgetStore.saveSchedule(getContext(), scheduleJson, scheduleThemeJson);
-        CourseWidgetProvider.refreshAll(getContext());
+        CourseWidgetRefresh.refreshAll(getContext());
         call.resolve();
     }
 
@@ -34,17 +34,20 @@ public class CourseWidgetPlugin extends Plugin {
             CourseWidgetStore.saveAppearance(getContext(), appearanceJson);
         }
 
-        CourseWidgetProvider.refreshAll(getContext());
+        CourseWidgetRefresh.refreshAll(getContext());
         call.resolve();
     }
 
     @PluginMethod
     public void getWidgetStatus(PluginCall call) {
         JSObject result = new JSObject();
-        result.put("hasWidget", CourseWidgetProvider.hasPlacedWidget(getContext()));
+        result.put(
+                "hasWidget",
+                BarWidgetProvider.hasPlacedWidget(getContext())
+                        || CardWidgetProvider.hasPlacedWidget(getContext()));
         result.put(
                 "canScheduleExactAlarms",
-                CourseWidgetProvider.canScheduleExactAlarms(getContext()));
+                CourseWidgetRefresh.canScheduleExactAlarms(getContext()));
         call.resolve(result);
     }
 
@@ -52,7 +55,7 @@ public class CourseWidgetPlugin extends Plugin {
     public void requestExactAlarmPermission(PluginCall call) {
         JSObject result = new JSObject();
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
-                || CourseWidgetProvider.canScheduleExactAlarms(getContext())) {
+                || CourseWidgetRefresh.canScheduleExactAlarms(getContext())) {
             result.put("opened", false);
             call.resolve(result);
             return;
