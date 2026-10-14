@@ -193,11 +193,12 @@ final class CourseWidgetRemoteViews {
             if (slots.count() > 1) {
                 views.setViewVisibility(R.id.course_2_card, View.GONE);
             }
-            views.setViewVisibility(
-                    R.id.widget_status, content.hasLessonsToday() ? View.VISIBLE : View.GONE);
-            if (content.hasLessonsToday()) {
-                views.setTextViewText(R.id.widget_status, dayFinishedText);
-            }
+            views.setViewVisibility(R.id.widget_status, View.VISIBLE);
+            views.setTextViewText(
+                    R.id.widget_status,
+                    content.hasLessonsToday()
+                            ? dayFinishedText
+                            : context.getString(R.string.course_widget_no_lessons));
             return;
         }
 
