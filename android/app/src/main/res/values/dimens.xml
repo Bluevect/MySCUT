@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Smallest gap between the header columns, the real gap grows when the schedule name is short. -->
+    <dimen name="course_widget_header_gap">24dp</dimen>
+</resources>

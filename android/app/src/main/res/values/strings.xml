@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="bar_widget_name">今日课程 - 竖条</string>
+    <string name="card_widget_name">今日课程 - 卡片</string>
+    <string name="compact_bar_widget_name">紧凑今日课程 - 竖条</string>
+    <string name="compact_card_widget_name">紧凑今日课程 - 卡片</string>
     <string name="app_name">启梦华工</string>
     <string name="title_activity_main">启梦华工</string>
     <string name="package_name">com.manual.univ</string>

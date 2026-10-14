@@ -1,12 +1,6 @@
 package com.manual.univ.widget;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.widget.RemoteViews;
-
-import com.manual.univ.R;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,9 +15,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+// Reads the schedule JSON stored for the widget. It knows nothing about how a widget looks.
 final class CourseWidgetCourseManager {
     private static final long DAY_IN_MILLIS = 24L * 60L * 60L * 1000L;
-    private static final float CORNER_RADIUS_PX = 24.0f;
 
     private CourseWidgetCourseManager() {}
 
@@ -109,58 +103,10 @@ final class CourseWidgetCourseManager {
 
     static String getLessonEndTime(
             JSONObject scheduleData, String timeSlotPresetId, JSONObject lesson) {
-        return resolveLessonTimeParts(scheduleData, timeSlotPresetId, lesson)[1];
+        return getLessonTimeParts(scheduleData, timeSlotPresetId, lesson)[1];
     }
 
-    static void applyCourse(
-            RemoteViews views,
-            JSONObject scheduleData,
-            JSONObject scheduleTheme,
-            String timeSlotPresetId,
-            JSONObject lesson,
-            int weekday,
-            int slot) {
-        int nameViewId = slot == 1 ? R.id.course_1_name : R.id.course_2_name;
-        int placeViewId = slot == 1 ? R.id.course_1_place : R.id.course_2_place;
-        int startTimeViewId = slot == 1 ? R.id.course_1_start_time : R.id.course_2_start_time;
-        int endTimeViewId = slot == 1 ? R.id.course_1_end_time : R.id.course_2_end_time;
-        int backgroundViewId = slot == 1 ? R.id.course_1_bg : R.id.course_2_bg;
-        int courseCardViewId = slot == 1 ? R.id.course_1_card : R.id.course_2_card;
-
-        JSONObject course =
-                findCourse(scheduleData.optJSONArray("courses"), lesson.optInt("courseId"));
-        String courseName = course == null ? "课程" : course.optString("name", "课程");
-        String place = lesson.optString("room", "");
-        String[] timeParts = resolveLessonTimeParts(scheduleData, timeSlotPresetId, lesson);
-
-        String courseColor = course == null ? "" : course.optString("color", "");
-        int fallbackColor =
-                getFallbackCourseColor(
-                        scheduleTheme,
-                        lesson.optInt("courseId"),
-                        weekday,
-                        lesson.optInt("startNode"));
-        int backgroundColor = CourseWidgetColorUtils.parseColor(courseColor, fallbackColor);
-        int primaryTextColor =
-                CourseWidgetColorUtils.readColor(
-                        scheduleTheme, "textColorPrimary", Color.rgb(31, 42, 60));
-        int secondaryTextColor =
-                CourseWidgetColorUtils.readColor(
-                        scheduleTheme, "textColorSecondary", Color.rgb(58, 94, 124));
-
-        views.setTextViewText(nameViewId, courseName);
-        views.setTextViewText(placeViewId, place);
-        views.setTextViewText(startTimeViewId, timeParts[0]);
-        views.setTextViewText(endTimeViewId, timeParts[1]);
-        views.setTextColor(nameViewId, primaryTextColor);
-        views.setTextColor(placeViewId, secondaryTextColor);
-        views.setTextColor(startTimeViewId, secondaryTextColor);
-        views.setTextColor(endTimeViewId, secondaryTextColor);
-        views.setImageViewBitmap(backgroundViewId, createRoundedRectBitmap(backgroundColor));
-        views.setViewVisibility(courseCardViewId, android.view.View.VISIBLE);
-    }
-
-    private static String[] resolveLessonTimeParts(
+    static String[] getLessonTimeParts(
             JSONObject scheduleData, String presetId, JSONObject lesson) {
         JSONArray timeSlots = scheduleData == null ? null : scheduleData.optJSONArray("timeSlots");
         JSONObject table = scheduleData == null ? null : scheduleData.optJSONObject("table");
@@ -190,7 +136,8 @@ final class CourseWidgetCourseManager {
                 selectedTimeTable);
     }
 
-    private static JSONObject findCourse(JSONArray courses, int courseId) {
+    static JSONObject findCourse(JSONObject scheduleData, int courseId) {
+        JSONArray courses = scheduleData == null ? null : scheduleData.optJSONArray("courses");
         if (courses == null) {
             return null;
         }
@@ -204,7 +151,7 @@ final class CourseWidgetCourseManager {
         return null;
     }
 
-    private static int getFallbackCourseColor(
+    static int getFallbackCourseColor(
             JSONObject scheduleTheme, int courseId, int weekday, int lessonNumber) {
         JSONArray fallbackColors =
                 scheduleTheme == null ? null : scheduleTheme.optJSONArray("fallbackColors");
@@ -216,16 +163,5 @@ final class CourseWidgetCourseManager {
                 fallbackColors.optString(
                         Math.floorMod(courseId + weekday + lessonNumber, fallbackColors.length()));
         return CourseWidgetColorUtils.parseColor(color, Color.rgb(217, 232, 255));
-    }
-
-    private static Bitmap createRoundedRectBitmap(int color) {
-        int width = 800;
-        int height = 200;
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(color);
-        canvas.drawRoundRect(0f, 0f, width, height, CORNER_RADIUS_PX, CORNER_RADIUS_PX, paint);
-        return bitmap;
     }
 }

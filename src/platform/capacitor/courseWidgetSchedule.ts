@@ -7,13 +7,55 @@ import {
 } from '../../core/schedule/storage'
 import { getScheduleThemePresetById } from '../../core/schedule/themePresets'
 
+export type AndroidCourseWidgetStatus = {
+  hasWidget: boolean
+  canScheduleExactAlarms: boolean
+}
+
 type CourseWidgetPlugin = {
   syncSchedule(options: { scheduleJson: string; scheduleThemeJson: string }): Promise<void>
   refresh(options?: { appearanceJson?: string }): Promise<void>
+  getWidgetStatus(): Promise<AndroidCourseWidgetStatus>
+  requestExactAlarmPermission(): Promise<{ opened: boolean }>
 }
 
 const CourseWidget = registerPlugin<CourseWidgetPlugin>('CourseWidget')
 let syncQueue = Promise.resolve()
+
+export function supportsAndroidCourseWidget() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
+// A failed status read must not block widget syncing.
+export async function loadAndroidCourseWidgetStatus(): Promise<AndroidCourseWidgetStatus | null> {
+  if (!supportsAndroidCourseWidget()) {
+    return null
+  }
+
+  try {
+    return await CourseWidget.getWidgetStatus()
+  } catch (error) {
+    console.error('Failed to read Android course widget status:', error)
+    return null
+  }
+}
+
+export async function requestAndroidExactAlarmPermission() {
+  if (!supportsAndroidCourseWidget()) {
+    return
+  }
+
+  try {
+    await CourseWidget.requestExactAlarmPermission()
+  } catch (error) {
+    console.error('Failed to open Android exact alarm settings:', error)
+  }
+}
+
+// Only relevant once the widget is placed, so users without one are never asked.
+export function shouldPromptExactAlarmPermission(status: AndroidCourseWidgetStatus | null) {
+  return status !== null && status.hasWidget && !status.canScheduleExactAlarms
+}
 
 function enqueueWidgetSync(operation: () => Promise<void>) {
   syncQueue = syncQueue.then(operation).catch((error: unknown) => {
@@ -22,7 +64,7 @@ function enqueueWidgetSync(operation: () => Promise<void>) {
 }
 
 export function syncAndroidCourseWidgetSchedule(semesterStartDate?: string) {
-  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+  if (!supportsAndroidCourseWidget()) {
     return
   }
 
@@ -43,7 +85,7 @@ export function syncAndroidCourseWidgetSchedule(semesterStartDate?: string) {
 }
 
 export function startAndroidCourseWidgetScheduleSync() {
-  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+  if (!supportsAndroidCourseWidget()) {
     return
   }
 
@@ -59,14 +101,15 @@ export function syncAndroidCourseWidgetAppearance(
   mode: GlobalThemeMode,
   family: GlobalThemeFamily,
 ) {
-  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') {
+  if (!supportsAndroidCourseWidget()) {
     return
   }
 
   const toWidgetPalette = (resolvedMode: 'light' | 'dark') => {
     const variables = getGlobalThemePreset(resolvedMode, family).cssVariables
     return {
-      backgroundColor: variables['--bg-surface'],
+      // The widget reads as a soft surface, so it takes the alt surface token.
+      backgroundColor: variables['--bg-surface-alt'],
       primaryTextColor: variables['--text-primary'],
       secondaryTextColor: variables['--text-secondary'],
     }

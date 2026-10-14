@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="course_widget_background">#FFFFFF</color>
+    <!-- Soft surface, matching the bg-surface-alt token of the light preset. -->
+    <color name="course_widget_background">#F8FAFF</color>
     <color name="course_widget_content_text">#1F1F1F</color>
     <color name="course_widget_footer_text">#72809A</color>
 </resources>
