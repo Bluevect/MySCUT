@@ -183,6 +183,7 @@ final class CourseWidgetRemoteViews {
     }
 
     static void bindHeader(RemoteViews views, CourseWidgetContent.Snapshot content) {
+        views.setViewVisibility(R.id.widget_header, View.VISIBLE);
         views.setTextViewText(R.id.widget_schedule_name, content.scheduleName());
         views.setTextViewText(R.id.widget_date, content.dateLabel());
         views.setTextViewText(R.id.widget_week, content.weekLabel());
@@ -213,6 +214,20 @@ final class CourseWidgetRemoteViews {
             LessonSlots slots,
             AccentBinder accentBinder) {
         List<CourseWidgetContent.Lesson> lessons = content.lessons();
+
+        // Nothing has been synced yet, so the widget explains itself instead of sitting blank.
+        if (!content.hasScheduleData()) {
+            views.setViewVisibility(R.id.widget_header, View.GONE);
+            views.setViewVisibility(R.id.course_1_card, View.GONE);
+            if (slots.count() > 1) {
+                views.setViewVisibility(R.id.course_2_card, View.GONE);
+            }
+            views.setViewVisibility(R.id.widget_status, View.VISIBLE);
+            views.setTextViewText(
+                    R.id.widget_status, context.getString(R.string.course_widget_no_data));
+            return;
+        }
+
         if (lessons.isEmpty()) {
             views.setViewVisibility(R.id.course_1_card, View.GONE);
             if (slots.count() > 1) {
