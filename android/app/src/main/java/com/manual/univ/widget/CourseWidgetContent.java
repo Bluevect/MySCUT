@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-// Every course widget style renders this snapshot, so lesson picking and colours live here.
+// Every course widget style renders this snapshot, so lesson picking and colors live here.
 final class CourseWidgetContent {
     private static final String DEFAULT_COURSE_NAME = "课程";
     private static final String[] WEEKDAY_LABELS = {"日", "一", "二", "三", "四", "五", "六"};

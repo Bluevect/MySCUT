@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -22,7 +23,6 @@ import androidx.core.os.BundleCompat;
 
 import com.manual.univ.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
 // Binding helpers shared by every course widget layout, which uses the same view ids.
@@ -41,7 +41,7 @@ final class CourseWidgetRemoteViews {
     // How many course slots a layout holds, and whether empty slots stay blank instead of collapsing.
     record LessonSlots(int count, LessonTimeLayout timeLayout, boolean keepsEmptySlots) {}
 
-    // Course text colours, from the schedule theme on cards and from the widget appearance on bars.
+    // Course text colors, from the schedule theme on cards and from the widget appearance on bars.
     record LessonTextColors(int primary, int secondary) {}
 
     record WidgetSize(int widthDp, int heightDp) {}
@@ -127,7 +127,7 @@ final class CourseWidgetRemoteViews {
                 == Configuration.ORIENTATION_LANDSCAPE;
     }
 
-    // Rounded accent bitmap. Keep a non zero size, and a height below the course text.
+    // Rounded accent bitmap. Keep a non-zero size, and a height below the course text.
     static Bitmap createRoundedBitmap(
             Context context, int widthDp, int heightDp, float radiusDp, int color) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
@@ -169,6 +169,17 @@ final class CourseWidgetRemoteViews {
         views.setTextColor(R.id.widget_week, palette.primaryTextColor());
         views.setTextColor(R.id.widget_status, palette.secondaryTextColor());
         views.setTextColor(R.id.widget_footer, palette.secondaryTextColor());
+    }
+
+    // Tints the rounded compact surface.
+    // The tint API is 31+, so older hosts keep the default color.
+    static void bindCompactSurface(RemoteViews views, CourseWidgetAppearance.Palette palette) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            views.setColorStateList(
+                    R.id.widget_content,
+                    "setBackgroundTintList",
+                    ColorStateList.valueOf(palette.backgroundColor()));
+        }
     }
 
     static void bindHeader(RemoteViews views, CourseWidgetContent.Snapshot content) {
@@ -220,7 +231,6 @@ final class CourseWidgetRemoteViews {
         bindLesson(
                 context,
                 views,
-                content,
                 lessons.get(0),
                 1,
                 textColors,
@@ -235,7 +245,6 @@ final class CourseWidgetRemoteViews {
             bindLesson(
                     context,
                     views,
-                    content,
                     lessons.get(1),
                     2,
                     textColors,
@@ -245,7 +254,6 @@ final class CourseWidgetRemoteViews {
             bindLesson(
                     context,
                     views,
-                    content,
                     BLANK_LESSON,
                     2,
                     textColors,
@@ -259,7 +267,6 @@ final class CourseWidgetRemoteViews {
     private static void bindLesson(
             Context context,
             RemoteViews views,
-            CourseWidgetContent.Snapshot content,
             CourseWidgetContent.Lesson lesson,
             int slot,
             LessonTextColors textColors,

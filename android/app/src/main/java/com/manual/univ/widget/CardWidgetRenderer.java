@@ -6,7 +6,7 @@ import android.widget.RemoteViews;
 
 import com.manual.univ.R;
 
-// Card style, every course keeps a filled and rounded colour card as its background.
+// Card style, every course keeps a filled and rounded color card as its background.
 final class CardWidgetRenderer {
     private static final CourseWidgetRemoteViews.LessonSlots LESSON_SLOTS =
             new CourseWidgetRemoteViews.LessonSlots(

@@ -6,7 +6,7 @@ import android.widget.RemoteViews;
 
 import com.manual.univ.R;
 
-// Bar style, every course shows a rounded colour bar on its left instead of a filled card.
+// Bar style, every course shows a rounded color bar on its left instead of a filled card.
 final class BarWidgetRenderer {
     private static final CourseWidgetRemoteViews.LessonSlots LESSON_SLOTS =
             new CourseWidgetRemoteViews.LessonSlots(
