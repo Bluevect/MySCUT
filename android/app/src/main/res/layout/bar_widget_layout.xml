@@ -60,7 +60,7 @@
         android:layout_centerInParent="true"
         android:gravity="center"
         android:textColor="@color/course_widget_footer_text"
-        android:textSize="13sp"
+        android:textSize="14sp"
         android:visibility="gone" />
 
     <FrameLayout
