@@ -7,18 +7,18 @@
     android:gravity="center"
     android:orientation="vertical">
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/widget_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/widget_content_background"
-        android:orientation="vertical"
         android:padding="12dp">
 
         <LinearLayout
             android:id="@+id/widget_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -50,7 +50,7 @@
             android:id="@+id/widget_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_centerInParent="true"
             android:gravity="center"
             android:textColor="@color/course_widget_footer_text"
             android:textSize="12sp"
@@ -60,6 +60,7 @@
             android:id="@+id/course_1_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/widget_header"
             android:layout_marginTop="8dp">
 
             <ImageView
@@ -109,6 +110,7 @@
             android:id="@+id/course_2_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/course_1_card"
             android:layout_marginTop="6dp">
 
             <ImageView
@@ -153,7 +155,7 @@
                     style="@style/WidgetCourseTimeTextCompact" />
             </LinearLayout>
         </FrameLayout>
-    </LinearLayout>
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/widget_footer"

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/course_widget_background"
-    android:orientation="vertical"
     android:padding="12dp">
 
     <RelativeLayout
         android:id="@+id/widget_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true">
 
         <TextView
             android:id="@+id/widget_date"
@@ -57,7 +57,7 @@
         android:id="@+id/widget_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_centerInParent="true"
         android:gravity="center"
         android:textColor="@color/course_widget_footer_text"
         android:textSize="13sp"
@@ -67,6 +67,7 @@
         android:id="@+id/course_1_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+            android:layout_below="@id/widget_header"
         android:layout_marginTop="10dp">
 
         <ImageView
@@ -137,6 +138,7 @@
         android:id="@+id/course_2_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+            android:layout_below="@id/course_1_card"
         android:layout_marginTop="8dp">
 
         <ImageView
@@ -207,9 +209,9 @@
         android:id="@+id/widget_footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_alignParentBottom="true"
         android:gravity="center"
         android:text="@string/course_widget_title"
         android:textColor="@color/course_widget_footer_text"
         android:textSize="11sp" />
-</LinearLayout>
+</RelativeLayout>
