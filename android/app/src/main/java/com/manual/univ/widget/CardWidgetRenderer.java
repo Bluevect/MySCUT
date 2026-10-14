@@ -52,6 +52,8 @@ final class CardWidgetRenderer {
         CourseWidgetContent.Snapshot content = CourseWidgetContent.resolve(data);
         CourseWidgetAppearance.Palette palette =
                 CourseWidgetAppearance.resolvePalette(context, data.appearance());
+        boolean showsRemaining =
+                CourseWidgetAppearance.showsRemainingLessons(data.appearance());
         CourseWidgetRefresh.scheduleNextRefresh(
                 context, CardWidgetProvider.class, content.nextRefreshAt());
 
@@ -63,7 +65,7 @@ final class CardWidgetRenderer {
             CourseWidgetRemoteViews.bindTextColors(views, palette);
             views.setInt(R.id.widget_root, "setBackgroundColor", palette.backgroundColor());
             CourseWidgetRemoteViews.bindHeader(views, content);
-            CourseWidgetRemoteViews.bindFooter(context, views, content, true);
+            CourseWidgetRemoteViews.bindFooter(context, views, content, showsRemaining);
             CourseWidgetRemoteViews.bindLessons(
                     context,
                     views,
