@@ -37,4 +37,8 @@ final class CourseWidgetAppearance {
     }
 
     record Palette(int backgroundColor, int primaryTextColor, int secondaryTextColor) {}
+
+    static boolean showsRemainingLessons(JSONObject appearance) {
+        return appearance == null || appearance.optBoolean("showRemaining", true);
+    }
 }

@@ -2,7 +2,6 @@ package com.manual.univ.widget;
 
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.os.Build;
 import android.util.TypedValue;
 import android.widget.RemoteViews;
@@ -62,12 +61,9 @@ final class CompactBarWidgetRenderer {
             CourseWidgetRemoteViews.bindClickTargets(
                     context, views, appWidgetId, CLICKABLE_VIEW_IDS);
             CourseWidgetRemoteViews.bindTextColors(views, palette);
-            // Tints the rounded shape so the block matches the wide styles, box stays transparent.
-            views.setColorStateList(
-                    R.id.widget_content,
-                    "setBackgroundTintList",
-                    ColorStateList.valueOf(palette.backgroundColor()));
-            CourseWidgetRemoteViews.bindHeader(context, views, content);
+            CourseWidgetRemoteViews.bindCompactSurface(views, palette);
+            CourseWidgetRemoteViews.bindHeader(views, content);
+            CourseWidgetRemoteViews.bindFooter(context, views, content, false);
             CourseWidgetRemoteViews.bindLessons(
                     context,
                     views,

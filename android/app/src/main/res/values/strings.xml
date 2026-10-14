@@ -8,6 +8,24 @@
     <string name="title_activity_main">启梦华工</string>
     <string name="package_name">com.manual.univ</string>
     <string name="custom_url_scheme">com.manual.univ</string>
-    <string name="course_widget_title">启梦华工</string>
+    <string name="course_widget_remaining">今日还剩 %1$d 节课</string>
+    <string name="course_widget_remaining_sample">今日还剩 2 节课</string>
     <string name="course_widget_day_finished">今日课程已结束</string>
+    <string name="course_widget_no_lessons">今日无课</string>
+    <string name="course_widget_no_data">数据未加载，请先打开应用进行初始化</string>
+
+    <!-- Sample data for the widget picker previews. -->
+    <string name="course_widget_preview_schedule_name">课表</string>
+    <string name="course_widget_preview_date">9月1日 星期一</string>
+    <string name="course_widget_preview_week">第1周</string>
+    <string name="course_widget_preview_course_1_name">高等数学</string>
+    <string name="course_widget_preview_course_1_place">A4201</string>
+    <string name="course_widget_preview_course_1_start">08:50</string>
+    <string name="course_widget_preview_course_1_end">10:25</string>
+    <string name="course_widget_preview_course_1_range">08:50-10:25</string>
+    <string name="course_widget_preview_course_2_name">大学物理</string>
+    <string name="course_widget_preview_course_2_place">A4202</string>
+    <string name="course_widget_preview_course_2_start">10:40</string>
+    <string name="course_widget_preview_course_2_end">12:15</string>
+    <string name="course_widget_preview_course_2_range">10:40-12:15</string>
 </resources>

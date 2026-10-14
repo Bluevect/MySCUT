@@ -31,6 +31,14 @@ import {
   getScheduleWeekStorage,
   setScheduleWeekStorage,
 } from '../../core/schedule/scheduleWeekStorage'
+import {
+  getCourseWidgetShowsRemaining,
+  setCourseWidgetShowsRemaining,
+} from '../../core/schedule/displaySettings'
+import {
+  supportsAndroidCourseWidget,
+  syncAndroidCourseWidgetAppearance,
+} from '../../platform/capacitor/courseWidgetSchedule'
 
 type MineDetailPageProps = {
   title: string
@@ -107,6 +115,9 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const [isReloadManualEnabled, setIsReloadManualEnabled] = useState(() => getReloadManualEnabled())
   const [isScheduleWeekStorageEnabled, setIsScheduleWeekStorageEnabled] = useState(() =>
     getScheduleWeekStorage(),
+  )
+  const [showsCourseWidgetRemaining, setShowsCourseWidgetRemaining] = useState(() =>
+    getCourseWidgetShowsRemaining(),
   )
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false)
@@ -185,6 +196,12 @@ function MineDetailPage({ title }: MineDetailPageProps) {
   const handleScheduleWeekStorageSwitchChange = (checked: boolean) => {
     setIsScheduleWeekStorageEnabled(checked)
     setScheduleWeekStorage(checked)
+  }
+
+  const handleCourseWidgetRemainingChange = (checked: boolean) => {
+    setShowsCourseWidgetRemaining(checked)
+    setCourseWidgetShowsRemaining(checked)
+    syncAndroidCourseWidgetAppearance(mode, themeFamily)
   }
 
   const handleCheckUpdate = async () => {
@@ -457,6 +474,23 @@ function MineDetailPage({ title }: MineDetailPageProps) {
                 />
               </div>
             </div>
+
+            {supportsAndroidCourseWidget() ? (
+              <div className="mine-button-group">
+                <div className="mine-group-button mine-setting-row">
+                  <div className="mine-setting-copy">
+                    <p className="mine-detail-card-title">小组件显示剩余课程数</p>
+                    <p className="mine-detail-card-description">
+                      关闭后桌面课程小组件底部不再显示剩余节数
+                    </p>
+                  </div>
+                  <Switch
+                    checked={showsCourseWidgetRemaining}
+                    onChange={handleCourseWidgetRemainingChange}
+                  />
+                </div>
+              </div>
+            ) : null}
           </>
         ) : title === '更多' ? (
           <>

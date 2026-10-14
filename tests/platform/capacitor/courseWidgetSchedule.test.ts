@@ -103,12 +103,31 @@ describe('android course widget exact alarm permission', () => {
     const [options] = pluginMocks.refresh.mock.calls[0] as [{ appearanceJson: string }]
     const appearance = JSON.parse(options.appearanceJson) as {
       mode: string
+      showRemaining: boolean
       light: { backgroundColor: string }
       dark: { backgroundColor: string }
     }
 
     expect(appearance.mode).toBe('light')
+    expect(appearance.showRemaining).toBe(true)
     expect(appearance.light.backgroundColor).toBe('#f8faff')
     expect(appearance.dark.backgroundColor).toBe('#212938')
+  })
+
+  it('sends the remaining lessons switch to the widget when it is off', async () => {
+    pluginMocks.refresh.mockReset().mockResolvedValue(undefined)
+    vi.stubGlobal('localStorage', {
+      getItem: () => '0',
+      setItem: () => undefined,
+    })
+
+    syncAndroidCourseWidgetAppearance('light', 'default')
+
+    await vi.waitFor(() => expect(pluginMocks.refresh).toHaveBeenCalledOnce())
+    const [options] = pluginMocks.refresh.mock.calls[0] as [{ appearanceJson: string }]
+    const appearance = JSON.parse(options.appearanceJson) as { showRemaining: boolean }
+
+    expect(appearance.showRemaining).toBe(false)
+    vi.unstubAllGlobals()
   })
 })

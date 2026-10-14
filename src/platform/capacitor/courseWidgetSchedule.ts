@@ -6,6 +6,7 @@ import {
   subscribeScheduleLibraryChanges,
 } from '../../core/schedule/storage'
 import { getScheduleThemePresetById } from '../../core/schedule/themePresets'
+import { getCourseWidgetShowsRemaining } from '../../core/schedule/displaySettings'
 
 export type AndroidCourseWidgetStatus = {
   hasWidget: boolean
@@ -117,6 +118,7 @@ export function syncAndroidCourseWidgetAppearance(
 
   const appearanceJson = JSON.stringify({
     mode,
+    showRemaining: getCourseWidgetShowsRemaining(),
     light: toWidgetPalette('light'),
     dark: toWidgetPalette('dark'),
   })

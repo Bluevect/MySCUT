@@ -60,14 +60,14 @@
         android:layout_centerInParent="true"
         android:gravity="center"
         android:textColor="@color/course_widget_footer_text"
-        android:textSize="13sp"
+        android:textSize="14sp"
         android:visibility="gone" />
 
     <FrameLayout
         android:id="@+id/course_1_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-            android:layout_below="@id/widget_header"
+        android:layout_below="@id/widget_header"
         android:layout_marginTop="10dp">
 
         <ImageView
@@ -211,7 +211,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:gravity="center"
-        android:text="@string/course_widget_title"
+        android:text="@string/course_widget_remaining_sample"
         android:textColor="@color/course_widget_footer_text"
-        android:textSize="11sp" />
+        android:textSize="14sp" />
 </RelativeLayout>
