@@ -24,7 +24,8 @@ final class CourseWidgetAppearance {
                 CourseWidgetColorUtils.readColor(
                         selectedPalette,
                         "backgroundColor",
-                        isDark ? Color.rgb(27, 33, 43) : Color.WHITE),
+                        // Matches the bg-surface-alt token, used before anything has been synced.
+                        isDark ? Color.rgb(33, 41, 56) : Color.rgb(248, 250, 255)),
                 CourseWidgetColorUtils.readColor(
                         selectedPalette,
                         "primaryTextColor",
@@ -33,10 +34,6 @@ final class CourseWidgetAppearance {
                         selectedPalette,
                         "secondaryTextColor",
                         isDark ? Color.rgb(168, 178, 197) : Color.rgb(114, 128, 154)));
-    }
-
-    static boolean followsSystemAppearance(JSONObject appearance) {
-        return appearance == null || "system".equals(appearance.optString("mode", "system"));
     }
 
     record Palette(int backgroundColor, int primaryTextColor, int secondaryTextColor) {}

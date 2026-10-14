@@ -44,7 +44,9 @@ public class CourseWidgetPlugin extends Plugin {
         result.put(
                 "hasWidget",
                 BarWidgetProvider.hasPlacedWidget(getContext())
-                        || CardWidgetProvider.hasPlacedWidget(getContext()));
+                        || CardWidgetProvider.hasPlacedWidget(getContext())
+                        || CompactBarWidgetProvider.hasPlacedWidget(getContext())
+                        || CompactCardWidgetProvider.hasPlacedWidget(getContext()));
         result.put(
                 "canScheduleExactAlarms",
                 CourseWidgetRefresh.canScheduleExactAlarms(getContext()));

@@ -6,10 +6,12 @@ import android.widget.RemoteViews;
 
 import com.manual.univ.R;
 
-// Card style: every course keeps a filled and rounded colour card as its background.
+// Card style, every course keeps a filled and rounded colour card as its background.
 final class CardWidgetRenderer {
-    // Below the height of the padded course text, so the row stays sized by that text. The width only
-    // has to stay close to the real card width to keep the rounded corners round.
+    private static final CourseWidgetRemoteViews.LessonSlots LESSON_SLOTS =
+            new CourseWidgetRemoteViews.LessonSlots(
+                    2, CourseWidgetRemoteViews.LessonTimeLayout.SPLIT, false);
+    // Below the padded course text height, so the row stays sized by that text.
     private static final int ACCENT_WIDTH_DP = 240;
     private static final int ACCENT_HEIGHT_DP = 48;
     private static final float ACCENT_CORNER_RADIUS_DP = 8.0f;
@@ -58,13 +60,17 @@ final class CardWidgetRenderer {
                     new RemoteViews(context.getPackageName(), R.layout.card_widget_layout);
             CourseWidgetRemoteViews.bindClickTargets(
                     context, views, appWidgetId, CLICKABLE_VIEW_IDS);
-            CourseWidgetRemoteViews.bindAppearance(views, data.appearance(), palette);
+            CourseWidgetRemoteViews.bindTextColors(views, palette);
+            views.setInt(R.id.widget_root, "setBackgroundColor", palette.backgroundColor());
             CourseWidgetRemoteViews.bindHeader(context, views, content);
             CourseWidgetRemoteViews.bindLessons(
                     context,
                     views,
                     content,
                     context.getString(R.string.course_widget_day_finished),
+                    new CourseWidgetRemoteViews.LessonTextColors(
+                            content.primaryTextColor(), content.secondaryTextColor()),
+                    LESSON_SLOTS,
                     CardWidgetRenderer::bindAccent);
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }

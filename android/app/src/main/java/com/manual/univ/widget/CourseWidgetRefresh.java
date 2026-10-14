@@ -23,6 +23,8 @@ final class CourseWidgetRefresh {
     static void refreshAll(Context context) {
         BarWidgetRenderer.refreshAll(context);
         CardWidgetRenderer.refreshAll(context);
+        CompactBarWidgetRenderer.refreshAll(context);
+        CompactCardWidgetRenderer.refreshAll(context);
     }
 
     static int[] getWidgetIds(Context context, Class<? extends AppWidgetProvider> provider) {

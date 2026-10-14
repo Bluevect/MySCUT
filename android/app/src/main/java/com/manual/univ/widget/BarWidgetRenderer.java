@@ -6,8 +6,11 @@ import android.widget.RemoteViews;
 
 import com.manual.univ.R;
 
-// Bar style: every course shows a rounded colour bar on its left instead of a filled card.
+// Bar style, every course shows a rounded colour bar on its left instead of a filled card.
 final class BarWidgetRenderer {
+    private static final CourseWidgetRemoteViews.LessonSlots LESSON_SLOTS =
+            new CourseWidgetRemoteViews.LessonSlots(
+                    2, CourseWidgetRemoteViews.LessonTimeLayout.SPLIT, false);
     private static final int ACCENT_WIDTH_DP = 4;
     // Below the height of two lines of course text, so the row stays sized by that text.
     private static final int ACCENT_HEIGHT_DP = 44;
@@ -56,13 +59,17 @@ final class BarWidgetRenderer {
                     new RemoteViews(context.getPackageName(), R.layout.bar_widget_layout);
             CourseWidgetRemoteViews.bindClickTargets(
                     context, views, appWidgetId, CLICKABLE_VIEW_IDS);
-            CourseWidgetRemoteViews.bindAppearance(views, data.appearance(), palette);
+            CourseWidgetRemoteViews.bindTextColors(views, palette);
+            views.setInt(R.id.widget_root, "setBackgroundColor", palette.backgroundColor());
             CourseWidgetRemoteViews.bindHeader(context, views, content);
             CourseWidgetRemoteViews.bindLessons(
                     context,
                     views,
                     content,
                     context.getString(R.string.course_widget_day_finished),
+                    new CourseWidgetRemoteViews.LessonTextColors(
+                            palette.primaryTextColor(), palette.secondaryTextColor()),
+                    LESSON_SLOTS,
                     BarWidgetRenderer::bindAccent);
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }

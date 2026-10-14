@@ -25,6 +25,7 @@ import {
   requestAndroidExactAlarmPermission,
   shouldPromptExactAlarmPermission,
   supportsAndroidCourseWidget,
+  syncAndroidCourseWidgetAppearance,
 } from '../../../src/platform/capacitor/courseWidgetSchedule'
 
 describe('android course widget exact alarm permission', () => {
@@ -91,5 +92,23 @@ describe('android course widget exact alarm permission', () => {
 
     await expect(requestAndroidExactAlarmPermission()).resolves.toBeUndefined()
     expect(consoleError).toHaveBeenCalled()
+  })
+
+  it('sends the soft surface token as the widget background for both modes', async () => {
+    pluginMocks.refresh.mockReset().mockResolvedValue(undefined)
+
+    syncAndroidCourseWidgetAppearance('light', 'default')
+
+    await vi.waitFor(() => expect(pluginMocks.refresh).toHaveBeenCalledOnce())
+    const [options] = pluginMocks.refresh.mock.calls[0] as [{ appearanceJson: string }]
+    const appearance = JSON.parse(options.appearanceJson) as {
+      mode: string
+      light: { backgroundColor: string }
+      dark: { backgroundColor: string }
+    }
+
+    expect(appearance.mode).toBe('light')
+    expect(appearance.light.backgroundColor).toBe('#f8faff')
+    expect(appearance.dark.backgroundColor).toBe('#212938')
   })
 })

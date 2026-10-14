@@ -108,7 +108,8 @@ export function syncAndroidCourseWidgetAppearance(
   const toWidgetPalette = (resolvedMode: 'light' | 'dark') => {
     const variables = getGlobalThemePreset(resolvedMode, family).cssVariables
     return {
-      backgroundColor: variables['--bg-surface'],
+      // The widget reads as a soft surface, so it takes the alt surface token.
+      backgroundColor: variables['--bg-surface-alt'],
       primaryTextColor: variables['--text-primary'],
       secondaryTextColor: variables['--text-secondary'],
     }

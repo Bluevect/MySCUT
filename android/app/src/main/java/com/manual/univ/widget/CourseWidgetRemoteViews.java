@@ -1,12 +1,17 @@
 package com.manual.univ.widget;
 
 import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -16,21 +21,64 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-// Binding helpers shared by the course widget layouts, which use the same view ids for the header
-// and for the course text.
+// Binding helpers shared by every course widget layout, which uses the same view ids.
 final class CourseWidgetRemoteViews {
     // A style decides how its own accent view is painted.
     interface AccentBinder {
         void bind(Context context, RemoteViews views, int slot, int color);
     }
 
+    // Lesson time either uses a start and an end view, or one label on the start view.
+    enum LessonTimeLayout {
+        SPLIT,
+        RANGE
+    }
+
+    // How many course slots a layout holds, and whether empty slots stay blank instead of collapsing.
+    record LessonSlots(int count, LessonTimeLayout timeLayout, boolean keepsEmptySlots) {}
+
+    // Course text colours, from the schedule theme on cards and from the widget appearance on bars.
+    record LessonTextColors(int primary, int secondary) {}
+
+    record WidgetSize(int widthDp, int heightDp) {}
+
+    // Clears a slot when a layout reserves space for a lesson that does not exist.
+    private static final CourseWidgetContent.Lesson BLANK_LESSON =
+            new CourseWidgetContent.Lesson("", "", "", "", Color.TRANSPARENT);
+
     private CourseWidgetRemoteViews() {}
 
-    // Both styles paint a rounded accent bitmap, stretched across the accent view by fitXY.
-    // Two rules keep it simple: the bitmap must keep a non zero intrinsic size, because ImageView
-    // skips drawing entirely when an intrinsic dimension is 0, and its intrinsic height also feeds
-    // the measurement of the wrap_content course row. Each style therefore passes a height below its
-    // own text height, which leaves the row sized by the course text.
+    // Height the content block needs at that width, measured instead of hard coded.
+    static int measureContentHeight(Context context, int layoutRes, int widthPx) {
+        View root = LayoutInflater.from(context).inflate(layoutRes, null);
+        View content = root.findViewById(R.id.widget_content);
+        if (content == null) {
+            return 0;
+        }
+
+        content.measure(
+                View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        return content.getMeasuredHeight();
+    }
+
+    // Widget size in dp the launcher reports for the current orientation.
+    static WidgetSize resolveWidgetSize(Context context, Bundle options) {
+        boolean landscape =
+                context.getResources().getConfiguration().orientation
+                        == Configuration.ORIENTATION_LANDSCAPE;
+        return new WidgetSize(
+                options.getInt(
+                        landscape
+                                ? AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
+                                : AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                options.getInt(
+                        landscape
+                                ? AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
+                                : AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT));
+    }
+
+    // Rounded accent bitmap. Keep a non zero size, and a height below the course text.
     static Bitmap createRoundedBitmap(
             Context context, int widthDp, int heightDp, float radiusDp, int color) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
@@ -65,13 +113,8 @@ final class CourseWidgetRemoteViews {
         }
     }
 
-    static void bindAppearance(
-            RemoteViews views, JSONObject appearance, CourseWidgetAppearance.Palette palette) {
-        if (CourseWidgetAppearance.followsSystemAppearance(appearance)) {
-            return;
-        }
-
-        views.setInt(R.id.widget_root, "setBackgroundColor", palette.backgroundColor());
+    // Applied on every update, because a re-applied RemoteViews is not re-inflated.
+    static void bindTextColors(RemoteViews views, CourseWidgetAppearance.Palette palette) {
         views.setTextColor(R.id.widget_schedule_name, palette.primaryTextColor());
         views.setTextColor(R.id.widget_date, palette.primaryTextColor());
         views.setTextColor(R.id.widget_week, palette.primaryTextColor());
@@ -92,11 +135,15 @@ final class CourseWidgetRemoteViews {
             RemoteViews views,
             CourseWidgetContent.Snapshot content,
             String dayFinishedText,
+            LessonTextColors textColors,
+            LessonSlots slots,
             AccentBinder accentBinder) {
         List<CourseWidgetContent.Lesson> lessons = content.lessons();
         if (lessons.isEmpty()) {
             views.setViewVisibility(R.id.course_1_card, View.GONE);
-            views.setViewVisibility(R.id.course_2_card, View.GONE);
+            if (slots.count() > 1) {
+                views.setViewVisibility(R.id.course_2_card, View.GONE);
+            }
             views.setViewVisibility(
                     R.id.widget_status, content.hasLessonsToday() ? View.VISIBLE : View.GONE);
             if (content.hasLessonsToday()) {
@@ -106,10 +153,40 @@ final class CourseWidgetRemoteViews {
         }
 
         views.setViewVisibility(R.id.widget_status, View.GONE);
-        bindLesson(context, views, content, lessons.get(0), 1, accentBinder);
+        bindLesson(
+                context,
+                views,
+                content,
+                lessons.get(0),
+                1,
+                textColors,
+                slots.timeLayout(),
+                accentBinder);
+
+        if (slots.count() <= 1) {
+            return;
+        }
 
         if (lessons.size() > 1) {
-            bindLesson(context, views, content, lessons.get(1), 2, accentBinder);
+            bindLesson(
+                    context,
+                    views,
+                    content,
+                    lessons.get(1),
+                    2,
+                    textColors,
+                    slots.timeLayout(),
+                    accentBinder);
+        } else if (slots.keepsEmptySlots()) {
+            bindLesson(
+                    context,
+                    views,
+                    content,
+                    BLANK_LESSON,
+                    2,
+                    textColors,
+                    slots.timeLayout(),
+                    accentBinder);
         } else {
             views.setViewVisibility(R.id.course_2_card, View.GONE);
         }
@@ -121,22 +198,39 @@ final class CourseWidgetRemoteViews {
             CourseWidgetContent.Snapshot content,
             CourseWidgetContent.Lesson lesson,
             int slot,
+            LessonTextColors textColors,
+            LessonTimeLayout timeLayout,
             AccentBinder accentBinder) {
         int cardViewId = slot == 1 ? R.id.course_1_card : R.id.course_2_card;
         int nameViewId = slot == 1 ? R.id.course_1_name : R.id.course_2_name;
         int placeViewId = slot == 1 ? R.id.course_1_place : R.id.course_2_place;
-        int startTimeViewId = slot == 1 ? R.id.course_1_start_time : R.id.course_2_start_time;
-        int endTimeViewId = slot == 1 ? R.id.course_1_end_time : R.id.course_2_end_time;
 
         views.setTextViewText(nameViewId, lesson.name());
         views.setTextViewText(placeViewId, lesson.place());
-        views.setTextViewText(startTimeViewId, lesson.startTime());
-        views.setTextViewText(endTimeViewId, lesson.endTime());
-        views.setTextColor(nameViewId, content.primaryTextColor());
-        views.setTextColor(placeViewId, content.secondaryTextColor());
-        views.setTextColor(startTimeViewId, content.secondaryTextColor());
-        views.setTextColor(endTimeViewId, content.secondaryTextColor());
+        views.setTextColor(nameViewId, textColors.primary());
+        views.setTextColor(placeViewId, textColors.secondary());
+        bindLessonTime(views, lesson, slot, textColors, timeLayout);
         views.setViewVisibility(cardViewId, View.VISIBLE);
         accentBinder.bind(context, views, slot, lesson.accentColor());
+    }
+
+    private static void bindLessonTime(
+            RemoteViews views,
+            CourseWidgetContent.Lesson lesson,
+            int slot,
+            LessonTextColors textColors,
+            LessonTimeLayout timeLayout) {
+        int startTimeViewId = slot == 1 ? R.id.course_1_start_time : R.id.course_2_start_time;
+        views.setTextColor(startTimeViewId, textColors.secondary());
+
+        if (timeLayout == LessonTimeLayout.RANGE) {
+            views.setTextViewText(startTimeViewId, lesson.startTime() + "-" + lesson.endTime());
+            return;
+        }
+
+        int endTimeViewId = slot == 1 ? R.id.course_1_end_time : R.id.course_2_end_time;
+        views.setTextViewText(startTimeViewId, lesson.startTime());
+        views.setTextViewText(endTimeViewId, lesson.endTime());
+        views.setTextColor(endTimeViewId, textColors.secondary());
     }
 }
