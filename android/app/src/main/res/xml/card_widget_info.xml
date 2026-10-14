@@ -1,9 +1,12 @@
 <!-- Best-effort refresh floor for devices without the exact alarm permission. Android clamps
      the interval to 30 minutes. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:minWidth="250dp"
     android:minHeight="110dp"
+    android:previewLayout="@layout/card_widget_preview"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/card_widget_layout"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    tools:ignore="UnusedAttribute" />

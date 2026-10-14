@@ -4,4 +4,9 @@
     <color name="course_widget_background">#F8FAFF</color>
     <color name="course_widget_content_text">#1F1F1F</color>
     <color name="course_widget_footer_text">#72809A</color>
+
+    <!-- Fixed course colours for the picker previews, so the sample cards read the same in both modes. -->
+    <color name="course_widget_preview_accent_1">#D9E8FF</color>
+    <color name="course_widget_preview_accent_2">#D8F3E7</color>
+    <color name="course_widget_preview_on_accent">#1F1F1F</color>
 </resources>
