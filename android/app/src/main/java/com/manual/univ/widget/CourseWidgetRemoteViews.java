@@ -171,12 +171,26 @@ final class CourseWidgetRemoteViews {
         views.setTextColor(R.id.widget_footer, palette.secondaryTextColor());
     }
 
-    static void bindHeader(
-            Context context, RemoteViews views, CourseWidgetContent.Snapshot content) {
+    static void bindHeader(RemoteViews views, CourseWidgetContent.Snapshot content) {
         views.setTextViewText(R.id.widget_schedule_name, content.scheduleName());
         views.setTextViewText(R.id.widget_date, content.dateLabel());
         views.setTextViewText(R.id.widget_week, content.weekLabel());
-        views.setTextViewText(R.id.widget_footer, context.getString(R.string.course_widget_title));
+    }
+
+    // Counts the lessons still to come
+    static void bindFooter(
+            Context context,
+            RemoteViews views,
+            CourseWidgetContent.Snapshot content,
+            boolean showsFooter) {
+        int remaining = content.lessons().size();
+        boolean visible = showsFooter && remaining > 0;
+        views.setViewVisibility(R.id.widget_footer, visible ? View.VISIBLE : View.GONE);
+        if (visible) {
+            views.setTextViewText(
+                    R.id.widget_footer,
+                    context.getString(R.string.course_widget_remaining, remaining));
+        }
     }
 
     static void bindLessons(

@@ -208,7 +208,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:gravity="center"
-        android:text="@string/course_widget_title"
+        android:text="@string/course_widget_remaining_sample"
         android:textColor="@color/course_widget_footer_text"
-        android:textSize="11sp" />
+        android:textSize="14sp" />
 </RelativeLayout>

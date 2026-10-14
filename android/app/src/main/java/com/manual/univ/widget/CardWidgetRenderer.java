@@ -62,7 +62,8 @@ final class CardWidgetRenderer {
                     context, views, appWidgetId, CLICKABLE_VIEW_IDS);
             CourseWidgetRemoteViews.bindTextColors(views, palette);
             views.setInt(R.id.widget_root, "setBackgroundColor", palette.backgroundColor());
-            CourseWidgetRemoteViews.bindHeader(context, views, content);
+            CourseWidgetRemoteViews.bindHeader(views, content);
+            CourseWidgetRemoteViews.bindFooter(context, views, content, true);
             CourseWidgetRemoteViews.bindLessons(
                     context,
                     views,

@@ -68,7 +68,8 @@ final class CompactCardWidgetRenderer {
                     R.id.widget_content,
                     "setBackgroundTintList",
                     ColorStateList.valueOf(palette.backgroundColor()));
-            CourseWidgetRemoteViews.bindHeader(context, views, content);
+            CourseWidgetRemoteViews.bindHeader(views, content);
+            CourseWidgetRemoteViews.bindFooter(context, views, content, false);
             CourseWidgetRemoteViews.bindLessons(
                     context,
                     views,
