@@ -1,7 +1,9 @@
 <!-- Two cell widget, updatePeriodMillis is the refresh floor without the exact alarm permission. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="110dp"
-    android:minHeight="110dp"
+    android:minWidth="@dimen/course_widget_min_side"
+    android:minHeight="@dimen/course_widget_min_side"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/compact_bar_widget_layout"
     android:resizeMode="horizontal|vertical"

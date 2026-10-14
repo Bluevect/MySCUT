@@ -9,16 +9,20 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.SizeF;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import androidx.annotation.RequiresApi;
+import androidx.core.os.BundleCompat;
+
 import com.manual.univ.R;
 
-import org.json.JSONObject;
-
+import java.util.ArrayList;
 import java.util.List;
 
 // Binding helpers shared by every course widget layout, which uses the same view ids.
@@ -62,11 +66,18 @@ final class CourseWidgetRemoteViews {
         return content.getMeasuredHeight();
     }
 
-    // Widget size in dp the launcher reports for the current orientation.
     static WidgetSize resolveWidgetSize(Context context, Bundle options) {
-        boolean landscape =
-                context.getResources().getConfiguration().orientation
-                        == Configuration.ORIENTATION_LANDSCAPE;
+        // Use Android 12+ API first
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SizeF current = pickCurrentSize(readWidgetSizes(options), isLandscape(context));
+            if (current != null) {
+                return new WidgetSize(
+                        Math.round(current.getWidth()), Math.round(current.getHeight()));
+            }
+        }
+
+        // Fallback to bounds
+        boolean landscape = isLandscape(context);
         return new WidgetSize(
                 options.getInt(
                         landscape
@@ -76,6 +87,44 @@ final class CourseWidgetRemoteViews {
                         landscape
                                 ? AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
                                 : AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    private static List<SizeF> readWidgetSizes(Bundle options) {
+        return BundleCompat.getParcelableArrayList(
+                options,
+                AppWidgetManager.OPTION_APPWIDGET_SIZES,
+                SizeF.class
+        );
+    }
+
+    private static SizeF pickCurrentSize(List<SizeF> sizes, boolean landscape) {
+        if (sizes == null || sizes.isEmpty()) {
+            return null;
+        }
+
+        SizeF fallback = null;
+
+        for (SizeF size : sizes) {
+            if (size == null || size.getWidth() <= 0 || size.getHeight() <= 0) {
+                continue;
+            }
+
+            if (fallback == null) {
+                fallback = size;
+            }
+
+            if ((size.getWidth() > size.getHeight()) == landscape) {
+                return size;
+            }
+        }
+
+        return fallback;
+    }
+
+    private static boolean isLandscape(Context context) {
+        return context.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     // Rounded accent bitmap. Keep a non zero size, and a height below the course text.

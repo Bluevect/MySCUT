@@ -2,4 +2,7 @@
 <resources>
     <!-- Smallest gap between the header columns, the real gap grows when the schedule name is short. -->
     <dimen name="course_widget_header_gap">24dp</dimen>
+
+    <!-- Two grid cells, the value older Android uses when targetCell is unavailable. -->
+    <dimen name="course_widget_min_side">110dp</dimen>
 </resources>

@@ -83,9 +83,12 @@ final class CompactCardWidgetRenderer {
         }
     }
 
-    // Pins the block to a square of the reported size, skipped when it would clip the courses.
+    // Pins the block to a square of the reported size
     private static void applySquareContent(
-            Context context, AppWidgetManager appWidgetManager, int appWidgetId, RemoteViews views) {
+            Context context,
+            AppWidgetManager appWidgetManager,
+            int appWidgetId,
+            RemoteViews views) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             return;
         }
@@ -93,13 +96,16 @@ final class CompactCardWidgetRenderer {
         CourseWidgetRemoteViews.WidgetSize size =
                 CourseWidgetRemoteViews.resolveWidgetSize(
                         context, appWidgetManager.getAppWidgetOptions(appWidgetId));
+
+        // Get minimum side
         int sideDp = Math.min(size.widthDp(), size.heightDp());
         if (sideDp <= 0) {
             return;
         }
 
-        int sidePx =
-                Math.round(sideDp * context.getResources().getDisplayMetrics().density);
+        int sidePx = Math.round(sideDp * context.getResources().getDisplayMetrics().density);
+
+        // Skip when it would clip the courses
         int contentHeightPx =
                 CourseWidgetRemoteViews.measureContentHeight(
                         context, R.layout.compact_card_widget_layout, sidePx);
