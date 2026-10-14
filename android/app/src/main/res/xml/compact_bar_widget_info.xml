@@ -5,6 +5,7 @@
     android:minHeight="@dimen/course_widget_min_side"
     android:targetCellWidth="2"
     android:targetCellHeight="2"
+    android:previewImage="@drawable/compact_bar_widget_preview_image"
     android:previewLayout="@layout/compact_bar_widget_preview"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/compact_bar_widget_layout"
