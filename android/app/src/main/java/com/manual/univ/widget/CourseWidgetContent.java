@@ -11,6 +11,7 @@ import java.util.List;
 // Every course widget style renders this snapshot, so lesson picking and colors live here.
 final class CourseWidgetContent {
     private static final String DEFAULT_COURSE_NAME = "课程";
+    private static final String[] CAMPUS_PREFIXES = {"大学城校区 ", "五山校区 ", "广州国际校区 "};
     private static final String[] WEEKDAY_LABELS = {"日", "一", "二", "三", "四", "五", "六"};
     private static final int DEFAULT_PRIMARY_TEXT_COLOR = Color.rgb(31, 42, 60);
     private static final int DEFAULT_SECONDARY_TEXT_COLOR = Color.rgb(58, 94, 124);
@@ -104,7 +105,22 @@ final class CourseWidgetContent {
                         course == null ? "" : course.optString("color", ""), fallbackColor);
 
         return new Lesson(
-                name, lesson.optString("room", ""), timeParts[0], timeParts[1], accentColor);
+                name,
+                simplifyRoom(lesson.optString("room", "")),
+                timeParts[0],
+                timeParts[1],
+                accentColor);
+    }
+
+    private static String simplifyRoom(String room) {
+        String trimmedRoom = room.trim();
+        for (String prefix : CAMPUS_PREFIXES) {
+            if (trimmedRoom.startsWith(prefix)) {
+                return trimmedRoom.substring(prefix.length()).trim();
+            }
+        }
+
+        return trimmedRoom;
     }
 
     private static long toAbsoluteMillis(Calendar now, String time) {
