@@ -21,6 +21,7 @@ final class CourseWidgetContent {
     record Snapshot(
             String scheduleName,
             String dateLabel,
+            String shortDateLabel,
             String weekLabel,
             List<Lesson> lessons,
             boolean hasLessonsToday,
@@ -71,6 +72,7 @@ final class CourseWidgetContent {
         return new Snapshot(
                 CourseWidgetCourseManager.getScheduleName(schedule),
                 formatDateLabel(now, dayOfWeek),
+                formatShortDateLabel(now, dayOfWeek),
                 "第" + currentWeek + "周",
                 visibleLessons,
                 !todayLessons.isEmpty(),
@@ -157,6 +159,15 @@ final class CourseWidgetContent {
                 + "月"
                 + now.get(Calendar.DAY_OF_MONTH)
                 + "日 星期"
+                + WEEKDAY_LABELS[dayOfWeek - 1];
+    }
+
+    // The two cell header has no room for the month and day characters.
+    private static String formatShortDateLabel(Calendar now, int dayOfWeek) {
+        return (now.get(Calendar.MONTH) + 1)
+                + "."
+                + now.get(Calendar.DAY_OF_MONTH)
+                + " 星期"
                 + WEEKDAY_LABELS[dayOfWeek - 1];
     }
 

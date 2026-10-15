@@ -182,10 +182,11 @@ final class CourseWidgetRemoteViews {
         }
     }
 
-    static void bindHeader(RemoteViews views, CourseWidgetContent.Snapshot content) {
+    static void bindHeader(
+            RemoteViews views, CourseWidgetContent.Snapshot content, String dateLabel) {
         views.setViewVisibility(R.id.widget_header, View.VISIBLE);
         views.setTextViewText(R.id.widget_schedule_name, content.scheduleName());
-        views.setTextViewText(R.id.widget_date, content.dateLabel());
+        views.setTextViewText(R.id.widget_date, dateLabel);
         views.setTextViewText(R.id.widget_week, content.weekLabel());
     }
 
