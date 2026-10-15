@@ -30,7 +30,7 @@
                 android:ellipsize="end"
                 android:gravity="start"
                 android:maxLines="1"
-                android:text="@string/course_widget_preview_date"
+                android:text="@string/course_widget_preview_short_date"
                 android:textColor="@color/course_widget_content_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />

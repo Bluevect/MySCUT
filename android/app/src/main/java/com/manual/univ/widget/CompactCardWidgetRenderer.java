@@ -63,7 +63,7 @@ final class CompactCardWidgetRenderer {
                     context, views, appWidgetId, CLICKABLE_VIEW_IDS);
             CourseWidgetRemoteViews.bindTextColors(views, palette);
             CourseWidgetRemoteViews.bindCompactSurface(views, palette);
-            CourseWidgetRemoteViews.bindHeader(views, content);
+            CourseWidgetRemoteViews.bindHeader(views, content, content.shortDateLabel());
             CourseWidgetRemoteViews.bindFooter(context, views, content, false);
             CourseWidgetRemoteViews.bindLessons(
                     context,

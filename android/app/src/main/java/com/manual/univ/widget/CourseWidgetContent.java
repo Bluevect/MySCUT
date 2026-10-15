@@ -11,6 +11,7 @@ import java.util.List;
 // Every course widget style renders this snapshot, so lesson picking and colors live here.
 final class CourseWidgetContent {
     private static final String DEFAULT_COURSE_NAME = "课程";
+    private static final String[] CAMPUS_PREFIXES = {"大学城校区 ", "五山校区 ", "广州国际校区 "};
     private static final String[] WEEKDAY_LABELS = {"日", "一", "二", "三", "四", "五", "六"};
     private static final int DEFAULT_PRIMARY_TEXT_COLOR = Color.rgb(31, 42, 60);
     private static final int DEFAULT_SECONDARY_TEXT_COLOR = Color.rgb(58, 94, 124);
@@ -20,10 +21,12 @@ final class CourseWidgetContent {
     record Snapshot(
             String scheduleName,
             String dateLabel,
+            String shortDateLabel,
             String weekLabel,
             List<Lesson> lessons,
             boolean hasLessonsToday,
             boolean hasScheduleData,
+            boolean semesterNotStarted,
             int primaryTextColor,
             int secondaryTextColor,
             long nextRefreshAt) {}
@@ -42,8 +45,13 @@ final class CourseWidgetContent {
         int weekdayNumber = dayOfWeek == Calendar.SUNDAY ? 7 : dayOfWeek - 1;
         long timeOfDayMillis = getTimeOfDayMillis(now);
 
+        // Drop the lessons before the semester starts, so the widget shows only the status text.
+        boolean semesterNotStarted = !CourseWidgetCourseManager.hasSemesterStarted(schedule);
         List<JSONObject> todayLessons =
-                CourseWidgetCourseManager.getTodayLessons(scheduleData, weekdayNumber, currentWeek);
+                semesterNotStarted
+                        ? new ArrayList<>()
+                        : CourseWidgetCourseManager.getTodayLessons(
+                                scheduleData, weekdayNumber, currentWeek);
         List<Lesson> visibleLessons = new ArrayList<>();
         long nextLessonEndAt = Long.MAX_VALUE;
 
@@ -70,10 +78,12 @@ final class CourseWidgetContent {
         return new Snapshot(
                 CourseWidgetCourseManager.getScheduleName(schedule),
                 formatDateLabel(now, dayOfWeek),
+                formatShortDateLabel(now, dayOfWeek),
                 "第" + currentWeek + "周",
                 visibleLessons,
                 !todayLessons.isEmpty(),
                 scheduleData != null,
+                semesterNotStarted,
                 CourseWidgetColorUtils.readColor(
                         scheduleTheme, "textColorPrimary", DEFAULT_PRIMARY_TEXT_COLOR),
                 CourseWidgetColorUtils.readColor(
@@ -104,7 +114,22 @@ final class CourseWidgetContent {
                         course == null ? "" : course.optString("color", ""), fallbackColor);
 
         return new Lesson(
-                name, lesson.optString("room", ""), timeParts[0], timeParts[1], accentColor);
+                name,
+                simplifyRoom(lesson.optString("room", "")),
+                timeParts[0],
+                timeParts[1],
+                accentColor);
+    }
+
+    private static String simplifyRoom(String room) {
+        String trimmedRoom = room.trim();
+        for (String prefix : CAMPUS_PREFIXES) {
+            if (trimmedRoom.startsWith(prefix)) {
+                return trimmedRoom.substring(prefix.length()).trim();
+            }
+        }
+
+        return trimmedRoom;
     }
 
     private static long toAbsoluteMillis(Calendar now, String time) {
@@ -141,6 +166,15 @@ final class CourseWidgetContent {
                 + "月"
                 + now.get(Calendar.DAY_OF_MONTH)
                 + "日 星期"
+                + WEEKDAY_LABELS[dayOfWeek - 1];
+    }
+
+    // The two cell header has no room for the month and day characters.
+    private static String formatShortDateLabel(Calendar now, int dayOfWeek) {
+        return (now.get(Calendar.MONTH) + 1)
+                + "."
+                + now.get(Calendar.DAY_OF_MONTH)
+                + " 星期"
                 + WEEKDAY_LABELS[dayOfWeek - 1];
     }
 

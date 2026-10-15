@@ -13,10 +13,12 @@
     <string name="course_widget_day_finished">今日课程已结束</string>
     <string name="course_widget_no_lessons">今日无课</string>
     <string name="course_widget_no_data">数据未加载，请先打开应用进行初始化</string>
+    <string name="course_widget_semester_not_started">学期未开始</string>
 
     <!-- Sample data for the widget picker previews. -->
     <string name="course_widget_preview_schedule_name">课表</string>
     <string name="course_widget_preview_date">9月1日 星期一</string>
+    <string name="course_widget_preview_short_date">9.1 星期一</string>
     <string name="course_widget_preview_week">第1周</string>
     <string name="course_widget_preview_course_1_name">高等数学</string>
     <string name="course_widget_preview_course_1_place">A4201</string>

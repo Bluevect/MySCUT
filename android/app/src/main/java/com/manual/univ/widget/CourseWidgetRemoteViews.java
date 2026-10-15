@@ -182,10 +182,11 @@ final class CourseWidgetRemoteViews {
         }
     }
 
-    static void bindHeader(RemoteViews views, CourseWidgetContent.Snapshot content) {
+    static void bindHeader(
+            RemoteViews views, CourseWidgetContent.Snapshot content, String dateLabel) {
         views.setViewVisibility(R.id.widget_header, View.VISIBLE);
         views.setTextViewText(R.id.widget_schedule_name, content.scheduleName());
-        views.setTextViewText(R.id.widget_date, content.dateLabel());
+        views.setTextViewText(R.id.widget_date, dateLabel);
         views.setTextViewText(R.id.widget_week, content.weekLabel());
     }
 
@@ -225,6 +226,18 @@ final class CourseWidgetRemoteViews {
             views.setViewVisibility(R.id.widget_status, View.VISIBLE);
             views.setTextViewText(
                     R.id.widget_status, context.getString(R.string.course_widget_no_data));
+            return;
+        }
+
+        if (content.semesterNotStarted()) {
+            views.setViewVisibility(R.id.course_1_card, View.GONE);
+            if (slots.count() > 1) {
+                views.setViewVisibility(R.id.course_2_card, View.GONE);
+            }
+            views.setViewVisibility(R.id.widget_status, View.VISIBLE);
+            views.setTextViewText(
+                    R.id.widget_status,
+                    context.getString(R.string.course_widget_semester_not_started));
             return;
         }
 
