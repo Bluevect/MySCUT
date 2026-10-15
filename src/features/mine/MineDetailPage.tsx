@@ -135,7 +135,8 @@ function MineDetailPage({ title }: MineDetailPageProps) {
 
   const startClosingTransition = useCallback(() => {
     if (isClosingRef.current) {
-      return false
+      // Keep consuming back while the existing close animation owns navigation.
+      return true
     }
 
     isClosingRef.current = true

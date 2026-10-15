@@ -9,7 +9,8 @@ import {
 } from '../../core/manual/manualSourceStorage'
 import { useLocation, useNavigationType } from 'react-router-dom'
 import { registerHardwareBackButtonHandler } from '../../platform/capacitor/useHardwareBackButton'
-import { createIframeHistory, type IframeHistory } from '../../platform/web/iframeHistory'
+import { createManualHistory } from '../../platform/capacitor/manualHistory'
+import type { IframeHistory } from '../../platform/web/iframeHistory'
 
 const REMOTE_LOAD_TIMEOUT_MS = 10000
 
@@ -27,7 +28,7 @@ function ManualPage() {
   const expectFrameDocumentRef = useRef(true)
 
   if (iframeHistoryRef.current === null) {
-    iframeHistoryRef.current = createIframeHistory()
+    iframeHistoryRef.current = createManualHistory()
   }
 
   useEffect(() => {
@@ -54,8 +55,21 @@ function ManualPage() {
     }
 
     // Back walks the manual first and only then leaves the tab
-    return registerHardwareBackButtonHandler(() => iframeHistoryRef.current?.goBack() ?? false)
-  }, [isActive])
+    let active = true
+    const unregister = registerHardwareBackButtonHandler(async () => {
+      try {
+        return (await iframeHistoryRef.current?.goBack(() => active)) ?? false
+      } catch (error) {
+        console.error('Failed to navigate back in the manual:', error)
+        messageApi.warning('手册返回失败，请重试')
+        return true
+      }
+    })
+    return () => {
+      active = false
+      unregister()
+    }
+  }, [isActive, location.key, messageApi])
 
   const clearRemoteTimer = () => {
     if (remoteFallbackTimerRef.current === null) {
@@ -116,7 +130,7 @@ function ManualPage() {
   return (
     <section
       className="manual-page"
-      style={{ display: isActive || getReloadManualEnabledStartup() ? 'unset' : 'none' }}
+      style={{ display: isActive || getReloadManualEnabledStartup() ? undefined : 'none' }}
     >
       {contextHolder}
       <iframe
