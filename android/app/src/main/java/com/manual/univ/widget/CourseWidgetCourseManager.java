@@ -34,13 +34,24 @@ final class CourseWidgetCourseManager {
     }
 
     static int getCurrentWeek(JSONObject schedule) {
-        if (schedule == null) {
-            return 1;
-        }
+        Integer differenceDays = getStartDayDifference(schedule);
+        return differenceDays == null
+                ? 1
+                : Math.max(1, (int) Math.floorDiv(differenceDays, 7L) + 1);
+    }
 
+    static boolean hasSemesterStarted(JSONObject schedule) {
+        Integer differenceDays = getStartDayDifference(schedule);
+        return differenceDays != null && differenceDays >= 0;
+    }
+
+    // Calendar days from the semester start to today
+    // Returns null when the start date is unusable
+    private static Integer getStartDayDifference(JSONObject schedule) {
         JSONObject scheduleData = getScheduleData(schedule);
         JSONObject table = scheduleData == null ? null : scheduleData.optJSONObject("table");
-        String startDateText = schedule.optString("semesterStartDate", "");
+
+        String startDateText = schedule == null ? "" : schedule.optString("semesterStartDate", "");
         if (startDateText.isEmpty() && table != null) {
             startDateText = table.optString("startDate", "");
         }
@@ -48,10 +59,11 @@ final class CourseWidgetCourseManager {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
         formatter.setLenient(false);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         try {
             Date semesterStart = formatter.parse(startDateText);
             if (semesterStart == null) {
-                return 1;
+                return null;
             }
 
             Calendar localToday = Calendar.getInstance();
@@ -61,12 +73,11 @@ final class CourseWidgetCourseManager {
                     localToday.get(Calendar.YEAR),
                     localToday.get(Calendar.MONTH),
                     localToday.get(Calendar.DAY_OF_MONTH));
-            long differenceDays =
+            return (int)
                     Math.floorDiv(
                             utcToday.getTimeInMillis() - semesterStart.getTime(), DAY_IN_MILLIS);
-            return Math.max(1, (int) Math.floorDiv(differenceDays, 7L) + 1);
         } catch (ParseException error) {
-            return 1;
+            return null;
         }
     }
 

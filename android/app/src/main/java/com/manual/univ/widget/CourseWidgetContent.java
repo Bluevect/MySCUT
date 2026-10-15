@@ -26,6 +26,7 @@ final class CourseWidgetContent {
             List<Lesson> lessons,
             boolean hasLessonsToday,
             boolean hasScheduleData,
+            boolean semesterNotStarted,
             int primaryTextColor,
             int secondaryTextColor,
             long nextRefreshAt) {}
@@ -44,8 +45,13 @@ final class CourseWidgetContent {
         int weekdayNumber = dayOfWeek == Calendar.SUNDAY ? 7 : dayOfWeek - 1;
         long timeOfDayMillis = getTimeOfDayMillis(now);
 
+        // Drop the lessons before the semester starts, so the widget shows only the status text.
+        boolean semesterNotStarted = !CourseWidgetCourseManager.hasSemesterStarted(schedule);
         List<JSONObject> todayLessons =
-                CourseWidgetCourseManager.getTodayLessons(scheduleData, weekdayNumber, currentWeek);
+                semesterNotStarted
+                        ? new ArrayList<>()
+                        : CourseWidgetCourseManager.getTodayLessons(
+                                scheduleData, weekdayNumber, currentWeek);
         List<Lesson> visibleLessons = new ArrayList<>();
         long nextLessonEndAt = Long.MAX_VALUE;
 
@@ -77,6 +83,7 @@ final class CourseWidgetContent {
                 visibleLessons,
                 !todayLessons.isEmpty(),
                 scheduleData != null,
+                semesterNotStarted,
                 CourseWidgetColorUtils.readColor(
                         scheduleTheme, "textColorPrimary", DEFAULT_PRIMARY_TEXT_COLOR),
                 CourseWidgetColorUtils.readColor(
