@@ -25,7 +25,8 @@
       .app-bootstrap-shell {
         box-sizing: border-box;
         height: 100%;
-        padding: calc(32px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));
+        padding: calc(32px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 24px
+          calc(32px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
         display: grid;
         place-items: center;
         color: #182338;

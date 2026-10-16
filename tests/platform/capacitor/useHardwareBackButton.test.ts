@@ -187,6 +187,39 @@ describe('useHardwareBackButton', () => {
     }
   })
 
+  it('requires a fresh exit confirmation after leaving and returning to courses', async () => {
+    const onExitHint = vi.fn()
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000)
+    const container = await renderApp('/courses', vi.fn(), onExitHint)
+
+    await pressBackButton()
+    await act(async () => {
+      navigateControllerRef.current?.('/mine')
+    })
+    await pressBackButton()
+    expect(readPath(container)).toBe('/courses')
+
+    await pressBackButton()
+    expect(onExitHint).toHaveBeenCalledTimes(2)
+    expect(capacitorMocks.exitApp).not.toHaveBeenCalled()
+  })
+
+  it('requires a fresh exit confirmation after dismissing an overlay at the root', async () => {
+    const onExitHint = vi.fn()
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000)
+    await renderApp('/courses', vi.fn(), onExitHint)
+
+    await pressBackButton()
+    await act(async () => {
+      overlayControllerRef.current?.setOpen(true)
+    })
+    await pressBackButton()
+    await pressBackButton()
+
+    expect(onExitHint).toHaveBeenCalledTimes(2)
+    expect(capacitorMocks.exitApp).not.toHaveBeenCalled()
+  })
+
   it('closes the open overlay instead of leaving the page', async () => {
     const onDismiss = vi.fn()
     const container = await renderApp('/mine/faq', onDismiss)
@@ -280,6 +313,60 @@ describe('useHardwareBackButton', () => {
     } finally {
       window.removeEventListener(ANIMATED_BACK_EVENT, handler)
     }
+  })
+
+  it('does not redirect a newly selected tab when an earlier page handler finishes', async () => {
+    const container = await renderApp('/manual')
+    let releaseHandler: (handled: boolean) => void = () => {}
+    const pendingHandler = new Promise<boolean>((resolve) => {
+      releaseHandler = resolve
+    })
+    cleanups.push(registerHardwareBackButtonHandler(() => pendingHandler))
+    const animateBack = vi.fn()
+    window.addEventListener(ANIMATED_BACK_EVENT, animateBack)
+
+    try {
+      const listener = capacitorMocks.backListeners.at(-1)!
+      let press: Promise<void> = Promise.resolve()
+      await act(async () => {
+        press = Promise.resolve(listener())
+      })
+      await act(async () => {
+        navigateControllerRef.current?.('/mine')
+      })
+      await act(async () => {
+        releaseHandler(false)
+        await press
+      })
+
+      expect(readPath(container)).toBe('/mine')
+      expect(animateBack).not.toHaveBeenCalled()
+    } finally {
+      window.removeEventListener(ANIMATED_BACK_EVENT, animateBack)
+    }
+  })
+
+  it('handles only one back press while an asynchronous page handler is pending', async () => {
+    const container = await renderApp('/mine/schedule-settings')
+    let releaseHandler: (handled: boolean) => void = () => {}
+    const pendingHandler = new Promise<boolean>((resolve) => {
+      releaseHandler = resolve
+    })
+    const handler = vi.fn(() => pendingHandler)
+    cleanups.push(registerHardwareBackButtonHandler(handler))
+    const listener = capacitorMocks.backListeners.at(-1)!
+    let presses: Promise<void[]> = Promise.resolve([])
+
+    await act(async () => {
+      presses = Promise.all([listener(), listener()])
+    })
+    await act(async () => {
+      releaseHandler(false)
+      await presses
+    })
+
+    expect(handler).toHaveBeenCalledOnce()
+    expect(readPath(container)).toBe('/mine')
   })
 
   it('does not listen on non native platforms', async () => {

@@ -44,56 +44,74 @@ async function requestRegisteredHandlers() {
 export function useHardwareBackButton({ onExitHint }: HardwareBackButtonOptions) {
   const navigate = useNavigate()
   const location = useLocation()
-  const pathnameRef = useRef(location.pathname)
+  const locationRef = useRef(location)
+  const pendingBackRef = useRef<typeof location | null>(null)
   const onExitHintRef = useRef(onExitHint)
-  const lastExitHintAtRef = useRef(0)
+  const lastExitHintAtRef = useRef<number | null>(null)
 
   useEffect(() => {
     onExitHintRef.current = onExitHint
   })
 
   useEffect(() => {
-    pathnameRef.current = location.pathname
-  }, [location.pathname])
+    locationRef.current = location
+    lastExitHintAtRef.current = null
+  }, [location])
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
       return
     }
 
+    let disposed = false
     const listenerPromise = CapacitorApp.addListener('backButton', async () => {
-      const pathname = pathnameRef.current
-
-      // Order: dismiss overlays, let the page handle it, then walk the app hierarchy
-      if (dismissTopBackOverlay()) {
+      const pressedLocation = locationRef.current
+      if (disposed || pendingBackRef.current === pressedLocation) {
         return
       }
+      pendingBackRef.current = pressedLocation
 
-      if (await requestRegisteredHandlers()) {
-        return
-      }
-
-      if (requestAnimatedBack()) {
-        return
-      }
-
-      if (isAppRootPath(pathname)) {
-        const now = Date.now()
-        if (now - lastExitHintAtRef.current < EXIT_HINT_WINDOW_MS) {
-          await CapacitorApp.exitApp()
+      try {
+        // Only consecutive, unhandled root presses confirm an exit.
+        if (dismissTopBackOverlay()) {
+          lastExitHintAtRef.current = null
           return
         }
 
-        // First back at the root explains how to leave, pressing back again exits
-        lastExitHintAtRef.current = now
-        onExitHintRef.current()
-        return
-      }
+        const handledByPage = await requestRegisteredHandlers()
+        // An old page must not navigate or close the newly selected page.
+        if (disposed || locationRef.current !== pressedLocation) {
+          return
+        }
 
-      navigate(resolveBackPath(pathname), { replace: true })
+        if (handledByPage || requestAnimatedBack()) {
+          lastExitHintAtRef.current = null
+          return
+        }
+
+        if (isAppRootPath(pressedLocation.pathname)) {
+          const now = Date.now()
+          const lastExitHintAt = lastExitHintAtRef.current
+          if (lastExitHintAt !== null && now - lastExitHintAt < EXIT_HINT_WINDOW_MS) {
+            await CapacitorApp.exitApp()
+            return
+          }
+
+          lastExitHintAtRef.current = now
+          onExitHintRef.current()
+          return
+        }
+
+        navigate(resolveBackPath(pressedLocation.pathname), { replace: true })
+      } finally {
+        if (pendingBackRef.current === pressedLocation) {
+          pendingBackRef.current = null
+        }
+      }
     })
 
     return () => {
+      disposed = true
       listenerPromise.then((listener) => listener.remove()).catch(() => undefined)
     }
   }, [navigate])
