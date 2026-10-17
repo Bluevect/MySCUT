@@ -9,14 +9,17 @@
 | 类 | 职责 |
 | --- | --- |
 | `CourseWidgetPlugin` | 暴露 Capacitor `CourseWidget` 插件方法，接收课表和外观同步请求 |
-| `CourseWidgetProvider` | 接收 Android AppWidget 生命周期及日期、时间、时区和配置变化广播；处理课程结束时的定时刷新 |
+| `BarWidgetProvider` / `CardWidgetProvider` / `CompactBarWidgetProvider` / `CompactCardWidgetProvider` | 接收 AppWidget 生命周期及日期、时间、时区、配置和精确闹钟权限变化广播，分发对应样式的刷新 |
 | `CourseWidgetStore` | 将课表、课表主题和外观 JSON 保存在 Android `SharedPreferences` |
-| `CourseWidgetRenderer` | 从本地数据组装 `RemoteViews` 并更新已放置的小组件 |
+| `BarWidgetRenderer` / `CardWidgetRenderer` / `CompactBarWidgetRenderer` / `CompactCardWidgetRenderer` | 从本地数据组装四种样式的 `RemoteViews` 并更新已放置的小组件 |
+| `CourseWidgetRemoteViews` | 绑定共用标题、状态、点击事件和可滚动列表，并按系统版本选择列表数据通道 |
+| `CourseWidgetRefresh` | 统一安排 `RTC_WAKEUP` 刷新闹钟、查询精确闹钟权限并处理权限变化 |
+| `CourseWidgetRemoteViewsService` / `CourseWidgetListFactory` | 为 Android 8–11 的组件提供 service-backed 可滚动课程列表 |
 | `CourseWidgetCourseManager` | 选择当天课程、读取课程信息和颜色，并填充课程卡片 |
 | `CourseWidgetTimeResolver` | 按时间表预设解析课程起止时间，并判断课程是否已结束 |
 | `CourseWidgetAppearance` / `CourseWidgetColorUtils` | 解析小组件浅色、深色及用户指定的调色板 |
 
-`MainActivity` 只注册 `CourseWidgetPlugin`。Provider 的注册、初始布局和尺寸等声明位于 `AndroidManifest.xml` 与 `res/xml/course_widget_info.xml`。
+`MainActivity` 只注册 `CourseWidgetPlugin`。Provider、刷新广播和兼容服务位于 `AndroidManifest.xml`，各样式初始布局和尺寸位于 `res/xml/*_widget_info.xml`。
 
 ## 数据流
 
@@ -36,24 +39,40 @@
 - 其他预设（包括 `builtIn`）使用课表 `scheduleData.timeSlots`，优先匹配课表的 `timeTable`，没有匹配项时使用该节次的首个时间项；
 - 如果没有可用的时间表时间，则回退到课程自身的起止时间。
 
-当天课程先按星期、周次和单双周规则筛选，再按开始节次排序。小组件最多显示两节尚未结束的课程。课程时间精确到分钟：系统本地时间严格晚于当天的结束时刻才会隐藏该课程；在结束时刻的整分仍显示。
+当天课程先按星期、周次和单双周规则筛选，再按开始节次排序。小组件显示当天全部尚未结束的课程，课程区域可垂直滚动。课程时间精确到分钟：系统本地时间严格晚于当天的结束时刻才会隐藏该课程；在结束时刻的整分仍显示。
 
-- 今天没有排课：隐藏课程卡片和状态文案。
-- 今天有课且仍有未结束课程：显示最多两节未结束课程，不显示状态文案。
-- 今天有课但全部结束：隐藏课程卡片，显示“今日课程已结束”。
+- 今天没有排课：隐藏课程列表，在组件中央显示“今日无课”。
+- 今天有课且仍有未结束课程：显示可滚动课程列表；宽样式在启用剩余课程显示时，于底部显示剩余课程数。
+- 今天有课但全部结束：隐藏课程列表，在组件中央显示“今日课程已结束”。
+
+## 列表兼容机制
+
+四种样式共用 `CourseWidgetRemoteViews` 和 `CourseWidgetListFactory.createItemView()`，课程名称、地点、时间、颜色和点击行为保持一致。列表数据通道按系统版本切换：
+
+- Android 12（API 31）及以上：使用 `RemoteViews.RemoteCollectionItems` 构造完整列表，并调用 `setRemoteAdapter(viewId, items)`。每次刷新重新执行 `updateAppWidget()` 时，新的课程项会随 `RemoteViews` 一起下发，不依赖 `RemoteViewsService`，也不需要额外通知列表刷新。
+- Android 8–11（API 26–30）：使用 `CourseWidgetRemoteViewsService` 和 `CourseWidgetListFactory`。主布局通过 `setRemoteAdapter(viewId, Intent)` 连接服务，并在 `updateAppWidget()` 后调用 `notifyAppWidgetViewDataChanged()`，让系统重新读取列表。
+- 兼容服务在 Manifest 中以 `BIND_REMOTEVIEWS` 权限声明。`notifyAppWidgetViewDataChanged()` 在新版编译 SDK 中已标记弃用，但它是旧系统的必要刷新机制，因此只保留在 API < 31 分支。
 
 ## 刷新机制与限制
 
-小组件使用 Android `RemoteViews`，初始布局为 `res/layout/course_widget_layout.xml`。`updatePeriodMillis` 设为 `0`，不依赖 Android 的周期性更新：Android 对周期更新有最短间隔限制，且可能因省电策略延后执行，无法满足课程结束时更新的需求；课表和外观变化、系统日期或配置变化以及课程结束闹钟已经覆盖了所需刷新场景。关闭周期轮询可以避免内容未变化时反复重绘和耗电。
+四份 `res/xml/*_widget_info.xml` 均将 `updatePeriodMillis` 设为 `1800000`（30 分钟），作为系统周期更新的兜底。Android 对周期更新有最短间隔限制，并可能因省电策略延后执行，因此它只能提供最终刷新机会，不能保证课程结束时立即更新。
+
+课程结束刷新使用 `SCHEDULE_EXACT_ALARM` 和 `RTC_WAKEUP`：
+
+- `AndroidManifest.xml` 声明 `SCHEDULE_EXACT_ALARM`。Android 12 及以上在每次安排前通过 `AlarmManager.canScheduleExactAlarms()` 检查用户是否允许精确闹钟；Android 11 及以下不需要该权限。
+- 已授权时调用 `setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)`，按本地墙钟时间触发并允许在 Doze 期间唤醒。
+- 未授权，或检查后权限在调度前被撤销时，退回 `setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)`。该路径仍使用 `RTC_WAKEUP`，但属于非精确闹钟，系统可能延后广播。
+- 刷新目标为当天下一节尚未结束课程的结束时刻；当天没有后续课程时，安排在次日 `00:00:05`，目的是避开零点边界、确保进入新一天后再刷新日期、星期和新一天的课程。
+- `CourseWidgetPlugin.requestExactAlarmPermission()` 在 Android 12+ 打开系统的“闹钟和提醒”授权页；Provider 同时监听 `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED`，授权状态变化后会重新刷新并安排闹钟。
+- 如果目标时间已经过去，现有刷新闹钟会被取消。系统重启后 AlarmManager 任务不会保留，下一次由系统周期更新、应用同步或其他广播触发渲染时，会重新安排最近的刷新时间。
 
 刷新由以下事件触发：
 
 - Capacitor 插件同步课表或外观；
-- Android 创建或更新小组件；
+- Android 创建、更新或调整小组件；
 - 日期、系统时间、时区或系统配置变化；
-- Provider 用 `AlarmManager.setAndAllowWhileIdle()` 为当天下一节课的结束时间安排一次广播刷新。
-
-课程结束刷新使用非精确的 RTC 闹钟。Android 省电策略可能延迟广播，因此它不是准点提醒，也不保证在结束时间的精确瞬间刷新。系统重启后 AlarmManager 定时任务不会保留；小组件之后再次被系统或应用刷新时会重新安排下一次课程结束刷新。
+- 精确闹钟授权状态变化；
+- Provider 在当天下一节课结束时或次日零点后安排广播刷新。
 
 ## 原生测试
 
