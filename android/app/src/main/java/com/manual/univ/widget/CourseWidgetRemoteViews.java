@@ -323,7 +323,7 @@ final class CourseWidgetRemoteViews {
         views.setTextColor(startTimeViewId, textColors.secondary());
 
         if (timeLayout == LessonTimeLayout.RANGE) {
-            views.setTextViewText(startTimeViewId, lesson.startTime() + "-" + lesson.endTime());
+            views.setTextViewText(startTimeViewId, lesson.timeRangeLabel());
             return;
         }
 
