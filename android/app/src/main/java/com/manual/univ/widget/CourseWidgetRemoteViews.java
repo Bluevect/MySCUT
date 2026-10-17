@@ -5,16 +5,14 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.SizeF;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -27,105 +25,28 @@ import java.util.List;
 
 // Binding helpers shared by every course widget layout, which uses the same view ids.
 final class CourseWidgetRemoteViews {
-    // A style decides how its own accent view is painted.
-    interface AccentBinder {
-        void bind(Context context, RemoteViews views, int slot, int color);
-    }
+    private static final String LESSON_ADAPTER_URI_SCHEME = "myscut-widget";
+    private static final String LESSON_ADAPTER_URI_AUTHORITY = "lessons";
 
-    // Lesson time either uses a start and an end view, or one label on the start view.
-    enum LessonTimeLayout {
-        SPLIT,
-        RANGE
-    }
+    enum LessonStyle {
+        BAR,
+        CARD,
+        COMPACT_BAR,
+        COMPACT_CARD;
 
-    // How many course slots a layout holds, and whether empty slots stay blank instead of collapsing.
-    record LessonSlots(int count, LessonTimeLayout timeLayout, boolean keepsEmptySlots) {}
+        boolean isCard() {
+            return this == CARD || this == COMPACT_CARD;
+        }
+
+        boolean isCompact() {
+            return this == COMPACT_BAR || this == COMPACT_CARD;
+        }
+    }
 
     // Course text colors, from the schedule theme on cards and from the widget appearance on bars.
     record LessonTextColors(int primary, int secondary) {}
 
-    record WidgetSize(int widthDp, int heightDp) {}
-
-    // Clears a slot when a layout reserves space for a lesson that does not exist.
-    private static final CourseWidgetContent.Lesson BLANK_LESSON =
-            new CourseWidgetContent.Lesson("", "", "", "", Color.TRANSPARENT);
-
     private CourseWidgetRemoteViews() {}
-
-    // Height the content block needs at that width, measured instead of hard coded.
-    static int measureContentHeight(Context context, int layoutRes, int widthPx) {
-        View root = LayoutInflater.from(context).inflate(layoutRes, null);
-        View content = root.findViewById(R.id.widget_content);
-        if (content == null) {
-            return 0;
-        }
-
-        content.measure(
-                View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        return content.getMeasuredHeight();
-    }
-
-    static WidgetSize resolveWidgetSize(Context context, Bundle options) {
-        // Use Android 12+ API first
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            SizeF current = pickCurrentSize(readWidgetSizes(options), isLandscape(context));
-            if (current != null) {
-                return new WidgetSize(
-                        Math.round(current.getWidth()), Math.round(current.getHeight()));
-            }
-        }
-
-        // Fallback to bounds
-        boolean landscape = isLandscape(context);
-        return new WidgetSize(
-                options.getInt(
-                        landscape
-                                ? AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
-                                : AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
-                options.getInt(
-                        landscape
-                                ? AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
-                                : AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT));
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.S)
-    private static List<SizeF> readWidgetSizes(Bundle options) {
-        return BundleCompat.getParcelableArrayList(
-                options,
-                AppWidgetManager.OPTION_APPWIDGET_SIZES,
-                SizeF.class
-        );
-    }
-
-    private static SizeF pickCurrentSize(List<SizeF> sizes, boolean landscape) {
-        if (sizes == null || sizes.isEmpty()) {
-            return null;
-        }
-
-        SizeF fallback = null;
-
-        for (SizeF size : sizes) {
-            if (size == null || size.getWidth() <= 0 || size.getHeight() <= 0) {
-                continue;
-            }
-
-            if (fallback == null) {
-                fallback = size;
-            }
-
-            if ((size.getWidth() > size.getHeight()) == landscape) {
-                return size;
-            }
-        }
-
-        return fallback;
-    }
-
-    private static boolean isLandscape(Context context) {
-        return context.getResources().getConfiguration().orientation
-                == Configuration.ORIENTATION_LANDSCAPE;
-    }
 
     // Rounded accent bitmap. Keep a non-zero size, and a height below the course text.
     static Bitmap createRoundedBitmap(
@@ -144,22 +65,39 @@ final class CourseWidgetRemoteViews {
 
     static void bindClickTargets(
             Context context, RemoteViews views, int appWidgetId, int[] clickableViewIds) {
-        Intent launchIntent =
-                context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-        if (launchIntent == null) {
+        PendingIntent launchPendingIntent =
+                createLaunchPendingIntent(context, appWidgetId, false);
+        if (launchPendingIntent == null) {
             return;
         }
 
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent launchPendingIntent =
-                PendingIntent.getActivity(
-                        context,
-                        appWidgetId,
-                        launchIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         for (int viewId : clickableViewIds) {
             views.setOnClickPendingIntent(viewId, launchPendingIntent);
         }
+        PendingIntent listTemplate =
+                createLaunchPendingIntent(context, appWidgetId + 100_000, true);
+        if (listTemplate != null) {
+            views.setPendingIntentTemplate(R.id.course_widget_list, listTemplate);
+        }
+    }
+
+    private static PendingIntent createLaunchPendingIntent(
+            Context context, int requestCode, boolean mutable) {
+        Intent launchIntent =
+                context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        if (launchIntent == null) {
+            return null;
+        }
+
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int pendingIntentFlags =
+                PendingIntent.FLAG_UPDATE_CURRENT
+                        | (mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getActivity(
+                context,
+                requestCode,
+                launchIntent,
+                pendingIntentFlags);
     }
 
     // Applied on every update, because a re-applied RemoteViews is not re-inflated.
@@ -182,6 +120,88 @@ final class CourseWidgetRemoteViews {
         }
     }
 
+    // Keeps the compact variants inside their original centered square.
+    static void bindSquareContent(
+            Context context,
+            AppWidgetManager appWidgetManager,
+            int appWidgetId,
+            RemoteViews views) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return;
+        }
+
+        WidgetSize size =
+                resolveWidgetSize(
+                        context, appWidgetManager.getAppWidgetOptions(appWidgetId));
+        int sideDp = Math.min(size.widthDp(), size.heightDp());
+        if (sideDp <= 0) {
+            return;
+        }
+
+        views.setViewLayoutWidth(
+                R.id.widget_content,
+                sideDp,
+                android.util.TypedValue.COMPLEX_UNIT_DIP);
+        views.setViewLayoutHeight(
+                R.id.widget_content,
+                sideDp,
+                android.util.TypedValue.COMPLEX_UNIT_DIP);
+    }
+
+    private record WidgetSize(int widthDp, int heightDp) {}
+
+    private static WidgetSize resolveWidgetSize(Context context, Bundle options) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SizeF current = pickCurrentSize(readWidgetSizes(options), isLandscape(context));
+            if (current != null) {
+                return new WidgetSize(
+                        Math.round(current.getWidth()), Math.round(current.getHeight()));
+            }
+        }
+
+        boolean landscape = isLandscape(context);
+        return new WidgetSize(
+                options.getInt(
+                        landscape
+                                ? AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
+                                : AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                options.getInt(
+                        landscape
+                                ? AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
+                                : AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    private static List<SizeF> readWidgetSizes(Bundle options) {
+        return BundleCompat.getParcelableArrayList(
+                options, AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF.class);
+    }
+
+    private static SizeF pickCurrentSize(List<SizeF> sizes, boolean landscape) {
+        if (sizes == null || sizes.isEmpty()) {
+            return null;
+        }
+
+        SizeF fallback = null;
+        for (SizeF size : sizes) {
+            if (size == null || size.getWidth() <= 0 || size.getHeight() <= 0) {
+                continue;
+            }
+            if (fallback == null) {
+                fallback = size;
+            }
+            if ((size.getWidth() > size.getHeight()) == landscape) {
+                return size;
+            }
+        }
+        return fallback;
+    }
+
+    private static boolean isLandscape(Context context) {
+        return context.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    }
+
     static void bindHeader(
             RemoteViews views, CourseWidgetContent.Snapshot content, String dateLabel) {
         views.setViewVisibility(R.id.widget_header, View.VISIBLE);
@@ -190,8 +210,120 @@ final class CourseWidgetRemoteViews {
         views.setTextViewText(R.id.widget_week, content.weekLabel());
     }
 
-    // Counts the lessons still to come
-    static void bindFooter(
+    static void bindScrollableLessons(
+            Context context,
+            RemoteViews views,
+            int appWidgetId,
+            CourseWidgetContent.Snapshot content,
+            String dayFinishedText,
+            LessonStyle style,
+            CourseWidgetAppearance.Palette palette,
+            boolean showsFooter) {
+        List<CourseWidgetContent.Lesson> lessons = content.lessons();
+
+        // Nothing has been synced yet, so the widget explains itself instead of sitting blank.
+        if (!content.hasScheduleData()) {
+            views.setViewVisibility(R.id.widget_header, View.GONE);
+            hideLessonList(views);
+            showStatus(views, context.getString(R.string.course_widget_no_data));
+            return;
+        }
+
+        if (content.semesterNotStarted()) {
+            hideLessonList(views);
+            showStatus(
+                    views,
+                    context.getString(R.string.course_widget_semester_not_started));
+            return;
+        }
+
+        if (lessons.isEmpty()) {
+            hideLessonList(views);
+            showStatus(
+                    views,
+                    content.hasLessonsToday()
+                            ? dayFinishedText
+                            : context.getString(R.string.course_widget_no_lessons));
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            views.setRemoteAdapter(
+                    R.id.course_widget_list,
+                    buildCollectionItems(context, content, style, palette));
+        } else {
+            bindLegacyRemoteAdapter(context, views, appWidgetId, style);
+        }
+        views.setViewVisibility(R.id.course_widget_list, View.VISIBLE);
+        views.setViewVisibility(R.id.widget_status, View.GONE);
+        bindFooter(context, views, content, showsFooter);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    private static RemoteViews.RemoteCollectionItems buildCollectionItems(
+            Context context,
+            CourseWidgetContent.Snapshot content,
+            LessonStyle style,
+            CourseWidgetAppearance.Palette palette) {
+        LessonTextColors textColors =
+                CourseWidgetListFactory.resolveTextColors(style, content, palette);
+        RemoteViews.RemoteCollectionItems.Builder builder =
+                new RemoteViews.RemoteCollectionItems.Builder()
+                        .setHasStableIds(false)
+                        .setViewTypeCount(1);
+        List<CourseWidgetContent.Lesson> lessons = content.lessons();
+        for (int index = 0; index < lessons.size(); index++) {
+            builder.addItem(
+                    index,
+                    CourseWidgetListFactory.createItemView(
+                            context, style, lessons.get(index), textColors));
+        }
+        return builder.build();
+    }
+
+    // Android 8-11 has no RemoteCollectionItems API, so the service-backed overload is required.
+    @SuppressWarnings("deprecation")
+    private static void bindLegacyRemoteAdapter(
+            Context context,
+            RemoteViews views,
+            int appWidgetId,
+            LessonStyle style) {
+        Intent adapterIntent = new Intent(context, CourseWidgetRemoteViewsService.class);
+        adapterIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        adapterIntent.putExtra(
+                CourseWidgetRemoteViewsService.EXTRA_LESSON_STYLE, style.name());
+        adapterIntent.setData(
+                new Uri.Builder()
+                        .scheme(LESSON_ADAPTER_URI_SCHEME)
+                        .authority(LESSON_ADAPTER_URI_AUTHORITY)
+                        .appendPath(String.valueOf(appWidgetId))
+                        .appendPath(style.name())
+                        .build());
+        views.setRemoteAdapter(R.id.course_widget_list, adapterIntent);
+    }
+
+    // Pre-12 widgets still use the service-backed adapter and need this refresh signal.
+    @SuppressWarnings("deprecation")
+    static void notifyLessonListChanged(AppWidgetManager appWidgetManager, int appWidgetId) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            appWidgetManager.notifyAppWidgetViewDataChanged(
+                    appWidgetId, R.id.course_widget_list);
+        }
+    }
+
+    private static void hideLessonList(RemoteViews views) {
+        views.setViewVisibility(R.id.course_widget_list, View.GONE);
+        views.setViewVisibility(R.id.widget_footer, View.GONE);
+    }
+
+    private static void showStatus(RemoteViews views, String text) {
+        views.setViewVisibility(R.id.widget_status, View.VISIBLE);
+        views.setTextViewText(R.id.widget_status, text);
+        views.setViewVisibility(R.id.widget_footer, View.GONE);
+    }
+
+    // Counts the lessons still to come.
+    private static void bindFooter(
             Context context,
             RemoteViews views,
             CourseWidgetContent.Snapshot content,
@@ -204,132 +336,5 @@ final class CourseWidgetRemoteViews {
                     R.id.widget_footer,
                     context.getString(R.string.course_widget_remaining, remaining));
         }
-    }
-
-    static void bindLessons(
-            Context context,
-            RemoteViews views,
-            CourseWidgetContent.Snapshot content,
-            String dayFinishedText,
-            LessonTextColors textColors,
-            LessonSlots slots,
-            AccentBinder accentBinder) {
-        List<CourseWidgetContent.Lesson> lessons = content.lessons();
-
-        // Nothing has been synced yet, so the widget explains itself instead of sitting blank.
-        if (!content.hasScheduleData()) {
-            views.setViewVisibility(R.id.widget_header, View.GONE);
-            views.setViewVisibility(R.id.course_1_card, View.GONE);
-            if (slots.count() > 1) {
-                views.setViewVisibility(R.id.course_2_card, View.GONE);
-            }
-            views.setViewVisibility(R.id.widget_status, View.VISIBLE);
-            views.setTextViewText(
-                    R.id.widget_status, context.getString(R.string.course_widget_no_data));
-            return;
-        }
-
-        if (content.semesterNotStarted()) {
-            views.setViewVisibility(R.id.course_1_card, View.GONE);
-            if (slots.count() > 1) {
-                views.setViewVisibility(R.id.course_2_card, View.GONE);
-            }
-            views.setViewVisibility(R.id.widget_status, View.VISIBLE);
-            views.setTextViewText(
-                    R.id.widget_status,
-                    context.getString(R.string.course_widget_semester_not_started));
-            return;
-        }
-
-        if (lessons.isEmpty()) {
-            views.setViewVisibility(R.id.course_1_card, View.GONE);
-            if (slots.count() > 1) {
-                views.setViewVisibility(R.id.course_2_card, View.GONE);
-            }
-            views.setViewVisibility(R.id.widget_status, View.VISIBLE);
-            views.setTextViewText(
-                    R.id.widget_status,
-                    content.hasLessonsToday()
-                            ? dayFinishedText
-                            : context.getString(R.string.course_widget_no_lessons));
-            return;
-        }
-
-        views.setViewVisibility(R.id.widget_status, View.GONE);
-        bindLesson(
-                context,
-                views,
-                lessons.get(0),
-                1,
-                textColors,
-                slots.timeLayout(),
-                accentBinder);
-
-        if (slots.count() <= 1) {
-            return;
-        }
-
-        if (lessons.size() > 1) {
-            bindLesson(
-                    context,
-                    views,
-                    lessons.get(1),
-                    2,
-                    textColors,
-                    slots.timeLayout(),
-                    accentBinder);
-        } else if (slots.keepsEmptySlots()) {
-            bindLesson(
-                    context,
-                    views,
-                    BLANK_LESSON,
-                    2,
-                    textColors,
-                    slots.timeLayout(),
-                    accentBinder);
-        } else {
-            views.setViewVisibility(R.id.course_2_card, View.GONE);
-        }
-    }
-
-    private static void bindLesson(
-            Context context,
-            RemoteViews views,
-            CourseWidgetContent.Lesson lesson,
-            int slot,
-            LessonTextColors textColors,
-            LessonTimeLayout timeLayout,
-            AccentBinder accentBinder) {
-        int cardViewId = slot == 1 ? R.id.course_1_card : R.id.course_2_card;
-        int nameViewId = slot == 1 ? R.id.course_1_name : R.id.course_2_name;
-        int placeViewId = slot == 1 ? R.id.course_1_place : R.id.course_2_place;
-
-        views.setTextViewText(nameViewId, lesson.name());
-        views.setTextViewText(placeViewId, lesson.place());
-        views.setTextColor(nameViewId, textColors.primary());
-        views.setTextColor(placeViewId, textColors.secondary());
-        bindLessonTime(views, lesson, slot, textColors, timeLayout);
-        views.setViewVisibility(cardViewId, View.VISIBLE);
-        accentBinder.bind(context, views, slot, lesson.accentColor());
-    }
-
-    private static void bindLessonTime(
-            RemoteViews views,
-            CourseWidgetContent.Lesson lesson,
-            int slot,
-            LessonTextColors textColors,
-            LessonTimeLayout timeLayout) {
-        int startTimeViewId = slot == 1 ? R.id.course_1_start_time : R.id.course_2_start_time;
-        views.setTextColor(startTimeViewId, textColors.secondary());
-
-        if (timeLayout == LessonTimeLayout.RANGE) {
-            views.setTextViewText(startTimeViewId, lesson.timeRangeLabel());
-            return;
-        }
-
-        int endTimeViewId = slot == 1 ? R.id.course_1_end_time : R.id.course_2_end_time;
-        views.setTextViewText(startTimeViewId, lesson.startTime());
-        views.setTextViewText(endTimeViewId, lesson.endTime());
-        views.setTextColor(endTimeViewId, textColors.secondary());
     }
 }

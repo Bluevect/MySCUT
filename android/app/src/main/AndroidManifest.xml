@@ -74,6 +74,15 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <service
+            android:name=".widget.CourseWidgetRemoteViewsService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS">
+            <intent-filter>
+                <action android:name="android.widget.RemoteViewsService" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".widget.BarWidgetProvider"
             android:exported="false"
