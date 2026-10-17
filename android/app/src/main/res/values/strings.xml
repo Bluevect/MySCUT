@@ -24,10 +24,10 @@
     <string name="course_widget_preview_course_1_place">A4201</string>
     <string name="course_widget_preview_course_1_start">08:50</string>
     <string name="course_widget_preview_course_1_end">10:25</string>
-    <string name="course_widget_preview_course_1_range">08:50-10:25</string>
+    <string name="course_widget_preview_course_1_range">08:50–10:25</string>
     <string name="course_widget_preview_course_2_name">大学物理</string>
     <string name="course_widget_preview_course_2_place">A4202</string>
     <string name="course_widget_preview_course_2_start">10:40</string>
     <string name="course_widget_preview_course_2_end">12:15</string>
-    <string name="course_widget_preview_course_2_range">10:40-12:15</string>
+    <string name="course_widget_preview_course_2_range">10:40–12:15</string>
 </resources>

@@ -18,6 +18,6 @@ public class CourseWidgetContentTest {
         CourseWidgetContent.Lesson lesson =
                 new CourseWidgetContent.Lesson("Course", "Room", "08:50", "10:25", 0);
 
-        assertEquals("08:50-10:25", lesson.timeRangeLabel());
+        assertEquals("08:50–10:25", lesson.timeRangeLabel());
     }
 }

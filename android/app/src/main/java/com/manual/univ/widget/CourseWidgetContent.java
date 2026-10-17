@@ -24,7 +24,7 @@ final class CourseWidgetContent {
             if (endTime.isEmpty()) {
                 return startTime;
             }
-            return startTime + "-" + endTime;
+            return startTime + "–" + endTime;
         }
     }
 
