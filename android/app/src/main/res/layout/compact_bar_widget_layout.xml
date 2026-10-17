@@ -163,7 +163,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textColor="@color/course_widget_footer_text"
-        android:textSize="10sp"
+        android:textSize="11sp"
         android:visibility="gone" />
 
     <!-- Filled by the shared header helper, but a two cell widget has no room for it. -->
