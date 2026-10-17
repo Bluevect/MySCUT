@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!-- Permissions -->
     <!-- 以下权限声明由依赖库带入，本应用均不使用，合并时剔除：
          - CAMERA：来自 @capgo/capacitor-inappbrowser。本应用不需要相机，
            且声明 CAMERA 反而会导致系统相机 intent 需要运行时授权。
@@ -15,12 +20,24 @@
     <uses-permission
         android:name="android.permission.CAMERA"
         tools:node="remove" />
+
     <uses-permission
         android:name="android.permission.USE_BIOMETRIC"
         tools:node="remove" />
+
+    <!--suppress DeprecatedClassUsageInspection -->
     <uses-permission
         android:name="android.permission.USE_FINGERPRINT"
         tools:node="remove" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:ignore="RequestInstallPackagesPolicy" />
+
+    <!-- Keeps the course widget fresh after a lesson ends. Users grant this from the system
+         "Alarms & reminders" screen, and the plugin falls back to an inexact alarm without it. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
@@ -54,8 +71,17 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
+                android:resource="@xml/file_paths" />
         </provider>
+
+        <service
+            android:name=".widget.CourseWidgetRemoteViewsService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS">
+            <intent-filter>
+                <action android:name="android.widget.RemoteViewsService" />
+            </intent-filter>
+        </service>
 
         <receiver
             android:name=".widget.BarWidgetProvider"
@@ -125,12 +151,4 @@
                 android:resource="@xml/compact_card_widget_info" />
         </receiver>
     </application>
-
-    <!-- Permissions -->
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <!-- Keeps the course widget fresh after a lesson ends. Users grant this from the system
-         "Alarms & reminders" screen, and the plugin falls back to an inexact alarm without it. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 </manifest>

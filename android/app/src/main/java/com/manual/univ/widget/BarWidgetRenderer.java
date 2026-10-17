@@ -8,13 +8,6 @@ import com.manual.univ.R;
 
 // Bar style, every course shows a rounded color bar on its left instead of a filled card.
 final class BarWidgetRenderer {
-    private static final CourseWidgetRemoteViews.LessonSlots LESSON_SLOTS =
-            new CourseWidgetRemoteViews.LessonSlots(
-                    2, CourseWidgetRemoteViews.LessonTimeLayout.SPLIT, false);
-    private static final int ACCENT_WIDTH_DP = 4;
-    // Below the height of two lines of course text, so the row stays sized by that text.
-    private static final int ACCENT_HEIGHT_DP = 44;
-
     private static final int[] CLICKABLE_VIEW_IDS = {
         R.id.widget_root,
         R.id.widget_header,
@@ -22,18 +15,6 @@ final class BarWidgetRenderer {
         R.id.widget_date,
         R.id.widget_week,
         R.id.widget_status,
-        R.id.course_1_card,
-        R.id.course_1_bar,
-        R.id.course_1_name,
-        R.id.course_1_place,
-        R.id.course_1_start_time,
-        R.id.course_1_end_time,
-        R.id.course_2_card,
-        R.id.course_2_bar,
-        R.id.course_2_name,
-        R.id.course_2_place,
-        R.id.course_2_start_time,
-        R.id.course_2_end_time,
         R.id.widget_footer
     };
 
@@ -64,25 +45,18 @@ final class BarWidgetRenderer {
             CourseWidgetRemoteViews.bindTextColors(views, palette);
             views.setInt(R.id.widget_root, "setBackgroundColor", palette.backgroundColor());
             CourseWidgetRemoteViews.bindHeader(views, content, content.dateLabel());
-            CourseWidgetRemoteViews.bindFooter(context, views, content, showsRemaining);
-            CourseWidgetRemoteViews.bindLessons(
+            CourseWidgetRemoteViews.bindScrollableLessons(
                     context,
                     views,
+                    appWidgetId,
                     content,
                     context.getString(R.string.course_widget_day_finished),
-                    new CourseWidgetRemoteViews.LessonTextColors(
-                            palette.primaryTextColor(), palette.secondaryTextColor()),
-                    LESSON_SLOTS,
-                    BarWidgetRenderer::bindAccent);
+                    CourseWidgetRemoteViews.LessonStyle.BAR,
+                    palette,
+                    showsRemaining);
             appWidgetManager.updateAppWidget(appWidgetId, views);
+            CourseWidgetRemoteViews.notifyLessonListChanged(
+                    appWidgetManager, appWidgetId);
         }
-    }
-
-    private static void bindAccent(Context context, RemoteViews views, int slot, int color) {
-        int accentViewId = slot == 1 ? R.id.course_1_bar : R.id.course_2_bar;
-        views.setImageViewBitmap(
-                accentViewId,
-                CourseWidgetRemoteViews.createRoundedBitmap(
-                        context, ACCENT_WIDTH_DP, ACCENT_HEIGHT_DP, ACCENT_WIDTH_DP / 2.0f, color));
     }
 }

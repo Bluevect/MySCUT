@@ -16,7 +16,17 @@ final class CourseWidgetContent {
     private static final int DEFAULT_PRIMARY_TEXT_COLOR = Color.rgb(31, 42, 60);
     private static final int DEFAULT_SECONDARY_TEXT_COLOR = Color.rgb(58, 94, 124);
 
-    record Lesson(String name, String place, String startTime, String endTime, int accentColor) {}
+    record Lesson(String name, String place, String startTime, String endTime, int accentColor) {
+        String timeRangeLabel() {
+            if (startTime.isEmpty()) {
+                return endTime;
+            }
+            if (endTime.isEmpty()) {
+                return startTime;
+            }
+            return startTime + "–" + endTime;
+        }
+    }
 
     record Snapshot(
             String scheduleName,
