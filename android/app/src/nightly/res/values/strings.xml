@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- nightly 变体覆盖应用名，与 stable（启梦华工）在桌面图标上区分 -->
 <resources>
-    <string name="app_name">启蒙华工Nightly</string>
-    <string name="title_activity_main">启蒙华工Nightly</string>
+    <string name="app_name">启梦华工 Nightly</string>
+    <string name="title_activity_main">启梦华工 Nightly</string>
 </resources>
