@@ -89,9 +89,8 @@ jobs:
 
       - name: Build web assets for nightly channel
         env:
-          VITE_UPDATE_CHANNEL: nightly
           VITE_UPDATE_MANIFEST_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}/${{ secrets.R2_KEY_PREFIX }}/nightly/versions.json
-        run: npm run build:android
+        run: npm run build:android:nightly
 
       - name: Build and sign nightly APK
         env:

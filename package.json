@@ -35,6 +35,7 @@
     "build:pwa": "node scripts/buildPwa.mjs",
     "build:full": "node scripts/buildFull.mjs",
     "build:android": "node scripts/buildAndroid.mjs",
+    "build:android:nightly": "node scripts/buildAndroid.mjs --nightly",
     "build:ios": "node scripts/buildIos.mjs",
     "build:ohos-web": "node scripts/buildOhosWeb.mjs",
     "build:ohos-artifacts": "node scripts/printOhosArtifacts.mjs",

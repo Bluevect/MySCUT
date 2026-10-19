@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -10,10 +10,20 @@ export default defineConfig(({ mode }) => {
   const shouldBundlePdfLocalCMap = env.PDFJS_LOCAL_CMAP === '1' || env.PDFJS_LOCAL_CMAP === 'true'
   const targetPlatform = env.VITE_TARGET_PLATFORM || 'web'
   const isPwaBuild = env.VITE_PWA === '1' || env.VITE_PWA === 'true'
+  const isNightlyChannel = env.VITE_UPDATE_CHANNEL === 'nightly'
   const outDir = env.VITE_OUT_DIR || 'dist/web'
   const base = targetPlatform === 'ohos' ? './' : '/'
 
-  const plugins = [react(), tailwindcss()]
+  const plugins: PluginOption[] = [react(), tailwindcss()]
+
+  if (isNightlyChannel) {
+    plugins.push({
+      name: 'nightly-web-assets',
+      transformIndexHtml(html: string) {
+        return html.replaceAll('/icons/icon-192.png', '/icons/icon-nightly-192.png')
+      },
+    })
+  }
 
   if (targetPlatform === 'web') {
     plugins.push(
