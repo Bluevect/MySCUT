@@ -1,8 +1,10 @@
+import { APP_ICON_URL } from '../app/appIcon'
+
 export function AppBootstrapSkeleton() {
   return (
     <div className="app-bootstrap-shell" role="status" aria-live="polite" aria-busy="true">
       <div className="app-bootstrap-brand">
-        <img className="app-bootstrap-icon" src="/icons/icon-192.png" alt="" aria-hidden="true" />
+        <img className="app-bootstrap-icon" src={APP_ICON_URL} alt="" aria-hidden="true" />
         <h1>MySCUT</h1>
         <p>正在准备你的校园工具</p>
         <span className="app-bootstrap-progress" aria-hidden="true" />

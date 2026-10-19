@@ -1,6 +1,7 @@
 import { CalendarOutlined, HomeOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons'
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { APP_ICON_URL } from '../app/appIcon'
 
 export function RouteLoadingView() {
   return (
@@ -13,7 +14,7 @@ export function RouteLoadingView() {
       <div className="app-route-state-content">
         <img
           className="app-route-state-app-icon"
-          src="/icons/icon-192.png"
+          src={APP_ICON_URL}
           alt=""
           aria-hidden="true"
         />

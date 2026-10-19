@@ -4,6 +4,7 @@ import {
   MobileOutlined,
   RightOutlined,
 } from '@ant-design/icons'
+import { APP_ICON_URL } from '../../app/appIcon'
 
 type CoursesFirstUseGuideProps = {
   onImport: () => void
@@ -40,7 +41,7 @@ function CoursesFirstUseGuide({ onImport }: CoursesFirstUseGuideProps) {
       <div className="courses-first-use-hero">
         <img
           className="courses-first-use-app-icon"
-          src="/icons/icon-192.png"
+          src={APP_ICON_URL}
           alt=""
           aria-hidden="true"
         />
