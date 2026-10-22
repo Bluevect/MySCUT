@@ -33,21 +33,32 @@ final class CourseWidgetCourseManager {
         return schedule == null ? "我的课表" : schedule.optString("name", "我的课表");
     }
 
+    // Monday is 1 … Sunday is 7, matching the lesson "day" numbers in the schedule data.
+    static int weekdayNumber(Calendar date) {
+        int dayOfWeek = date.get(Calendar.DAY_OF_WEEK);
+        return dayOfWeek == Calendar.SUNDAY ? 7 : dayOfWeek - 1;
+    }
+
     static int getCurrentWeek(JSONObject schedule) {
-        Integer differenceDays = getStartDayDifference(schedule);
+        return getWeekOn(schedule, Calendar.getInstance());
+    }
+
+    // The week number on an arbitrary day, so a look ahead crosses week boundaries correctly.
+    static int getWeekOn(JSONObject schedule, Calendar day) {
+        Integer differenceDays = getStartDayDifference(schedule, day);
         return differenceDays == null
                 ? 1
                 : Math.max(1, (int) Math.floorDiv(differenceDays, 7L) + 1);
     }
 
     static boolean hasSemesterStarted(JSONObject schedule) {
-        Integer differenceDays = getStartDayDifference(schedule);
+        Integer differenceDays = getStartDayDifference(schedule, Calendar.getInstance());
         return differenceDays != null && differenceDays >= 0;
     }
 
-    // Calendar days from the semester start to today
+    // Calendar days from the semester start to the given day
     // Returns null when the start date is unusable
-    private static Integer getStartDayDifference(JSONObject schedule) {
+    private static Integer getStartDayDifference(JSONObject schedule, Calendar localDay) {
         JSONObject scheduleData = getScheduleData(schedule);
         JSONObject table = scheduleData == null ? null : scheduleData.optJSONObject("table");
 
@@ -66,13 +77,12 @@ final class CourseWidgetCourseManager {
                 return null;
             }
 
-            Calendar localToday = Calendar.getInstance();
             Calendar utcToday = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
             utcToday.clear();
             utcToday.set(
-                    localToday.get(Calendar.YEAR),
-                    localToday.get(Calendar.MONTH),
-                    localToday.get(Calendar.DAY_OF_MONTH));
+                    localDay.get(Calendar.YEAR),
+                    localDay.get(Calendar.MONTH),
+                    localDay.get(Calendar.DAY_OF_MONTH));
             return (int)
                     Math.floorDiv(
                             utcToday.getTimeInMillis() - semesterStart.getTime(), DAY_IN_MILLIS);

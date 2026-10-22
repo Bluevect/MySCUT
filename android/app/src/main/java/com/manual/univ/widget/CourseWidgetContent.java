@@ -35,6 +35,7 @@ final class CourseWidgetContent {
             String weekLabel,
             List<Lesson> lessons,
             boolean hasLessonsToday,
+            int tomorrowLessonCount,
             boolean hasScheduleData,
             boolean semesterNotStarted,
             int primaryTextColor,
@@ -52,7 +53,7 @@ final class CourseWidgetContent {
 
         Calendar now = Calendar.getInstance();
         int dayOfWeek = now.get(Calendar.DAY_OF_WEEK);
-        int weekdayNumber = dayOfWeek == Calendar.SUNDAY ? 7 : dayOfWeek - 1;
+        int weekdayNumber = CourseWidgetCourseManager.weekdayNumber(now);
         long timeOfDayMillis = getTimeOfDayMillis(now);
 
         // Drop the lessons before the semester starts, so the widget shows only the status text.
@@ -85,6 +86,19 @@ final class CourseWidgetContent {
             }
         }
 
+        // The empty states still owe the user a look ahead, so count tomorrow on its real date.
+        // Calendar.add rolls the month, the year and the week number in one step.
+        Calendar tomorrow = (Calendar) now.clone();
+        tomorrow.add(Calendar.DAY_OF_MONTH, 1);
+        int tomorrowLessonCount =
+                semesterNotStarted || scheduleData == null
+                        ? 0
+                        : CourseWidgetCourseManager.getTodayLessons(
+                                        scheduleData,
+                                        CourseWidgetCourseManager.weekdayNumber(tomorrow),
+                                        CourseWidgetCourseManager.getWeekOn(schedule, tomorrow))
+                                .size();
+
         return new Snapshot(
                 CourseWidgetCourseManager.getScheduleName(schedule),
                 formatDateLabel(now, dayOfWeek),
@@ -92,6 +106,7 @@ final class CourseWidgetContent {
                 "第" + currentWeek + "周",
                 visibleLessons,
                 !todayLessons.isEmpty(),
+                tomorrowLessonCount,
                 scheduleData != null,
                 semesterNotStarted,
                 CourseWidgetColorUtils.readColor(
