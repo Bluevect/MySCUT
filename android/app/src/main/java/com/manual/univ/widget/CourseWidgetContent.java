@@ -4,6 +4,7 @@ import android.graphics.Color;
 
 import org.json.JSONObject;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -37,7 +38,7 @@ final class CourseWidgetContent {
             boolean hasLessonsToday,
             int tomorrowLessonCount,
             boolean hasScheduleData,
-            boolean semesterNotStarted,
+            CourseWidgetSemester semester,
             int primaryTextColor,
             int secondaryTextColor,
             long nextRefreshAt) {}
@@ -49,20 +50,20 @@ final class CourseWidgetContent {
         JSONObject scheduleTheme = data.scheduleTheme();
         JSONObject scheduleData = CourseWidgetCourseManager.getScheduleData(schedule);
         String timeSlotPresetId = CourseWidgetCourseManager.getTimeSlotPresetId(schedule);
-        int currentWeek = CourseWidgetCourseManager.getCurrentWeek(schedule);
-
         Calendar now = Calendar.getInstance();
+        LocalDate today = now.toInstant().atZone(now.getTimeZone().toZoneId()).toLocalDate();
+        CourseWidgetSemester semester = CourseWidgetCourseManager.getSemester(schedule, today);
+        boolean semesterActive = semester.state() == CourseWidgetSemester.State.ACTIVE;
         int dayOfWeek = now.get(Calendar.DAY_OF_WEEK);
-        int weekdayNumber = CourseWidgetCourseManager.weekdayNumber(now);
+        int weekdayNumber = CourseWidgetCourseManager.weekdayNumber(today);
         long timeOfDayMillis = getTimeOfDayMillis(now);
 
-        // Drop the lessons before the semester starts, so the widget shows only the status text.
-        boolean semesterNotStarted = !CourseWidgetCourseManager.hasSemesterStarted(schedule);
+        // Outside the semester, only show its status and refresh again after midnight.
         List<JSONObject> todayLessons =
-                semesterNotStarted
-                        ? new ArrayList<>()
-                        : CourseWidgetCourseManager.getTodayLessons(
-                                scheduleData, weekdayNumber, currentWeek);
+                semesterActive
+                        ? CourseWidgetCourseManager.getTodayLessons(
+                                scheduleData, weekdayNumber, semester.week())
+                        : new ArrayList<>();
         List<Lesson> visibleLessons = new ArrayList<>();
         long nextLessonEndAt = Long.MAX_VALUE;
 
@@ -87,28 +88,33 @@ final class CourseWidgetContent {
         }
 
         // The empty states still owe the user a look ahead, so count tomorrow on its real date.
-        // Calendar.add rolls the month, the year and the week number in one step.
-        Calendar tomorrow = (Calendar) now.clone();
-        tomorrow.add(Calendar.DAY_OF_MONTH, 1);
+        // plusDays rolls the month, the year and the week number in one step, and a tomorrow
+        // outside the semester simply reports week 0, which matches no lesson.
+        LocalDate tomorrowDate = today.plusDays(1);
+        CourseWidgetSemester tomorrowSemester =
+                CourseWidgetCourseManager.getSemester(schedule, tomorrowDate);
         int tomorrowLessonCount =
-                semesterNotStarted || scheduleData == null
+                !semesterActive || scheduleData == null
                         ? 0
                         : CourseWidgetCourseManager.getTodayLessons(
                                         scheduleData,
-                                        CourseWidgetCourseManager.weekdayNumber(tomorrow),
-                                        CourseWidgetCourseManager.getWeekOn(schedule, tomorrow))
+                                        CourseWidgetCourseManager.weekdayNumber(tomorrowDate),
+                                        tomorrowSemester.state()
+                                                        == CourseWidgetSemester.State.ACTIVE
+                                                ? tomorrowSemester.week()
+                                                : 0)
                                 .size();
 
         return new Snapshot(
                 CourseWidgetCourseManager.getScheduleName(schedule),
                 formatDateLabel(now, dayOfWeek),
                 formatShortDateLabel(now, dayOfWeek),
-                "第" + currentWeek + "周",
+                semesterActive ? "第" + semester.week() + "周" : "",
                 visibleLessons,
                 !todayLessons.isEmpty(),
                 tomorrowLessonCount,
                 scheduleData != null,
-                semesterNotStarted,
+                semester,
                 CourseWidgetColorUtils.readColor(
                         scheduleTheme, "textColorPrimary", DEFAULT_PRIMARY_TEXT_COLOR),
                 CourseWidgetColorUtils.readColor(

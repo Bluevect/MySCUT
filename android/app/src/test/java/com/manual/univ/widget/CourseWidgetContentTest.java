@@ -4,8 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.time.LocalDate;
 
 public class CourseWidgetContentTest {
     @Test
@@ -26,39 +25,26 @@ public class CourseWidgetContentTest {
 
     @Test
     public void weekdayNumberMatchesScheduleDayNumbers() {
-        assertEquals(1, CourseWidgetCourseManager.weekdayNumber(date(2026, Calendar.OCTOBER, 19)));
-        assertEquals(5, CourseWidgetCourseManager.weekdayNumber(date(2026, Calendar.OCTOBER, 23)));
-        assertEquals(6, CourseWidgetCourseManager.weekdayNumber(date(2026, Calendar.OCTOBER, 24)));
-        assertEquals(7, CourseWidgetCourseManager.weekdayNumber(date(2026, Calendar.OCTOBER, 18)));
+        assertEquals(1, CourseWidgetCourseManager.weekdayNumber(LocalDate.of(2026, 10, 19)));
+        assertEquals(5, CourseWidgetCourseManager.weekdayNumber(LocalDate.of(2026, 10, 23)));
+        assertEquals(6, CourseWidgetCourseManager.weekdayNumber(LocalDate.of(2026, 10, 24)));
+        assertEquals(7, CourseWidgetCourseManager.weekdayNumber(LocalDate.of(2026, 10, 18)));
     }
 
     @Test
     public void tomorrowRollsFromSundayToMonday() {
-        Calendar sunday = date(2026, Calendar.OCTOBER, 18);
-        Calendar monday = (Calendar) sunday.clone();
-        monday.add(Calendar.DAY_OF_MONTH, 1);
+        LocalDate sunday = LocalDate.of(2026, 10, 18);
 
         assertEquals(7, CourseWidgetCourseManager.weekdayNumber(sunday));
-        assertEquals(1, CourseWidgetCourseManager.weekdayNumber(monday));
+        assertEquals(1, CourseWidgetCourseManager.weekdayNumber(sunday.plusDays(1)));
     }
 
     @Test
     public void tomorrowRollsOverMonthEnd() {
-        Calendar saturday = date(2026, Calendar.OCTOBER, 31);
-        Calendar sunday = (Calendar) saturday.clone();
-        sunday.add(Calendar.DAY_OF_MONTH, 1);
+        LocalDate sunday = LocalDate.of(2026, 10, 31).plusDays(1);
 
-        assertEquals(Calendar.NOVEMBER, sunday.get(Calendar.MONTH));
-        assertEquals(1, sunday.get(Calendar.DAY_OF_MONTH));
+        assertEquals(11, sunday.getMonthValue());
+        assertEquals(1, sunday.getDayOfMonth());
         assertEquals(7, CourseWidgetCourseManager.weekdayNumber(sunday));
-    }
-
-    private static Calendar date(int year, int month, int day) {
-        Calendar calendar = new GregorianCalendar(year, month, day);
-        calendar.clear(Calendar.HOUR_OF_DAY);
-        calendar.clear(Calendar.MINUTE);
-        calendar.clear(Calendar.SECOND);
-        calendar.clear(Calendar.MILLISECOND);
-        return calendar;
     }
 }
